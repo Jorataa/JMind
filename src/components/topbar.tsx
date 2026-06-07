@@ -1,9 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Topbar() {
   const [search, setSearch] = useState<string>("");
+  const pathname = usePathname();
+
+  const title = useMemo(() => {
+    if (pathname.startsWith("/dashboard")) return "Dashboard";
+    if (pathname.startsWith("/mindmap")) return "Mind Maps";
+    if (pathname.startsWith("/tasks")) return "Tasks";
+    if (pathname.startsWith("/kpi")) return "KPI";
+    if (pathname.startsWith("/settings")) return "Settings";
+    return "JMind";
+  }, [pathname]);
+
   const todayLabel = useMemo(
     () =>
       new Intl.DateTimeFormat("en", {
@@ -18,7 +30,7 @@ export default function Topbar() {
     <header className="flex h-14 flex-shrink-0 items-center justify-between border-b border-white/10 bg-zinc-950/90 px-4 backdrop-blur-xl sm:px-6">
       {/* Page title */}
       <div className="flex items-center gap-3">
-        <h1 className="text-[14px] font-semibold text-zinc-100">Dashboard</h1>
+        <h1 className="text-[14px] font-semibold text-zinc-100">{title}</h1>
         <span className="hidden h-4 w-px bg-white/10 sm:block" />
         <span className="hidden text-[12px] text-zinc-500 sm:block">
           {todayLabel}
