@@ -42,3 +42,12 @@ next-env.d.ts
 
 # claude local settings
 .claude/settings.local.json
+
+# logs (dev / preview server output)
+*.log
+
+# local backup snapshots
+backup-before-claude/
+
+# local dev helper (machine-specific launcher)
+dev-server-local.cmd
