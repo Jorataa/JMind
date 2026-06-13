@@ -9,6 +9,8 @@ import {
   calculateTaskVelocity,
   calculateDeepWorkRatio,
   getWeeklyCompletionData,
+  calculateTaskCompletionRate,
+  calculateKPICompletionRate,
 } from "@/lib/analytics-engine";
 
 export function useAnalytics() {
@@ -20,15 +22,12 @@ export function useAnalytics() {
     const streak = calculateStreak(tasks);
     const velocity = calculateTaskVelocity(tasks);
     const deepWorkRatio = calculateDeepWorkRatio(tasks);
-    const weeklyData = getWeeklyCompletionData(tasks);
+    const weeklyData = getWeeklyCompletionData(tasks, kpis);
+
+    const taskCompletionRate = calculateTaskCompletionRate(tasks);
+    const kpiCompletionRate = calculateKPICompletionRate(kpis);
 
     const completedTasks = tasks.filter((t) => t.completed).length;
-    const taskCompletionRate = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
-
-    const activeKPIs = kpis.length;
-    const kpiCompletionRate = kpis.length > 0
-      ? Math.round(kpis.reduce((acc, k) => acc + Math.min((k.value / k.target) * 100, 100), 0) / kpis.length)
-      : 0;
 
     return {
       productivityScore,
@@ -44,7 +43,7 @@ export function useAnalytics() {
         pending: tasks.length - completedTasks,
       },
       kpiStats: {
-        total: activeKPIs,
+        total: kpis.length,
       },
     };
   }, [tasks, kpis]);

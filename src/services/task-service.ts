@@ -11,10 +11,11 @@ export const TaskService = {
     title: string, 
     priority: TaskPriority, 
     energy: TaskEnergy, 
-    category?: string
+    category?: string,
+    id?: string
   ): Task => {
     return {
-      id: `task-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: id || crypto.randomUUID(),
       title,
       completed: false,
       createdAt: new Date().toISOString(),

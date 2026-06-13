@@ -14,7 +14,6 @@ export interface AnalyticsSummary {
 export interface ChartDataPoint {
   name: string;
   value: number;
-  secondary?: number;
 }
 
 /**
@@ -77,9 +76,28 @@ export function calculateTaskVelocity(tasks: Task[]): number {
 }
 
 /**
+ * Calculates task completion rate (%)
+ */
+export function calculateTaskCompletionRate(tasks: Task[]): number {
+  if (tasks.length === 0) return 0;
+  const completed = tasks.filter((t) => t.completed).length;
+  return Math.round((completed / tasks.length) * 100);
+}
+
+/**
+ * Calculates KPI completion rate (%)
+ */
+export function calculateKPICompletionRate(kpis: KPI[]): number {
+  if (kpis.length === 0) return 0;
+  return Math.round(
+    kpis.reduce((acc, k) => acc + Math.min((k.value / k.target) * 100, 100), 0) / kpis.length
+  );
+}
+
+/**
  * Generates daily completion data for charts
  */
-export function getWeeklyCompletionData(tasks: Task[]): ChartDataPoint[] {
+export function getWeeklyCompletionData(tasks: Task[], kpis: KPI[]): ChartDataPoint[] {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const now = new Date();
   const data: ChartDataPoint[] = [];
@@ -87,13 +105,23 @@ export function getWeeklyCompletionData(tasks: Task[]): ChartDataPoint[] {
   for (let i = 6; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
     const dateStr = d.toDateString();
-    const count = tasks.filter((t) => 
+    
+    // For historical data, we count completions. 
+    // In a real app, we'd want to know what was active that day.
+    const taskCount = tasks.filter((t) => 
       t.completed && t.completedAt && new Date(t.completedAt).toDateString() === dateStr
     ).length;
 
+    const kpiCount = kpis.filter((k) => 
+      k.history.some(h => new Date(h.timestamp).toDateString() === dateStr)
+    ).length;
+
+    // Simplified score: (tasks * 20) + (kpis * 10), max 100
+    const score = Math.min((taskCount * 20) + (kpiCount * 10), 100);
+
     data.push({
       name: days[d.getDay()],
-      value: count,
+      value: score,
     });
   }
 

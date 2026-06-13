@@ -1,8 +1,10 @@
 # JMind Project Context
 
-Saved from `C:\Users\jovan\Downloads\JMind Project Context.pdf` and current workspace inspection on 2026-05-30.
+Saved from `C:\Users\jovan\Downloads\JMind Project Context.pdf` and current workspace inspection on 2026-05-30. Code snapshot refreshed 2026-06-12 after the multi-map & sticky completion pass (see `PRODUCT_AUDIT.md`).
 
 This document is the practical project memory for future coding agents working on JMind. Keep it beginner-friendly, current-stage focused, and useful for deciding what to build next.
+
+See also: `PRODUCT_STRATEGY.md` (philosophical and strategic compass — read before proposing features) and `PRODUCT_AUDIT.md` (historical record of what shipped and the agreed backlog).
 
 ## Product Vision
 
@@ -82,19 +84,20 @@ Future:
 
 ## Current Project Stage
 
-The project is in the foundation phase.
+The project has moved from basic prototyping into the **Growth Engineering Phase**.
 
 Already done:
-
-- Next.js project initialized
-- Local development environment exists
-- Basic dashboard prototype started
-- GitHub repository was mentioned in the project context, although this local folder currently has no `.git` directory
+- Next.js 16 / React 19 architecture established.
+- **Command Center Dashboard:** Refactored from a feature-dump to a high-clarity workspace.
+- **Real Activity Engine:** Live tracking of tasks, mind maps, and reflections (Zustand + local persistence).
+- **Today's Focus Widget:** Smart priority-ordered task execution on the dashboard.
+- **Mind Map Preview:** Optimized visual thinking snapshot for performance.
+- **Local Persistence:** All core modules (Tasks, Mind Maps, KPI, Activity) save locally.
 
 Current focus:
-
-- Build clean architecture and folder structure before adding many features.
-- Keep complexity low while the product direction becomes clearer.
+- Refining the "Mental Clarity" loops.
+- Improving information hierarchy and emotional UX.
+- Preparing for the KPI Module deep-dive.
 
 ## Current Priorities (Highest → Lowest)
 
@@ -117,46 +120,50 @@ Practical guidance:
 
 Root app:
 
-- `src/app/page.tsx` composes `Sidebar`, `Topbar`, and `Dashboard`.
-- `src/app/layout.tsx` sets metadata and Geist fonts.
-- `src/app/globals.css` imports Tailwind and defines simple theme variables.
+- `src/app/page.tsx` redirects to `/dashboard`; routes exist for `/dashboard`, `/mindmap`, `/tasks`, `/kpi`, `/settings`.
+- `src/app/layout.tsx` loads Inter via `next/font` and wraps pages in `components/layout/LayoutShell` (sidebar + topbar + command palette + quick capture + focus HUD).
+- `src/app/globals.css` holds Tailwind 4 theme variables, scrollbar utilities, and the single source of truth for React Flow edge/control styling (via `--xy-*` variables).
 
-Components:
+Layout shell (`src/components/layout/`):
 
-- `src/components/sidebar.tsx` contains navigation for Dashboard, Mind Maps, Tasks, and KPI.
-- `src/components/topbar.tsx` contains page title, date label, search input, notification button, and profile badge.
-- `src/components/dashboard.tsx` contains welcome text, stat cards, and the embedded mind map section.
+- `Sidebar.tsx` — collapsible nav (persisted), mobile drawer, plus the **Mind Maps manager** (list, create, inline rename via double-click, two-click delete).
+- `Topbar.tsx` — breadcrumb (`Workspace › Mind Maps › {active map}` on the canvas), date, command palette trigger (Ctrl+K).
+- `QuickActions.tsx` — single Quick Capture FAB (hidden on `/mindmap`).
+- `FocusHUD.tsx` — full-screen Deep Work focus overlay with timer.
 
-Features:
+Features (each under `src/features/<name>/`):
 
-- `src/features/mindmap/MindMapCanvas.tsx` is a client component using React Flow.
-- The current mind map starts with a root `JMind` node.
-- Users can add idea nodes around the root.
-- Nodes can be dragged and connected.
-- State is currently in React component state only; there is no persistence yet.
+- `mindmap/` — the core canvas. Full-bleed React Flow workspace; zustand store with localStorage persistence (`stores/use-mindmap-store.ts`); **multiple maps** (workspace record + `activeMapId`, legacy single-map data auto-migrates; switch via the canvas `MapSwitcher` chip, the sidebar list, or Ctrl+K); **sticky notes** (`S` key with cascade placement, right-click → "Sticky note here", four paper colors, multi-line + autogrow editing, sticky-mode details panel); keyboard-first (Tab child, Enter rename, Delete remove, Ctrl+Z/Ctrl+Shift+Z undo/redo, F fit, Shift+T tidy, I details, double-click to create, right-click pane/node menus); per-tab undo history with drag batching (cleared on map switch); details panel opens on demand; node↔task linking with status sync. Cross-surface node jumps use the store's transient `pendingFocusNodeId` request, consumed and centered by the canvas.
+- `tasks/` — full CRUD with priority/energy/category, filters, persisted.
+- `kpi/` — KPI tracking with history, persisted.
+- `dashboard/` — command-center modules (header/anchor, weekly pulse, continuity bridge, today's focus, KPI quick access, activity, inbox capture, mind map preview). A fresh workspace renders a Getting Started hero instead; analytics sections appear only once tasks/KPIs exist.
+- `command/` — Ctrl+K palette (search across tasks/KPIs/maps and **ideas in every map** — cross-map hits are labeled `· Map title` and selecting one switches maps and centers the node; quick actions; real arrow-key navigation) and Ctrl+J quick capture overlay.
+- `wisdom/`, `analytics/`, `search/` — supporting modules.
 
-Observed folders:
+State (`src/stores/`): zustand v5 + persist for mindmap, tasks, kpi, focus, activity, inbox, wisdom, ui, toast. **zustand v5 rule: any selector returning a fresh object/array must use `useShallow`** — a violation here once broke the whole app (see audit). Tabs stay in sync via `src/lib/cross-tab-sync.ts` (storage events → `persist.rehydrate()`), initialized in `LayoutShell`.
 
-- `src/features/kpi` exists but has no implemented feature yet.
-- `src/features/tasks` exists but has no implemented feature yet.
-- `backup-before-claude` contains earlier copies and should be treated as backup material, not active app code.
+Settings (`src/app/settings/page.tsx`): shortcut reference, JSON export/import of the whole workspace, clear-all-data with two-step confirm. Storage keys: `jmind:mindmap`, `jmind:tasks`, `jmind:kpis`, `jmind:focus`, `jmind:activity`, `jmind:inbox`, `jmind:wisdom`, `jmind:ui`.
 
 ## Current Technical Debt
 
 Known issues:
 
-- Some components are larger than ideal and may need future decomposition.
-- Folder structure is partially modular but not finalized.
-- No persistence layer yet.
-- No database integration.
-- No testing setup.
-- No error handling strategy yet.
+- No testing setup (sanitizers, undo history, and the workspace validator/migration are the best first targets).
+- Mobile touch interactions on the canvas are untuned (no long-press menu; map switcher hidden below `md` — the sidebar drawer is the mobile path).
+- Dashboard with lots of data is still dense; consider collapsible sections.
+- Undoing "Convert to Task" doesn't delete the created task; deleting a map has confirm-but-no-undo (cross-store/cross-map undo out of scope).
+- No database integration yet (by design at this stage).
 
 How to handle this:
 
 - Fix technical debt only when it supports the current feature work.
 - Avoid large refactors unless the founder confirms the direction first.
 - Prefer small, understandable improvements over broad rewrites.
+
+Dev workflow warnings (Windows / Next 16 / Turbopack):
+
+- Do not run `npm run build` while the dev server is running — they share `.next` and the dev session corrupts.
+- If the dev server serves stale CSS/JS after edits, stop it, delete `.next`, and restart.
 
 ## MVP Roadmap
 

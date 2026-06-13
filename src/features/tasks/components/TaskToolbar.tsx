@@ -1,6 +1,6 @@
 "use client";
 
-import { useTaskFilter, useTaskActions } from "@/stores/use-task-store";
+import { useTaskFilter, useTaskActions, type TaskPriority } from "@/stores/use-task-store";
 import { Search } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -39,6 +39,18 @@ export default function TaskToolbar() {
             label="Done" 
           />
         </div>
+
+        <select
+          value={filter.priority}
+          onChange={(e) => setFilter({ priority: e.target.value as "all" | TaskPriority })}
+          className="h-10 rounded-xl border border-white/10 bg-zinc-950/50 px-3 text-[11px] font-bold uppercase tracking-widest text-zinc-400 outline-none transition-all focus:border-emerald-400/30"
+          aria-label="Filter tasks by priority"
+        >
+          <option value="all">All Priorities</option>
+          <option value="high">High Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
       </div>
     </div>
   );
@@ -47,6 +59,7 @@ export default function TaskToolbar() {
 function FilterButton({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={cn(
         "px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest rounded-lg transition-all",

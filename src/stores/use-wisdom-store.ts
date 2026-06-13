@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { Wisdom } from "@/features/wisdom/types/wisdom";
+import { useActivityStore } from "./use-activity-store";
 
 interface WisdomState {
   favorites: Wisdom[];
@@ -26,9 +27,18 @@ export const useWisdomStore = create<WisdomState>()(
             return { favorites: [wisdom, ...state.favorites] };
           }),
         saveReflection: (date, content) =>
-          set((state) => ({
-            reflections: { ...state.reflections, [date]: content },
-          })),
+          set((state) => {
+            if (content.trim().length > 0) {
+              useActivityStore.getState().actions.logActivity(
+                'mindset_reflection',
+                `Captured a daily reflection`,
+                { date }
+              );
+            }
+            return {
+              reflections: { ...state.reflections, [date]: content },
+            };
+          }),
       },
     }),
     {

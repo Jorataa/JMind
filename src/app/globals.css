@@ -3,12 +3,23 @@
 :root {
   --background: #09090b;
   --foreground: #f4f4f5;
+  --accent-focus: rgba(52, 211, 153, 0.55);
+  --accent-select: rgba(52, 211, 153, 0.9);
+  --accent-edge: rgba(161, 161, 170, 0.5);
+}
+
+[data-theme="smiski"] {
+  --background: #070e08;
+  --foreground: #f0f4f0;
+  --accent-focus: rgba(134, 239, 172, 0.5);
+  --accent-select: rgba(134, 239, 172, 0.88);
+  --accent-edge: rgba(134, 239, 172, 0.25);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Inter", "Geist", Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-inter), "Segoe UI", Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
@@ -17,6 +28,16 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Keyboard-navigation baseline: a consistent, visible focus ring on
+   interactive controls (inputs keep their own border-based focus styles). */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent-focus);
+  outline-offset: 2px;
 }
 
 @layer utilities {
@@ -43,4 +64,35 @@ body {
 /* Recharts Tooltip Customization override */
 .recharts-default-tooltip {
   @apply !bg-zinc-900/90 !border-white/10 !rounded-xl !shadow-2xl !backdrop-blur-md !p-3 !text-[12px] !font-medium;
+}
+
+/* React Flow: one source of truth for edge, control and handle styling.
+   Uses the library's --xy-* theming variables so they survive the cascade
+   regardless of stylesheet order. */
+.react-flow {
+  --xy-edge-stroke: var(--accent-edge);
+  --xy-edge-stroke-width: 2;
+  --xy-edge-stroke-selected: var(--accent-select);
+  --xy-controls-button-background-color: rgba(24, 24, 27, 0.92);
+  --xy-controls-button-background-color-hover: rgba(39, 39, 42, 0.95);
+  --xy-controls-button-color: #a1a1aa;
+  --xy-controls-button-color-hover: #e4e4e7;
+  --xy-controls-button-border-color: rgba(255, 255, 255, 0.08);
+  --xy-minimap-background-color: rgba(9, 9, 11, 0.6);
+  --xy-attribution-background-color: transparent;
+}
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke: rgba(212, 212, 216, 0.7);
+}
+.react-flow__handle {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.react-flow__node:hover .react-flow__handle,
+.react-flow__node.selected .react-flow__handle,
+.react-flow__handle.connectionindicator {
+  opacity: 1;
+}
+.react-flow__attribution {
+  color: rgba(255, 255, 255, 0.2);
 }

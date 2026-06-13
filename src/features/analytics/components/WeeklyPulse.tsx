@@ -29,11 +29,11 @@ export default function WeeklyPulse() {
 
       <div className="flex items-end gap-3 h-[100px]">
         {weeklyData.map((day, index) => {
-          const height = Math.max((day.score / 100) * 80, 4); // Min 4px
+          const height = Math.max((day.value / 100) * 80, 4); // Min 4px
           const isToday = index === weeklyData.length - 1;
 
           return (
-            <div key={day.date} className="flex-1 flex flex-col items-center gap-2 group">
+            <div key={day.name} className="flex-1 flex flex-col items-center gap-2 group">
               <div className="relative w-full flex items-end justify-center h-full">
                 <div 
                   className={cn(
@@ -49,7 +49,7 @@ export default function WeeklyPulse() {
                 "text-[10px] font-bold uppercase tracking-tight",
                 isToday ? "text-emerald-400" : "text-zinc-600"
               )}>
-                {day.date}
+                {day.name}
               </span>
             </div>
           );

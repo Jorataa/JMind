@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Card } from "@/components/ui/Card";
 import { THEME } from "@/lib/constants/theme";
 import { ReactNode } from "react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
 interface StatSummaryProps {
   label: string;
@@ -49,8 +50,9 @@ export const StatSummary = ({
                 {value}
               </h4>
               {trend && (
-                <span className={`text-[11px] font-bold ${trend.isUp ? "text-emerald-400" : "text-rose-400"}`}>
-                  {trend.isUp ? "↑" : "↓"} {trend.value}%
+                <span className={`inline-flex items-center gap-0.5 text-[11px] font-bold ${trend.isUp ? "text-emerald-400" : "text-rose-400"}`}>
+                  {trend.isUp ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                  {trend.value}%
                 </span>
               )}
             </div>

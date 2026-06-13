@@ -10,7 +10,7 @@ export const KPIService = {
   createKPI: (label: string, target: number, unit: string, category?: string): KPI => {
     const now = new Date().toISOString();
     return {
-      id: `kpi-${Date.now()}`,
+      id: crypto.randomUUID(),
       label,
       value: 0,
       target,

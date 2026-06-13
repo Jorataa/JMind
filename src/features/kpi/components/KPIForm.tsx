@@ -98,7 +98,7 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
         />
 
         <div className="mt-4 flex gap-3">
-          <Button variant="secondary" onClick={onClose} className="flex-1">
+          <Button type="button" variant="secondary" onClick={onClose} className="flex-1">
             Cancel
           </Button>
           <Button type="submit" className="flex-1">

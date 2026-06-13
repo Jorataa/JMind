@@ -41,4 +41,4 @@ export const THEME = {
       ease: "easeInOut",
     },
   },
-};
+} as const;
