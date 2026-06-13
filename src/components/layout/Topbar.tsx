@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
+import { formatFullDate } from "@/lib/format-date";
 
 const PAGE_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -26,12 +27,10 @@ export default function Topbar() {
   const hydrated = useHydrated();
   const activeMapTitle = useMindMapStore((state) => state.maps[state.activeMapId]?.title);
 
-  // Format current date: "Monday, June 8" using native Intl
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  }).format(new Date());
+  // "Monday, June 8" — only computed after hydration. The server clock is UTC,
+  // so rendering a local date during SSR mismatches the client and can briefly
+  // show the wrong day; gating on `hydrated` keeps the date honest.
+  const formattedDate = hydrated ? formatFullDate() : null;
 
   // Breadcrumb/Title logic — on the canvas the active map is the real
   // location, so it takes the emphasized leaf position.
@@ -69,9 +68,17 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-6">
-        {/* Date Display */}
-        <div className="hidden lg:flex flex-col items-end">
-          <span className="text-[12px] font-semibold text-zinc-200">{formattedDate}</span>
+        {/* Date Display — width reserved so the date fading in after hydration
+            never nudges the search box. */}
+        <div className="hidden min-w-[150px] lg:flex flex-col items-end">
+          <span
+            className={cn(
+              "text-[12px] font-semibold text-zinc-200 transition-opacity duration-500",
+              formattedDate ? "opacity-100" : "opacity-0"
+            )}
+          >
+            {formattedDate ?? " "}
+          </span>
         </div>
 
         {/* Global Search Trigger */}

@@ -16,9 +16,16 @@ export default function KPIList() {
   const [showForm, setShowForm] = useState(false);
 
   if (!isHydrated) {
+    // Mirror the real layout so nothing jumps when data arrives — same calm
+    // pulse idiom the dashboard and task panel use.
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.04] p-8 text-center">
-        <div className="text-[13px] text-zinc-500">Loading indicators...</div>
+      <div className="flex flex-col gap-6">
+        <div className="h-5 w-40 animate-pulse rounded bg-white/[0.04]" />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="h-40 animate-pulse rounded-2xl bg-white/[0.02]" />
+          <div className="h-40 animate-pulse rounded-2xl bg-white/[0.02]" />
+          <div className="h-40 animate-pulse rounded-2xl bg-white/[0.02]" />
+        </div>
       </div>
     );
   }
@@ -26,7 +33,7 @@ export default function KPIList() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <SectionTitle>Your Performance Indicators</SectionTitle>
+        <SectionTitle>What you&rsquo;re tracking</SectionTitle>
         <Button size="sm" variant="secondary" onClick={() => setShowForm(true)} className="gap-1.5">
           <Plus size={14} />
           Add KPI

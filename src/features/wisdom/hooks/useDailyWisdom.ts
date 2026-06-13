@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { wisdomData } from "../data/wisdom";
+import { formatFullDate, getLocalDateKey } from "@/lib/format-date";
 
 export function useDailyWisdom() {
   const todayDate = useMemo(() => new Date(), []);
@@ -21,17 +22,11 @@ export function useDailyWisdom() {
     setRefreshSeed(prev => prev + 1);
   }, []);
 
-  const formattedDate = useMemo(() => {
-    return new Intl.DateTimeFormat("en", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    }).format(todayDate);
-  }, [todayDate]);
+  const formattedDate = useMemo(() => formatFullDate(todayDate), [todayDate]);
 
-  const dateKey = useMemo(() => {
-    return todayDate.toISOString().split("T")[0];
-  }, [todayDate]);
+  // Local day, not UTC — keeps "today's" reflection filed under the user's
+  // actual date instead of rolling over in the early morning.
+  const dateKey = useMemo(() => getLocalDateKey(todayDate), [todayDate]);
 
   return {
     wisdom,

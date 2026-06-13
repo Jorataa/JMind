@@ -274,12 +274,16 @@ export default function Sidebar() {
       {/* Brand */}
       <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
         {!isCompact && (
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col gap-1">
             <span className="text-[15px] font-semibold tracking-tight text-zinc-50">
               JMind
             </span>
-            <span className="text-[11px] font-medium uppercase tracking-widest text-zinc-500">
-              Think. Plan. Execute.
+            {/* The four-pillar loop, paired into its two halves — thinking, then
+                doing — so it reads as intentional rather than an awkward wrap. */}
+            <span className="text-[10px] font-medium uppercase leading-[1.5] tracking-[0.16em] text-zinc-500">
+              Think · Plan
+              <br />
+              Execute · Measure
             </span>
           </div>
         )}

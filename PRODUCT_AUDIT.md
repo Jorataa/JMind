@@ -165,3 +165,40 @@ Addressed remaining-weakness #2 (mid-state density) and the long-standing strate
 4. **No tests** — sanitizers, undo history, `validateWorkspace`/migration.
 5. **Voice / dead-code follow-ups (minor):** the dynamic hero insight still says "clear *objectives*" (`lib/dashboard-insights.ts`); the `/tasks` header still reads "Active Execution" (`TaskHeader.tsx`); `calculateProductivityScore` / `calculateStreak` are now dead exports in `analytics-engine.ts`.
 6. **Mobile follow-ups (minor):** touch-rename focus wants a real-device check; connection handles are hover-only.
+
+# Trust & empty-state pass — 2026-06-14
+
+A polish brief ("refine into something intentional, trustworthy, emotionally polished") prompted a 10-point audit. This session shipped the two lowest-risk, highest-trust tiers: the date/timezone correctness fix (the literal #1 ask) and the honest empty/loading-state pass. The broader subjective passes (cohesion sweep, mobile deep-dive, interaction polish, dashboard restructure) were deliberately *not* done blind — they're laid out as a prioritized roadmap for the founder to steer (see below). **All changes verified on the cold prod bundle :3100; UNCOMMITTED at session end** (same posture as the 2026-06-13 mobile pass — pending a "commit/deploy" from the founder).
+
+## Shipped
+
+1. **The date trust bug (root cause + fix).** `Topbar.tsx` rendered `new Intl.DateTimeFormat(...).format(new Date())` **unconditionally during SSR**. Every route is statically prerendered (`○ Static`), so the date was frozen to the *build machine's* clock — and on a live server (UTC) vs the user's local zone (Indonesia UTC+7/8) it also produced a **React hydration mismatch** every local morning before ~8am, briefly showing the wrong day. Fix: gate the date on `useHydrated()` (already imported), compute it client-only, reserve `min-w-[150px]` so the fade-in causes no layout shift. **Verified:** the prerendered HTML now contains *no* weekday string; the client renders the correct local date after a clean reload with a console free of hydration warnings.
+2. **Daily-wisdom UTC day-boundary bug.** `useDailyWisdom` keyed reflections off `toISOString().split("T")[0]` (always UTC), so "today" rolled over at UTC midnight (7–8am local), misfiling reflections by a day. Fixed with a local-day key.
+3. **Centralized date helpers** in `lib/format-date.ts`: `formatFullDate()` (the "Monday, June 8" form, DRY across Topbar + wisdom) and `getLocalDateKey()` (local `YYYY-MM-DD`, never UTC). Both carry comments explaining the SSR/timezone hazard so the trap isn't reintroduced.
+4. **Honest empty states (objective #2).** The **Tasks** empty state was a single bare line; it's now a calm, teaching `EmptyState` ("Your list is clear" + how it works), borderless so it reads as the card body — and the honest "no tasks" vs "no filter match" split is preserved. The **KPI** empty state (objective #9, "what do I measure here?") gained warmer voice ("Measure what matters" + a plain-language definition) and four concrete example chips (Runs this week · Hours studied · Pages written · Daily reading) via a new optional `footer` slot on the shared `EmptyState`.
+5. **Loading cohesion (objective #3).** KPI's one-off `"Loading indicators..."` text → the same `animate-pulse` skeleton (shaped like the real grid) that the dashboard and task panel already use. No module shows ambiguous loader text anymore.
+6. **Calm voice (objectives #4/#5).** `TaskHeader` "Active Execution" → "Your actions" (+ "… done" not "… Completed"); KPI "Your Performance Indicators" → "What you're tracking"; the dashboard hero insight lost its "objectives / Great progress / Keep the deep work going" performance framing. The sidebar tagline — the most-seen expression of the philosophy — completed the **Think · Plan · Execute · Measure** loop (it had dropped "Measure"), rendered as a deliberate two-line pairing (thinking half / doing half) so it reads intentional, not wrapped.
+
+Files: `lib/format-date.ts`, `components/layout/Topbar.tsx`, `features/wisdom/hooks/useDailyWisdom.ts`, `lib/dashboard-insights.ts`, `components/ui/EmptyState.tsx`, `features/kpi/components/{KPIList,EmptyKPIState}.tsx`, `features/tasks/components/{TaskList,TaskHeader}.tsx`, `components/layout/Sidebar.tsx` (10).
+
+## Verified (cold prod bundle :3100)
+- `tsc --noEmit` ✓, `eslint` ✓, `next build` ✓ (9 routes).
+- Prerendered `dashboard.html`: zero weekday strings (SSR no longer emits a date); date placeholder span present.
+- Runtime DOM: Topbar "Sunday, June 14" at opacity 1 after a hard reload, console clean on the fresh hydration cycle; `/tasks` "Your actions" + "0 / 0 done" + "Your list is clear"; `/kpi` "Measurement" / "What you're tracking" / "Measure what matters" + all 4 example chips, no stale loader text; sidebar tagline two clean lines, no overflow.
+- Screenshot skipped (reliably times out on this machine — known harness quirk); verification is DOM-based.
+
+## Prioritized roadmap for the rest of the brief (not yet done — needs founder steer)
+- **#8 Dashboard "command center" feel** — the mid/full dashboard is still ~8 modules; consider a calmer adaptive density (the highest-impact remaining UX item).
+- **#5 Cohesion sweep** — codify spacing/radius/shadow/typography tokens (a `THEME`-backed pass) so cards/buttons/sections are provably one system; mostly consistent today but not enforced.
+- **#4 Philosophy, deeper** — quiet pillar eyebrows per module page (Mind Maps→Think, Tasks→Execute, KPI→Measure) would tie modules to the loop more than the tagline alone.
+- **#6 Mobile deep-dive** — real-device check of touch-rename focus + canvas hand-drawn edges (handles are hover-only).
+- **#7 Interaction polish** — focus-visible audit, hover/active consistency, motion review.
+- **Dead code:** `calculateProductivityScore` / `calculateStreak` in `analytics-engine.ts` are now unused — safe to delete.
+
+## Remaining weaknesses (updated, ordered)
+1. **Dashboard mid/full-state density (#8)** — now the top open UX item.
+2. **Map deletion is confirm-only** — no undo.
+3. **Idea-node labels are single-line.**
+4. **No tests** — sanitizers, undo history, `validateWorkspace`/migration, and now the new date helpers (`getLocalDateKey` is a clean, pure first target).
+5. **Dead exports:** `calculateProductivityScore` / `calculateStreak` (`analytics-engine.ts`).
+6. **Mobile follow-ups (minor):** touch-rename focus wants a real-device check; connection handles are hover-only.

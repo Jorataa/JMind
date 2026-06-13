@@ -14,10 +14,11 @@ export function getProductivityInsight(tasks: Task[]) {
   ).length;
   
   if (completedToday === 0) {
-    if (tasks.length > 0) return "You have clear objectives waiting for your focus.";
-    return "Start your day by defining one clear next action.";
+    if (tasks.length > 0) return "A few things are waiting whenever you're ready.";
+    return "A quiet start. Name one thing worth moving today.";
   }
-  
-  if (completedToday > 5) return "Exceptional momentum today. Keep the deep work going.";
-  return `You've checked off ${completedToday} focus areas today. Great progress.`;
+
+  if (completedToday > 5) return "A lot came together today.";
+  const noun = completedToday === 1 ? "thing" : "things";
+  return `${completedToday} ${noun} off your mind today.`;
 }
