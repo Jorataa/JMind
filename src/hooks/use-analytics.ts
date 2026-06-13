@@ -4,8 +4,6 @@ import { useMemo } from "react";
 import { useTaskStore } from "@/stores/use-task-store";
 import { useKPIStore } from "@/stores/use-kpi-store";
 import {
-  calculateProductivityScore,
-  calculateStreak,
   calculateTaskVelocity,
   calculateDeepWorkRatio,
   getWeeklyCompletionData,
@@ -18,8 +16,6 @@ export function useAnalytics() {
   const kpis = useKPIStore((state) => state.kpis);
 
   return useMemo(() => {
-    const productivityScore = calculateProductivityScore(tasks, kpis);
-    const streak = calculateStreak(tasks);
     const velocity = calculateTaskVelocity(tasks);
     const deepWorkRatio = calculateDeepWorkRatio(tasks);
     const weeklyData = getWeeklyCompletionData(tasks, kpis);
@@ -30,8 +26,6 @@ export function useAnalytics() {
     const completedTasks = tasks.filter((t) => t.completed).length;
 
     return {
-      productivityScore,
-      streak,
       velocity,
       deepWorkRatio,
       weeklyData,

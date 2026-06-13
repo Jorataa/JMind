@@ -2,7 +2,7 @@
 
 import { useTaskStore } from "@/stores/use-task-store";
 import { useKPIStore } from "@/stores/use-kpi-store";
-import { getWeeklyCompletionData, calculateStreak } from "@/lib/analytics-engine";
+import { getWeeklyCompletionData } from "@/lib/analytics-engine";
 import { Card } from "@/components/ui/Card";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { useMemo } from "react";
@@ -13,18 +13,11 @@ export default function WeeklyPulse() {
   const kpis = useKPIStore((state) => state.kpis);
 
   const weeklyData = useMemo(() => getWeeklyCompletionData(tasks, kpis), [tasks, kpis]);
-  const streak = useMemo(() => calculateStreak(tasks), [tasks]);
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between gap-3 mb-6">
+      <div className="mb-6">
         <SectionTitle>Weekly Pulse</SectionTitle>
-        <div className="flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-2.5 py-1 text-[11px] font-bold text-emerald-400 ring-1 ring-emerald-400/20">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-          </svg>
-          {streak} day streak
-        </div>
       </div>
 
       <div className="flex items-end gap-3 h-[100px]">

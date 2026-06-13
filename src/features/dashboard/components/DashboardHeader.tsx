@@ -68,7 +68,7 @@ export default function DashboardHeader() {
             className="h-2 w-2 rounded-full bg-emerald-400" 
           />
           <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-emerald-400/80">
-            Personal Operating System
+            Thinking space
           </span>
         </div>
         
@@ -100,7 +100,7 @@ export default function DashboardHeader() {
             <InsightBadge icon={<Zap size={14} />} label={focusBadgeLabel} />
             <div className="h-4 w-px bg-white/10 my-auto" />
             <span className="text-[13px] font-medium text-zinc-500">
-              Current Focus: <span className="text-zinc-200">{dailyAnchor ? "Daily Anchor Set" : "Execution Phase"}</span>
+              Current focus: <span className="text-zinc-200">{dailyAnchor ? "Anchor set" : "Open day"}</span>
             </span>
           </div>
         </div>
@@ -161,11 +161,11 @@ export default function DashboardHeader() {
                         autoFocus
                         value={anchorInput}
                         onChange={(e) => setAnchorInput(e.target.value)}
-                        placeholder="What is your main objective?"
+                        placeholder="What's your anchor for today?"
                         className="w-full bg-transparent text-[18px] font-semibold text-zinc-100 outline-none placeholder:text-zinc-700"
                       />
                       <div className="flex gap-2">
-                        <button type="submit" className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300">Set Objective</button>
+                        <button type="submit" className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300">Set Anchor</button>
                         <button type="button" onClick={() => setIsEditing(false)} className="text-[11px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400">Cancel</button>
                       </div>
                     </form>

@@ -144,3 +144,24 @@ Files: `MapSwitcher.tsx`, `Topbar.tsx`, `EditableNode.tsx`, `CanvasToolbar.tsx`,
 4. **Idea-node labels are single-line.**
 5. **No tests** — sanitizers, undo history, `validateWorkspace`/migration.
 6. **Mobile follow-ups (minor):** connection handles are hover-only (`opacity-0 group-hover`), so edges can't be hand-drawn on touch (tree-building via the toolbar / Tab still works); the touch-rename focus wants a real-device check.
+
+# Dashboard pass — 2026-06-13
+
+Addressed remaining-weakness #2 (mid-state density) and the long-standing strategy violation the PRODUCT_STRATEGY audit flagged: productivity scores, streaks, and "Operating System / Execution" voice on a dashboard that's supposed to be a calm thinking space.
+
+## Shipped
+1. **Mid-state density** (commit `80cf73f`, deployed) — when the workspace has content but no tasks/KPIs, the dashboard stretched the Daily Wisdom quote edge-to-edge (954px) and repeated the map preview full-width at the bottom. Wisdom now pairs with the map preview in a 2-col grid (the pattern the fresh state already used); the redundant bottom preview is gone.
+2. **Calm voice + never-list removal** — deleted the two never-list features (the `ProductivityScore` ring card and the `{n} day streak` badge in `WeeklyPulse`) and the **whole** "Intelligence Overview" stat grid (its remaining Velocity/Completion were the same scoreboard genre). Voice: "Personal Operating System" → "Thinking space", "Execution Phase" → "Open day", "main objective / Set Objective" → "anchor for today / Set Anchor", the "Active Execution / Primary Loop" header dropped, "Performance Metrics" → "Goals". `productivityScore`/`streak` removed from `useAnalytics`; `ProductivityScore.tsx` deleted.
+   Files: `Dashboard.tsx`, `DashboardHeader.tsx`, `WeeklyPulse.tsx`, `use-analytics.ts`, `ProductivityScore.tsx` (deleted).
+
+## Verified (cold prod bundle :3100, 1280px)
+- `tsc` / `eslint` / `next build` green.
+- Mid + full state checked via DOM: every never-list/off-voice string (`productivity`, `streak`, `operating system`, `execution`, `intelligence overview`, `primary loop`) is absent; calm replacements ("Thinking space", "Open day", "Goals", the Wisdom+preview pairing) render; WeeklyPulse keeps its weekly chart without the streak badge.
+
+## Remaining weaknesses (updated, ordered)
+1. **Map deletion is confirm-only** — no undo.
+2. **Same-map concurrent edits across tabs** — last-writer-wins within the persist debounce.
+3. **Idea-node labels are single-line.**
+4. **No tests** — sanitizers, undo history, `validateWorkspace`/migration.
+5. **Voice / dead-code follow-ups (minor):** the dynamic hero insight still says "clear *objectives*" (`lib/dashboard-insights.ts`); the `/tasks` header still reads "Active Execution" (`TaskHeader.tsx`); `calculateProductivityScore` / `calculateStreak` are now dead exports in `analytics-engine.ts`.
+6. **Mobile follow-ups (minor):** touch-rename focus wants a real-device check; connection handles are hover-only.
