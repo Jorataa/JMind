@@ -377,7 +377,7 @@ function MindMapFlow() {
                       <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
                         Quick Start
                       </p>
-                      <div className="flex items-center gap-6">
+                      <div className="hidden items-center gap-6 sm:flex">
                         <EmptyHint keyName="2× Click" action="New idea" />
                         <span className="h-4 w-px bg-white/10" />
                         <EmptyHint keyName="Tab" action="Branch out" />
@@ -386,6 +386,10 @@ function MindMapFlow() {
                         <span className="h-4 w-px bg-white/10" />
                         <EmptyHint keyName="Enter" action="Rename" />
                       </div>
+                      <p className="text-center text-[12px] font-medium text-zinc-400 sm:hidden">
+                        Tap <span className="font-semibold text-emerald-400">+ Idea</span> to begin
+                        <span className="mt-1 block text-zinc-500">double-tap a node to rename</span>
+                      </p>
                     </motion.div>
                   </div>
                 )}

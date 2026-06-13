@@ -117,3 +117,30 @@ Between the MVP push above and this session, an interim (undocumented) pass intr
 4. **Same-map concurrent edits across tabs** are last-writer-wins within the 500ms persist debounce (pre-existing, now spans maps).
 5. **Idea-node labels are single-line** — verbose thoughts belong on stickies now, which softens this; still worth multi-line eventually.
 6. **No tests** — sanitizers, undo history, and now `validateWorkspace`/migration are the highest-value unit-test targets.
+
+# Mobile canvas pass — 2026-06-13
+
+Addressed remaining-weakness #1. Surgical and **mobile-only** — desktop (≥`sm`/`md`) behavior is byte-identical, and React Flow's touch defaults (one-finger pan, pinch-zoom, node drag, `preventScrolling`) were already correct, so the `<ReactFlow>` props were left untouched.
+
+## Shipped
+1. **Map switcher on mobile** — `MapSwitcher` was `hidden md:block`, so phones had no canvas-level "where am I / switch map". Now always shown; the 260px popover fits a 375px screen.
+2. **Map title deduped** — the Topbar breadcrumb's map-title crumb is now `md:`-only, since the canvas chip carries it on mobile. A phone header reads "Workspace › Mind Maps"; the map name appears once (in the switcher) instead of twice.
+3. **Touch rename** — node editing was `onDoubleClick`-only, so a node could not be renamed on a phone. Added an `onTouchEnd` double-tap (≤280ms) on `EditableNode` that opens the editor; single taps still bubble to React Flow for selection. Pure addition — the mouse path is unchanged.
+4. **Calmer mobile toolbar** — gap tightened (`gap-2 sm:gap-3`); the two least-used actions (Tidy, Export) hidden below `sm` so the floating toolbar settles into ~2 tidy rows instead of a cluttered grid. Idea / Sticky / Undo / Redo / Fit / Details stay.
+5. **Honest empty state** — the keyboard "Quick Start" hint (`2×Click / Tab / S / Enter`) is `sm:`-only; phones get "Tap + Idea to begin · double-tap a node to rename".
+
+Files: `MapSwitcher.tsx`, `Topbar.tsx`, `EditableNode.tsx`, `CanvasToolbar.tsx`, `MindMapCanvas.tsx` (5).
+
+## Verified (cold prod bundle :3100, mobile 375×812)
+- `tsc --noEmit` ✓, `eslint src` ✓ (0 problems), `next build` ✓ (9 routes).
+- DOM @375px: map switcher visible ("My Mindmap"); Tidy/Export hidden; Idea/Undo/Redo/Fit/Details visible; header text "Workspace Mind Maps" (no duplicate map title); mobile empty-hint present.
+- Synthetic double-tap on the root node opened the rename editor (value "JMind"). Programmatic focus did not apply under synthetic (untrusted) events — **confirm the keyboard pops up on a physical device**; the focus path is identical to the working desktop double-click.
+- Screenshot timed out (known harness quirk on this machine), so verification is DOM-based.
+
+## Remaining weaknesses (updated, ordered)
+1. **Dashboard mid-state density** — unchanged; now the top open item.
+2. **Map deletion is confirm-only** — no undo.
+3. **Same-map concurrent edits across tabs** — last-writer-wins within the persist debounce.
+4. **Idea-node labels are single-line.**
+5. **No tests** — sanitizers, undo history, `validateWorkspace`/migration.
+6. **Mobile follow-ups (minor):** connection handles are hover-only (`opacity-0 group-hover`), so edges can't be hand-drawn on touch (tree-building via the toolbar / Tab still works); the touch-rename focus wants a real-device check.

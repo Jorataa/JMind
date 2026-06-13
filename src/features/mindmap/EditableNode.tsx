@@ -92,6 +92,22 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
     setIsEditing(true);
   };
 
+  // Touch parity for double-click-to-edit: two quick taps open the editor.
+  // Single taps still bubble to React Flow for selection.
+  const lastTapRef = useRef(0);
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const now = Date.now();
+      if (now - lastTapRef.current < 280) {
+        e.stopPropagation();
+        setDraft(data.label);
+        setIsEditing(true);
+      }
+      lastTapRef.current = now;
+    },
+    [data.label]
+  );
+
   // Node UI
   return (
     <motion.div
@@ -120,6 +136,7 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
             : "rgba(255,255,255,0.08)",
       } : {}}
       onDoubleClick={onDoubleClick}
+      onTouchEnd={onTouchEnd}
     >
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-zinc-600 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-zinc-600 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />

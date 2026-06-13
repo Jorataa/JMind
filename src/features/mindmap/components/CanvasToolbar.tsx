@@ -55,7 +55,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
 
   return (
     <Panel position="top-left" className="z-10 ml-4 mt-4">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Which map am I in? Click to switch or create. */}
         <MapSwitcher />
 
@@ -117,7 +117,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
         <Button
           variant="secondary"
           size="sm"
-          className="h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl"
+          className="hidden h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl sm:flex"
           onClick={onTidy}
           title="Tidy map (Shift+T)"
           aria-label="Tidy map"
@@ -137,7 +137,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
         <Button
           variant="secondary"
           size="sm"
-          className="h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl"
+          className="hidden h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl sm:flex"
           onClick={handleExport}
           title="Export as PNG"
           aria-label="Export as PNG"

@@ -86,7 +86,7 @@ export default function MapSwitcher() {
   const sortedMaps = Object.values(maps).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   return (
-    <div ref={containerRef} className="relative hidden md:block">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}

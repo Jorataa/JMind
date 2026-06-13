@@ -58,12 +58,12 @@ export default function Topbar() {
             {pageTitle}
           </span>
           {showMapCrumb && (
-            <>
+            <span className="hidden items-center gap-2 md:flex">
               <ChevronRight size={14} className="text-zinc-700" />
               <span className="max-w-[180px] truncate font-semibold text-zinc-200">
                 {activeMapTitle}
               </span>
-            </>
+            </span>
           )}
         </div>
       </div>
