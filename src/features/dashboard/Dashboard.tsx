@@ -103,8 +103,14 @@ export default function Dashboard() {
           <ProductivityScore />
         </section>
       ) : (
-        <section>
+        // Mid-state (no tasks/KPIs yet): pair Wisdom with the map preview so a
+        // half-full board reads as composed, not a quote stretched edge-to-edge.
+        <section className="grid gap-6 lg:grid-cols-2">
           <WisdomCard />
+          <div className="flex flex-col gap-3">
+            <SectionTitle>Visual Thinking</SectionTitle>
+            <MindMapPreview />
+          </div>
         </section>
       )}
 
@@ -170,11 +176,14 @@ export default function Dashboard() {
         </div>
       </section>
 
-      {/* Visual Thinking */}
-      <section className="flex flex-col gap-3">
-        <SectionTitle>Visual Thinking</SectionTitle>
-        <MindMapPreview />
-      </section>
+      {/* Visual Thinking — full state keeps it at the bottom; the mid-state
+          pairs it with Daily Wisdom above, so the preview is never shown twice. */}
+      {hasExecutionData && (
+        <section className="flex flex-col gap-3">
+          <SectionTitle>Visual Thinking</SectionTitle>
+          <MindMapPreview />
+        </section>
+      )}
     </div>
   );
 }
