@@ -226,8 +226,11 @@ The founder pasted a 15-item prioritized evaluation of the LIVE app (P1 bugs, P2
 - Configurable name round-trip DOM-verified on cold prod :3100 (Settings "Jovan"→"Sam" → persisted → dashboard "Good morning, Sam." + sidebar). Empty/date/preview changes verified earlier.
 - **Canvas interactions are code-verified only** — this machine's headless preview reports `innerWidth: 0`, so React Flow renders no nodes there. Double-click, F2, "+ Idea" connect, handle visibility, and activity→node jumps need a **real-device smoke test** on j-mind.vercel.app.
 
-## Not done — deliberately deferred (need a focused pass or a decision)
-- **#13 collapse/expand branches** — genuinely unbuilt and the most complex remaining item (per-node collapsed state, hide descendant nodes+edges, persistence). Deserves its own pass *and* real-device verification — not safe to rush blind on a harness that can't render the canvas.
-- **Markdown / single-map JSON export** — `lib/export-markdown.ts` (`exportToMarkdown`) already exists but is **wired to nothing**; needs a download button (Settings or the canvas export control) + a JSON-structure variant. Clean, isolated follow-up.
-- **React Flow attribution** — **cannot be removed without a React Flow Pro/commercial license** (`proOptions.hideAttribution` is gated by their terms). Left in place on purpose; flag for the founder to decide on licensing.
-- **Dead code** `calculateProductivityScore` / `calculateStreak` still unused.
+## Then shipped too (the founder said "continue development")
+5. **#13 collapse/expand branches (`ac7d5ac`)** — parent nodes get a collapse toggle; collapsing hides all descendant nodes + edges, the folded node shows a persistent **+N** badge (N hidden) so the branch stays findable, and the toggle reveals on hover when expanded. Hidden state is derived at render by a **pure, cycle-safe `getHiddenNodeIds(nodes, edges)`** (`lib/collapse.ts`) — **unit-verified** against tree / nested / mid-branch / multi-collapse / root / cycle cases (7/7) since the harness can't render the canvas; only a per-node `collapsed` flag is persisted (through the sanitizer); toggling is undoable. The *visual* toggle still wants a real-device check.
+6. **Per-map export (`de6c38f`)** — Settings exports the open map as a Markdown outline or raw JSON structure (wires up the previously-dead `exportToMarkdown`/`downloadMarkdown`); slugified filenames; verified on cold prod :3100 (`# JMind` / valid `{app,type,title,exportedAt,nodes,edges}`).
+
+## Genuinely not done (decision / out of scope)
+- **React Flow attribution** — **cannot be removed without a React Flow Pro/commercial license** (`proOptions.hideAttribution` is gated by their terms). Left in place on purpose; a licensing call for the founder, not a code task.
+- **Dead code** `calculateProductivityScore` / `calculateStreak` still unused in `analytics-engine.ts` — safe to delete anytime.
+- **Real-device smoke test** of the canvas changes (double-click/F2 rename, "+ Idea" connect, selected-node handles, activity→node jumps, collapse/expand) — the only verification this machine's headless preview (`innerWidth: 0`) couldn't do.
