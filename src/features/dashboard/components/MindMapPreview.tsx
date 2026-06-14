@@ -19,7 +19,6 @@ import {
 } from "@/stores/use-mindmap-store";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { Maximize2 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,12 +41,19 @@ export default function MindMapPreview() {
   }
 
   return (
-    <div className="relative group h-[400px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#09090b] shadow-2xl shadow-black/40">
+    // The whole preview is the link — clicking anywhere opens the canvas.
+    <Link
+      href="/mindmap"
+      aria-label={`Open ${activeMapTitle ?? "mind map"}`}
+      className="group relative block h-[400px] w-full overflow-hidden rounded-2xl border border-white/10 bg-[#09090b] shadow-2xl shadow-black/40 transition-colors hover:border-emerald-500/30 focus-visible:border-emerald-500/40"
+    >
       <ReactFlowProvider>
         <ReactFlow
           nodes={nodes}
           edges={edges}
           defaultViewport={viewport}
+          fitView
+          fitViewOptions={{ padding: 0.3, maxZoom: 1 }}
           nodeTypes={nodeTypes}
           nodesDraggable={false}
           nodesConnectable={false}
@@ -70,14 +76,12 @@ export default function MindMapPreview() {
         </ReactFlow>
       </ReactFlowProvider>
 
-      {/* Overlay for Navigation */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-8">
-        <Link href="/mindmap">
-          <Button className="gap-2 shadow-2xl shadow-emerald-500/20">
-            <Maximize2 size={16} />
-            Enter Infinite Canvas
-          </Button>
-        </Link>
+      {/* Hover affordance — a visual cue only (not a nested link). */}
+      <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/60 via-transparent to-transparent pb-8 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <span className="inline-flex items-center gap-2 rounded-lg bg-emerald-500 px-4 text-[13px] font-semibold text-zinc-950 shadow-2xl shadow-emerald-500/20 h-10">
+          <Maximize2 size={16} />
+          Open Mind Map
+        </span>
       </div>
 
       <div className="absolute top-4 right-4 z-10">
@@ -85,6 +89,6 @@ export default function MindMapPreview() {
           {activeMapTitle ?? "Snapshot"}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }

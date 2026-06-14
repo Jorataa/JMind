@@ -133,7 +133,13 @@ export default function NodeIntelligenceSidebar() {
                   }
                 />
                 <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                  {isSticky ? "Sticky Note" : "Node Details"}
+                  {isSticky
+                    ? "Sticky Note"
+                    : data.category === "goal" ? "Goal"
+                    : data.category === "task" ? "Action"
+                    : data.category === "idea" ? "Idea"
+                    : data.category === "warning" ? "Risk"
+                    : "Node"}
                 </span>
               </div>
               <div className="flex items-center gap-2">
