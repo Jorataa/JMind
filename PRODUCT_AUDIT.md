@@ -202,3 +202,32 @@ Files: `lib/format-date.ts`, `components/layout/Topbar.tsx`, `features/wisdom/ho
 4. **No tests** — sanitizers, undo history, `validateWorkspace`/migration, and now the new date helpers (`getLocalDateKey` is a clean, pure first target).
 5. **Dead exports:** `calculateProductivityScore` / `calculateStreak` (`analytics-engine.ts`).
 6. **Mobile follow-ups (minor):** touch-rename focus wants a real-device check; connection handles are hover-only.
+
+# Founder UX-eval response — 2026-06-14
+
+The founder pasted a 15-item prioritized evaluation of the LIVE app (P1 bugs, P2 UX, P3 features, plus polish). **Headline finding, verified against the code: roughly half the items already existed and the real problem was discoverability, not absence.** Every item was triaged against the source before any change — the discipline that kept this from being a pile of redundant rebuilds. All work below shipped to production in verified increments; **prod is LIVE on `da0ac61`**.
+
+## Already implemented (perceived broken/missing — discoverability gap)
+- **#1 double-click rename** — handler present + `zoomOnDoubleClick={false}`; hardened anyway (below).
+- **#5 Enter rename**, **#8 category tooltips** (`title` attrs on swatches), **#10 reflection→activity** (`saveReflection` logs `mindset_reflection`, RecentActivity renders it).
+- **#11 multi-map sidebar** — full list/create/rename/delete manager already in `Sidebar.tsx`.
+- **#12 manual edge-drawing** — hover handles + `onConnect` already work on desktop; were hover-hidden.
+- **#15 global search** — `use-global-search.ts` already full-text searches nodes (all maps) + tasks + KPIs; the Ctrl+K palette *is* the search.
+- **#9 "Tidy does nothing"** — `calculateTreeLayout` works; it only arranges edge-connected nodes, so the dead feeling was the orphan nodes from #3 (now fixed). No code change.
+
+## Shipped fixes (commits)
+1. **P1 canvas (`96dac39`)** — double-click rename hardened with React Flow's native `onNodeDoubleClick → beginEditing` + `nodeDragThreshold` 1→4 (a wobble no longer eats the dblclick); **F2** rename alias; toolbar **"+ Idea"** now parents to selection-or-root like `Tab` (was orphaning nodes when nothing was selected — this was also why Tidy looked dead); one-time quiet **sticky hint** (founder chose "keep free-floating + hint" for #2).
+2. **P2 dashboard (`bfe38b5`)** — **#6** map preview is now one large clickable link, framed with `fitView` for legibility, calmer "Open Mind Map" copy; **#8** node category name shown in the details header.
+3. **Discoverability + #14 (`41ed1e4`)** — connection **handles now show on the selected node** (found via a normal click, not just hover); header search reads **"Search ideas, tasks, KPIs…"**; **#14** tasks created from a node store `sourceNodeId`/`sourceMapId` (through the sanitizer) and show a mind-map icon that jumps back to the origin node across maps.
+4. **#7 + name (`da0ac61`)** — **Recent Activity entries are clickable** (node→canvas centered on the node across maps via new `mapId` in activity metadata; task→/tasks; KPI→/kpi; reflections stay non-clickable); **configurable name** in Settings › Profile (persisted in `jmind:ui`, defaults to "Jovan") replaces the hardcoded greeting/sidebar name; F2 documented in the shortcut reference.
+
+## Verified
+- `tsc` / `eslint` / `next build` green on every increment; each pushed commit reached Vercel READY.
+- Configurable name round-trip DOM-verified on cold prod :3100 (Settings "Jovan"→"Sam" → persisted → dashboard "Good morning, Sam." + sidebar). Empty/date/preview changes verified earlier.
+- **Canvas interactions are code-verified only** — this machine's headless preview reports `innerWidth: 0`, so React Flow renders no nodes there. Double-click, F2, "+ Idea" connect, handle visibility, and activity→node jumps need a **real-device smoke test** on j-mind.vercel.app.
+
+## Not done — deliberately deferred (need a focused pass or a decision)
+- **#13 collapse/expand branches** — genuinely unbuilt and the most complex remaining item (per-node collapsed state, hide descendant nodes+edges, persistence). Deserves its own pass *and* real-device verification — not safe to rush blind on a harness that can't render the canvas.
+- **Markdown / single-map JSON export** — `lib/export-markdown.ts` (`exportToMarkdown`) already exists but is **wired to nothing**; needs a download button (Settings or the canvas export control) + a JSON-structure variant. Clean, isolated follow-up.
+- **React Flow attribution** — **cannot be removed without a React Flow Pro/commercial license** (`proOptions.hideAttribution` is gated by their terms). Left in place on purpose; flag for the founder to decide on licensing.
+- **Dead code** `calculateProductivityScore` / `calculateStreak` still unused.
