@@ -108,6 +108,10 @@ export const MindMapService = {
         target: connection.target,
         sourceHandle: connection.sourceHandle,
         targetHandle: connection.targetHandle,
+        // Hand-drawn = a lateral link, not a parent→child edge. The class (kept
+        // through the edge sanitizer) renders it dashed via globals.css.
+        className: "freeform-edge",
+        data: { freeform: true },
       },
       existingEdges
     );

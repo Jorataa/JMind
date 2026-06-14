@@ -65,6 +65,7 @@ export default function MindMapPreview() {
           zoomOnPinch={false}
           zoomOnDoubleClick={false}
           preventScrolling={true}
+          proOptions={{ hideAttribution: true }}
           className="bg-[#09090b] pointer-events-none"
         >
           <Background

@@ -356,6 +356,9 @@ function MindMapFlow() {
               snapGrid={[12, 12]}
               minZoom={0.1}
               maxZoom={4}
+              // Hiding the attribution is a React Flow Pro feature per xyflow's
+              // terms — enabled at the project owner's request.
+              proOptions={{ hideAttribution: true }}
               className="bg-[#09090b]"
             >
               <CanvasToolbar onTidy={handleTidy} onAddSticky={addStickyAtCenter} />

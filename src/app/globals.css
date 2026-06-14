@@ -84,6 +84,12 @@ select:focus-visible {
 .react-flow__edge:hover .react-flow__edge-path {
   stroke: rgba(212, 212, 216, 0.7);
 }
+/* Hand-drawn (freeform) connections read as lateral links — dashed and a touch
+   faded — vs solid parent-child edges. */
+.react-flow__edge.freeform-edge .react-flow__edge-path {
+  stroke-dasharray: 6 5;
+  opacity: 0.6;
+}
 .react-flow__handle {
   opacity: 0;
   transition: opacity 0.15s ease;

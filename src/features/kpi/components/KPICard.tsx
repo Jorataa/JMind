@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { calculateProgress } from "@/lib/calculate-progress";
 import { formatDate } from "@/lib/format-date";
 import { Pencil, Trash2 } from "lucide-react";
+import { Area, AreaChart as ReAreaChart, ResponsiveContainer } from "recharts";
+import { THEME } from "@/lib/constants/theme";
 
 export default function KPICard({ kpi }: { kpi: KPI }) {
   const { removeKPI, updateProgress } = useKPIActions();
@@ -18,6 +20,7 @@ export default function KPICard({ kpi }: { kpi: KPI }) {
 
   const percentage = calculateProgress(kpi.value, kpi.target);
   const isCompleted = kpi.value >= kpi.target;
+  const sparkColor = isCompleted ? THEME.colors.emerald.primary : THEME.colors.sky.primary;
 
   const handleQuickUpdate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +86,31 @@ export default function KPICard({ kpi }: { kpi: KPI }) {
         </div>
         <ProgressBar progress={percentage} variant={isCompleted ? "emerald" : "sky"} />
       </div>
+
+      {/* Trend — value over time. Only earns its space once there's a trend to show. */}
+      {kpi.history.length >= 2 && (
+        <div className="h-12 w-full" aria-hidden="true">
+          <ResponsiveContainer width="100%" height="100%">
+            <ReAreaChart data={kpi.history.map((h) => ({ value: h.value }))} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id={`spark-${kpi.id}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={sparkColor} stopOpacity={0.25} />
+                  <stop offset="100%" stopColor={sparkColor} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke={sparkColor}
+                strokeWidth={2}
+                fill={`url(#spark-${kpi.id})`}
+                isAnimationActive={false}
+                dot={false}
+              />
+            </ReAreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Footer / Quick Update */}
       <div className="flex items-center justify-between border-t border-white/5 pt-4">
