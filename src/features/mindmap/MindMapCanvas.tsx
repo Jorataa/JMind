@@ -31,6 +31,7 @@ import {
   MindMapNode,
 } from "@/stores/use-mindmap-store";
 import { useTaskStore } from "@/stores/use-task-store";
+import { useToast } from "@/stores/use-toast-store";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
@@ -152,6 +153,8 @@ function MindMapFlow() {
     window.setTimeout(() => fitView({ duration: 400, padding: 0.2 }), 50);
   }, [tidyMap, fitView]);
 
+  const addToast = useToast();
+
   const addStickyAt = useCallback(
     (flowPosition: { x: number; y: number }) => {
       addNode(
@@ -160,8 +163,15 @@ function MindMapFlow() {
         { x: flowPosition.x - STICKY_CENTER_OFFSET.x, y: flowPosition.y - STICKY_CENTER_OFFSET.y },
         "sticky"
       );
+
+      // First sticky ever: a quiet, one-time note so a free-floating card reads
+      // as intentional rather than a missing connection.
+      if (!localStorage.getItem("jmind:sticky-hint-seen")) {
+        localStorage.setItem("jmind:sticky-hint-seen", "1");
+        addToast("Sticky notes float freely — drag them anywhere.", "info");
+      }
     },
-    [addNode]
+    [addNode, addToast]
   );
 
   // Sticky notes drop at the visual center of the canvas (not the window —
@@ -209,7 +219,8 @@ function MindMapFlow() {
         // Plain S only — Ctrl/Cmd+S keeps its browser meaning.
         e.preventDefault();
         addStickyAtCenter();
-      } else if (e.key === "Enter" && selectedNodeId && isCanvasTarget(e.target)) {
+      } else if ((e.key === "Enter" || e.key === "F2") && selectedNodeId && isCanvasTarget(e.target)) {
+        // F2 is the universal rename key; Enter is the keyboard-first path.
         e.preventDefault();
         beginEditing(selectedNodeId);
       } else if ((e.key === "f" || e.key === "F") && !e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey) {
@@ -308,13 +319,16 @@ function MindMapFlow() {
               fitView={shouldFitView}
               fitViewOptions={{ padding: 0.4, maxZoom: 1.25 }}
               onNodeContextMenu={onNodeContextMenu}
+              onNodeDoubleClick={(_, node) => beginEditing(node.id)}
               onPaneContextMenu={onPaneContextMenu}
               onPaneClick={handlePaneClick}
               onNodeDragStart={markHistory}
               onSelectionDragStart={markHistory}
               nodeTypes={nodeTypes}
               deleteKeyCode={["Backspace", "Delete"]}
-              nodeDragThreshold={1}
+              // 4px, not 1: a tiny wobble during a double-click must not be read
+              // as a drag — that would swallow the dblclick and rename feels dead.
+              nodeDragThreshold={4}
               zoomOnDoubleClick={false}
               snapToGrid
               snapGrid={[12, 12]}

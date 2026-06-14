@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
 import { Panel, useReactFlow } from "@xyflow/react";
 import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo } from "@/stores/use-mindmap-store";
+import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
 import { exportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
@@ -38,8 +38,10 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
     [matchingNode, selectNode, setCenter]
   );
 
+  // Always connect: child of the selected node, or of the root when nothing is
+  // selected — matching the Tab shortcut, so the button never drops an orphan.
   const handleAddNode = useCallback(() => {
-    addNode("New Idea", selectedNodeId ?? undefined);
+    addNode("New Idea", selectedNodeId ?? ROOT_NODE_ID);
   }, [addNode, selectedNodeId]);
 
   const handleFitView = useCallback(() => {
@@ -74,7 +76,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
           size="sm"
           className="h-9 gap-2 rounded-full border border-emerald-500/20 px-4 shadow-xl"
           onClick={handleAddNode}
-          title={selectedNodeId ? "Add child idea (Tab)" : "Add idea (Tab)"}
+          title={selectedNodeId ? "Add child of selected idea (Tab)" : "Add idea under root (Tab)"}
         >
           <Plus size={14} />
           <span>Idea</span>
