@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2, Keyboard, Info, HardDrive, Palette } from "lucide-react";
+import { Download, Upload, Trash2, Keyboard, Info, HardDrive, Palette, User } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { useToast } from "@/stores/use-toast-store";
 import { cn } from "@/lib/cn";
 import { useTheme, THEMES } from "@/hooks/use-theme";
+import { useUserName, useUIActions } from "@/stores/use-ui-store";
 
 const JMIND_KEYS = [
   "jmind:mindmap",
@@ -30,7 +31,7 @@ const CANVAS_SHORTCUTS: [string, string][] = [
   ["Tab", "New child of selected idea"],
   ["S", "New sticky note"],
   ["Right-click", "Create & node actions"],
-  ["Enter", "Rename selected idea"],
+  ["Enter / F2", "Rename selected idea"],
   ["Del / Backspace", "Delete selection"],
   ["Ctrl + Z", "Undo"],
   ["Ctrl + Shift + Z", "Redo"],
@@ -44,6 +45,8 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const { theme, changeTheme } = useTheme();
+  const userName = useUserName();
+  const { setUserName } = useUIActions();
 
   // Disarm the destructive confirm if the user walks away.
   useEffect(() => {
@@ -122,6 +125,27 @@ export default function SettingsPage() {
             Your workspace lives entirely on this device — no account, no cloud.
           </p>
         </div>
+
+        {/* Profile */}
+        <section className="flex flex-col gap-3">
+          <SectionTitle className="flex items-center gap-2">
+            <User size={12} />
+            Profile
+          </SectionTitle>
+          <Card className="flex flex-col gap-4 p-6" hoverable={false}>
+            <div className="flex flex-col gap-1">
+              <h4 className="text-[14px] font-semibold text-zinc-200">Your name</h4>
+              <p className="text-[12px] text-zinc-500">Used for the greeting on your dashboard.</p>
+            </div>
+            <input
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="What should we call you?"
+              maxLength={40}
+              className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[14px] text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30"
+            />
+          </Card>
+        </section>
 
         {/* Appearance */}
         <section className="flex flex-col gap-3">

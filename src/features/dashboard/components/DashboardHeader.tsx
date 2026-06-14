@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useTaskStore } from "@/stores/use-task-store";
 import { useFocus, useFocusActions } from "@/stores/use-focus-store";
+import { useUserName } from "@/stores/use-ui-store";
 import { getGreeting, getProductivityInsight } from "@/lib/dashboard-insights";
 import { THEME } from "@/lib/constants/theme";
 import { Zap, Target, CheckCircle2, Circle } from "lucide-react";
@@ -14,6 +15,7 @@ export default function DashboardHeader() {
   const tasks = useTaskStore((state) => state.tasks);
   const { dailyAnchor, anchorCompleted } = useFocus();
   const { setDailyAnchor, toggleAnchorCompleted } = useFocusActions();
+  const userName = useUserName();
   
   const [isEditing, setIsEditing] = useState(false);
   const [anchorInput, setAnchorInput] = useState("");
@@ -92,7 +94,7 @@ export default function DashboardHeader() {
             transition={THEME.animation.fast}
             className="text-[32px] font-bold leading-[1.1] tracking-tight text-zinc-50 sm:text-[42px]"
           >
-            {greeting}, Jovan. <br />
+            {greeting}{userName ? `, ${userName}` : ""}. <br />
             <span className="text-zinc-500 font-medium">{insight}</span>
           </motion.h2>
           

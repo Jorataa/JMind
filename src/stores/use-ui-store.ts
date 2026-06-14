@@ -6,6 +6,7 @@ interface UIState {
   mobileSidebarOpen: boolean;
   commandPaletteOpen: boolean;
   quickCaptureOpen: boolean;
+  userName: string;
   // Actions
   actions: {
     toggleSidebar: () => void;
@@ -16,6 +17,7 @@ interface UIState {
     setCommandPaletteOpen: (open: boolean) => void;
     toggleQuickCapture: () => void;
     setQuickCaptureOpen: (open: boolean) => void;
+    setUserName: (name: string) => void;
   };
 }
 
@@ -26,6 +28,7 @@ export const useUIStore = create<UIState>()(
       mobileSidebarOpen: false,
       commandPaletteOpen: false,
       quickCaptureOpen: false,
+      userName: "Jovan",
       actions: {
         toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
         setSidebarCollapsed: (collapsed: boolean) => set({ sidebarCollapsed: collapsed }),
@@ -35,15 +38,18 @@ export const useUIStore = create<UIState>()(
         setCommandPaletteOpen: (open: boolean) => set({ commandPaletteOpen: open }),
         toggleQuickCapture: () => set((state) => ({ quickCaptureOpen: !state.quickCaptureOpen })),
         setQuickCaptureOpen: (open: boolean) => set({ quickCaptureOpen: open }),
+        setUserName: (name: string) => set({ userName: name }),
       },
     }),
     {
       name: "jmind:ui",
-      partialize: (state) => ({ 
-        sidebarCollapsed: state.sidebarCollapsed 
+      partialize: (state) => ({
+        sidebarCollapsed: state.sidebarCollapsed,
+        userName: state.userName,
       }),
     }
   )
 );
 
 export const useUIActions = () => useUIStore((state) => state.actions);
+export const useUserName = () => useUIStore((state) => state.userName);

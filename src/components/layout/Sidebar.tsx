@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useUIStore, useUIActions } from "@/stores/use-ui-store";
+import { useUIStore, useUIActions, useUserName } from "@/stores/use-ui-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { useShallow } from "zustand/shallow";
 import { cn } from "@/lib/cn";
@@ -176,6 +176,7 @@ export default function Sidebar() {
   const router = useRouter();
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
   const mobileSidebarOpen = useUIStore((state) => state.mobileSidebarOpen);
+  const userName = useUserName();
   const { toggleSidebar, setMobileSidebarOpen } = useUIActions();
   const isCompact = sidebarCollapsed && !mobileSidebarOpen;
 
@@ -470,11 +471,11 @@ export default function Sidebar() {
       <div className="border-t border-white/10 px-3 py-4">
         <div className={`flex items-center gap-3 rounded-xl py-2.5 transition-colors duration-100 hover:bg-white/[0.05] ${isCompact ? "justify-center px-0" : "px-2.5"}`}>
           <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-emerald-300 text-[12px] font-semibold text-zinc-950">
-            J
+            {(userName || "Y").charAt(0).toUpperCase()}
           </div>
           {!isCompact && (
             <div className="flex flex-col">
-              <span className="text-[13px] font-medium text-zinc-200">Jovan</span>
+              <span className="text-[13px] font-medium text-zinc-200">{userName || "You"}</span>
               <span className="text-[11px] text-zinc-500">Local workspace</span>
             </div>
           )}

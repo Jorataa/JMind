@@ -578,7 +578,7 @@ export const useMindMapStore = create<MindMapState>()(
             type === "sticky"
               ? `Added sticky note: ${newNode.data.label}`
               : `Added mind map node: ${newNode.data.label}`,
-            { nodeId: newNode.id, parentId }
+            { nodeId: newNode.id, parentId, mapId: current.activeMapId }
           );
 
           takeSnapshot();
@@ -654,7 +654,7 @@ export const useMindMapStore = create<MindMapState>()(
           useActivityStore.getState().actions.logActivity(
             'node_converted',
             `Converted node to task: ${label}`,
-            { nodeId: id, taskId: task.id }
+            { nodeId: id, taskId: task.id, mapId: get().activeMapId }
           );
 
           takeSnapshot();
