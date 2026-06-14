@@ -12,6 +12,8 @@ export type MindMapNodeData = {
   status: NodeStatus;
   isRoot?: boolean;
   isNew?: boolean;
+  /** When true, this node's descendants are hidden on the canvas. */
+  collapsed?: boolean;
   color?: string;
   linkedTaskIds: string[];
   linkedKpiIds: string[];

@@ -3,9 +3,9 @@
 import React, { memo, useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/cn";
-import { useMindMapActions, MindMapNodeData } from "@/stores/use-mindmap-store";
+import { useMindMapActions, useMindMapStore, MindMapNodeData } from "@/stores/use-mindmap-store";
 import { motion } from "framer-motion";
-import { AlertCircle, Clock, CheckCircle2, ListTodo } from "lucide-react";
+import { AlertCircle, Clock, CheckCircle2, ListTodo, Plus, Minus } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -20,11 +20,15 @@ const categoryStyles: Record<string, { bg: string; text: string; glow: string }>
 // ─── EditableNode ─────────────────────────────────────────────────────────────
 
 function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeData; selected?: boolean }) {
-  const { updateNodeData, updateNodeLabel, addNode } = useMindMapActions();
+  const { updateNodeData, updateNodeLabel, addNode, toggleNodeCollapse } = useMindMapActions();
   const isRoot = data.isRoot ?? false;
   const isLinked = data.linkedTaskIds?.length > 0;
   const category = data.category ?? "default";
   const style = categoryStyles[category] || categoryStyles.default;
+
+  // Direct children — drives the collapse toggle. Primitive selector, so the
+  // node only re-renders when its own child count actually changes.
+  const childCount = useMindMapStore((s) => s.edges.filter((e) => e.source === id).length);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [draft, setDraft] = useState<string>(data.label);
@@ -147,6 +151,37 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
     >
       <Handle type="target" position={Position.Left} className={handleClass} />
       <Handle type="source" position={Position.Right} className={handleClass} />
+
+      {/* Collapse / expand this branch. Collapsed shows the hidden-child count
+          and stays visible so a folded branch is findable; expanded reveals on
+          hover so it stays calm. */}
+      {childCount > 0 && !isEditing && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleNodeCollapse(id);
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className={cn(
+            "nodrag nopan absolute -bottom-2.5 left-1/2 z-10 flex h-5 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border px-1.5 text-[10px] font-bold shadow-md transition-opacity",
+            data.collapsed
+              ? "border-white/20 bg-zinc-800 text-zinc-100 opacity-100"
+              : "border-white/15 bg-zinc-900 text-zinc-400 opacity-0 group-hover:opacity-100"
+          )}
+          title={data.collapsed ? `Expand ${childCount} hidden` : "Collapse branch"}
+          aria-label={data.collapsed ? "Expand branch" : "Collapse branch"}
+        >
+          {data.collapsed ? (
+            <>
+              <Plus size={10} strokeWidth={3} />
+              {childCount}
+            </>
+          ) : (
+            <Minus size={11} strokeWidth={3} />
+          )}
+        </button>
+      )}
 
       {/* Status/Priority Indicators */}
       {!isRoot && !isEditing && (

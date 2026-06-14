@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -33,6 +33,7 @@ import {
 import { useTaskStore } from "@/stores/use-task-store";
 import { useToast } from "@/stores/use-toast-store";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { getHiddenNodeIds } from "@/lib/collapse";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
@@ -70,6 +71,27 @@ function MindMapFlow() {
   const edges = useMindMapEdges();
   const viewport = useMindMapViewport();
   const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
+
+  // Collapse/expand: descendants of a collapsed node are hidden. Derived at
+  // render (only `collapsed` is persisted) and kept referentially stable so
+  // React Flow's memoization isn't defeated when nothing changed.
+  const hiddenNodeIds = useMemo(() => getHiddenNodeIds(nodes, edges), [nodes, edges]);
+  const displayNodes = useMemo(
+    () =>
+      nodes.map((n) => {
+        const hide = hiddenNodeIds.has(n.id);
+        return (n.hidden ?? false) === hide ? n : { ...n, hidden: hide };
+      }),
+    [nodes, hiddenNodeIds]
+  );
+  const displayEdges = useMemo(
+    () =>
+      edges.map((e) => {
+        const hide = hiddenNodeIds.has(e.target) || hiddenNodeIds.has(e.source);
+        return (e.hidden ?? false) === hide ? e : { ...e, hidden: hide };
+      }),
+    [edges, hiddenNodeIds]
+  );
   const {
     onNodesChange,
     onEdgesChange,
@@ -309,8 +331,8 @@ function MindMapFlow() {
           className="h-full w-full"
         >
             <ReactFlow
-              nodes={nodes}
-              edges={edges}
+              nodes={displayNodes}
+              edges={displayEdges}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}

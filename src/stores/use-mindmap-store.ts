@@ -77,6 +77,7 @@ interface MindMapState {
     updateNodeData: (id: string, updates: Partial<MindMapNodeData>) => void;
     addNode: (label?: string, parentId?: string, position?: { x: number; y: number }, type?: string) => MindMapNode;
     beginEditing: (id: string) => void;
+    toggleNodeCollapse: (id: string) => void;
     removeNode: (id: string) => void;
     duplicateNode: (id: string) => void;
     convertNodeToTask: (id: string) => void;
@@ -256,6 +257,7 @@ const sanitizeNodeData = (value: unknown, id: string): MindMapNodeData => {
     status: validStatuses.has(status) ? (status as MindMapNodeData["status"]) : "none",
     isRoot,
     isNew: false,
+    collapsed: data.collapsed === true,
     linkedTaskIds: sanitizeStringArray(data.linkedTaskIds),
     linkedKpiIds: sanitizeStringArray(data.linkedKpiIds),
     tags: sanitizeStringArray(data.tags),
@@ -600,6 +602,17 @@ export const useMindMapStore = create<MindMapState>()(
             node.id === id ? { ...node, data: { ...node.data, isNew: true } } : node
           ),
         })),
+
+        toggleNodeCollapse: (id) => {
+          takeSnapshot();
+          set((state) => ({
+            nodes: state.nodes.map((node) =>
+              node.id === id
+                ? { ...node, data: { ...node.data, collapsed: !node.data.collapsed } }
+                : node
+            ),
+          }));
+        },
 
         removeNode: (id) => {
           if (id === ROOT_NODE_ID) return;
