@@ -12,4 +12,7 @@ export interface Task {
   priority: TaskPriority;
   energy: TaskEnergy;
   category?: string;
+  /** Set when the task was created from a mind-map node — lets the task jump back to it. */
+  sourceNodeId?: string;
+  sourceMapId?: string;
 }

@@ -108,6 +108,13 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
     [data.label]
   );
 
+  // Connection points: visible on the selected node (discoverable through a
+  // normal click) and on hover, faded otherwise so the canvas stays calm.
+  const handleClass = cn(
+    "!w-2.5 !h-2.5 !bg-zinc-500 !border-zinc-300 transition-opacity group-hover:opacity-100",
+    selected ? "opacity-100" : "opacity-0"
+  );
+
   // Node UI
   return (
     <motion.div
@@ -138,8 +145,8 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
       onDoubleClick={onDoubleClick}
       onTouchEnd={onTouchEnd}
     >
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-zinc-600 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-      <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-zinc-600 !border-zinc-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+      <Handle type="target" position={Position.Left} className={handleClass} />
+      <Handle type="source" position={Position.Right} className={handleClass} />
 
       {/* Status/Priority Indicators */}
       {!isRoot && !isEditing && (

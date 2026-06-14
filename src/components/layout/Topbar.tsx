@@ -90,7 +90,7 @@ export default function Topbar() {
         >
           <Search className="text-zinc-600" size={14} />
           <span className="flex-1 truncate text-[12px] text-zinc-500">
-            Search or capture...
+            Search ideas, tasks, KPIs&hellip;
           </span>
           <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-0.5 rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-zinc-500">
             <CommandIcon size={8} />

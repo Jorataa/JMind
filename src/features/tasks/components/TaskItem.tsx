@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Tag, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle2, Tag, Trash2, Network } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { Task, TaskPriority, TaskEnergy } from "@/types/tasks";
+import { useMindMapActions } from "@/stores/use-mindmap-store";
 
 interface TaskItemProps {
   task: Task;
@@ -34,6 +36,18 @@ function getPriorityVariant(priority: TaskPriority): BadgeVariant {
 }
 
 export default function TaskItem({ task, toggleTask, removeTask }: TaskItemProps) {
+  const router = useRouter();
+  const { switchMap, requestNodeFocus } = useMindMapActions();
+
+  // Jump to the node this task came from — switch maps first if it lives in
+  // another map, then ask the canvas to center it.
+  const handleOpenSource = () => {
+    if (!task.sourceNodeId) return;
+    if (task.sourceMapId) switchMap(task.sourceMapId);
+    requestNodeFocus(task.sourceNodeId);
+    router.push("/mindmap");
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, x: -10 }}
@@ -82,6 +96,17 @@ export default function TaskItem({ task, toggleTask, removeTask }: TaskItemProps
         <span className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest whitespace-nowrap">
           {energyLabels[task.energy]}
         </span>
+        {task.sourceNodeId && (
+          <button
+            type="button"
+            onClick={handleOpenSource}
+            className="p-2 text-zinc-600 transition-all hover:text-violet-400"
+            aria-label={`Open the mind-map node for ${task.title}`}
+            title="Open in mind map"
+          >
+            <Network size={14} />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => removeTask(task.id)}

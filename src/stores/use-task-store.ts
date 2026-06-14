@@ -40,6 +40,8 @@ const sanitizeTask = (value: unknown): Task | null => {
     priority: validPriorities.has(priority) ? priority : "medium",
     energy: validEnergies.has(energy) ? energy : "quick",
     category: typeof value.category === "string" && value.category.trim() ? value.category : undefined,
+    sourceNodeId: typeof value.sourceNodeId === "string" && value.sourceNodeId ? value.sourceNodeId : undefined,
+    sourceMapId: typeof value.sourceMapId === "string" && value.sourceMapId ? value.sourceMapId : undefined,
   };
 };
 

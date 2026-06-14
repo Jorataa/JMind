@@ -645,6 +645,12 @@ export const useMindMapStore = create<MindMapState>()(
             node.data.category !== "default" ? node.data.category : "Mind Map"
           );
 
+          // Back-reference so the task can jump to its origin node, across maps.
+          useTaskStore.getState().actions.updateTask(task.id, {
+            sourceNodeId: id,
+            sourceMapId: get().activeMapId,
+          });
+
           useActivityStore.getState().actions.logActivity(
             'node_converted',
             `Converted node to task: ${label}`,
