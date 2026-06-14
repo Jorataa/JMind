@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2, Keyboard, Info, HardDrive, Palette, User } from "lucide-react";
+import { Download, Upload, Trash2, Keyboard, Info, HardDrive, Palette, User, Network } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/SectionTitle";
@@ -9,6 +9,11 @@ import { useToast } from "@/stores/use-toast-store";
 import { cn } from "@/lib/cn";
 import { useTheme, THEMES } from "@/hooks/use-theme";
 import { useUserName, useUIActions } from "@/stores/use-ui-store";
+import { useMindMapStore } from "@/stores/use-mindmap-store";
+import { exportToMarkdown, downloadMarkdown } from "@/lib/export-markdown";
+
+const slugify = (s: string) =>
+  s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "mind-map";
 
 const JMIND_KEYS = [
   "jmind:mindmap",
@@ -105,6 +110,36 @@ export default function SettingsPage() {
     } catch {
       addToast("Import failed — that file isn't a JMind backup", "error");
     }
+  };
+
+  const handleExportMapMarkdown = () => {
+    const s = useMindMapStore.getState();
+    const title = s.maps[s.activeMapId]?.title ?? "Mind Map";
+    const md = exportToMarkdown(s.nodes, s.edges);
+    if (!md.trim()) {
+      addToast("This map is empty", "info");
+      return;
+    }
+    downloadMarkdown(md, `${slugify(title)}.md`);
+    addToast("Mind map exported as Markdown", "success");
+  };
+
+  const handleExportMapJson = () => {
+    const s = useMindMapStore.getState();
+    const title = s.maps[s.activeMapId]?.title ?? "Mind Map";
+    const payload = JSON.stringify(
+      { app: "jmind", type: "mindmap", title, exportedAt: new Date().toISOString(), nodes: s.nodes, edges: s.edges },
+      null,
+      2
+    );
+    const blob = new Blob([payload], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${slugify(title)}.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    addToast("Mind map structure exported", "success");
   };
 
   const handleClearAll = () => {
@@ -265,6 +300,34 @@ export default function SettingsPage() {
                 <Trash2 size={14} />
                 {confirmingClear ? "Click again to confirm" : "Clear data"}
               </Button>
+            </div>
+          </Card>
+        </section>
+
+        {/* Mind map export */}
+        <section className="flex flex-col gap-3">
+          <SectionTitle className="flex items-center gap-2">
+            <Network size={12} />
+            Export Mind Map
+          </SectionTitle>
+          <Card className="flex flex-col gap-4 p-6" hoverable={false}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-1">
+                <h4 className="text-[14px] font-semibold text-zinc-200">The map you have open</h4>
+                <p className="text-[12px] text-zinc-500">
+                  Export it as a Markdown outline or its raw JSON structure — separate from the full backup above.
+                </p>
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportMapMarkdown}>
+                  <Download size={14} />
+                  Markdown
+                </Button>
+                <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportMapJson}>
+                  <Download size={14} />
+                  JSON
+                </Button>
+              </div>
             </div>
           </Card>
         </section>
