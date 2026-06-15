@@ -20,6 +20,8 @@ import PaneContextMenu from "./components/PaneContextMenu";
 import NodeIntelligenceSidebar from "./components/NodeIntelligenceSidebar";
 import CanvasToolbar from "./components/CanvasToolbar";
 import CanvasHelp from "./components/CanvasHelp";
+import AiChat from "@/features/ai/AiChat";
+import AiButton from "@/components/ui/AiButton";
 
 import {
   useMindMapNodes,
@@ -168,6 +170,18 @@ function MindMapFlow() {
   }, [pendingFocusNodeId, clearNodeFocus, setCenter]);
 
   const [menu, setMenu] = useState<CanvasMenu | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
+
+  // Node titles feed the AI's "Update with Latest Info" — empty placeholders
+  // and the root's default app name aren't useful topics, so drop them.
+  const aiNodeTitles = useMemo(
+    () =>
+      nodes
+        .filter((n) => !n.data.isRoot)
+        .map((n) => n.data.label.trim())
+        .filter((label) => label.length > 0),
+    [nodes]
+  );
 
   const handleTidy = useCallback(() => {
     tidyMap();
@@ -439,6 +453,12 @@ function MindMapFlow() {
 
         {/* Node details panel — overlays the canvas edge, opens on demand */}
         <NodeIntelligenceSidebar />
+
+        {/* AI chat — floating launcher (top-right) + slide-in panel */}
+        {!aiOpen && (
+          <AiButton onClick={() => setAiOpen(true)} className="absolute right-4 top-4 z-20" />
+        )}
+        <AiChat mindMapNodes={aiNodeTitles} open={aiOpen} onClose={() => setAiOpen(false)} />
       </div>
 
       {/* Overlays */}
