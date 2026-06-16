@@ -25,7 +25,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       {/* Apply theme before first paint to prevent flash */}
       <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('jmind:theme');if(t&&t!=='default')document.documentElement.setAttribute('data-theme',t)}catch(e){}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('jmind:theme');if(['ocean','violet','rose','amber'].indexOf(t)>-1)document.documentElement.setAttribute('data-theme',t)}catch(e){}` }} />
       </head>
       <body className="bg-zinc-950 text-zinc-100 antialiased">
         <LayoutShell>{children}</LayoutShell>

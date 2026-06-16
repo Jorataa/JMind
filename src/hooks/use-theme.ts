@@ -2,14 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-export type ThemeId = "default" | "smiski";
+export type ThemeId = "default" | "ocean" | "violet" | "rose" | "amber";
 
-export const THEMES: { id: ThemeId; label: string; description: string }[] = [
-  { id: "default", label: "Default", description: "Dark zinc workspace" },
-  { id: "smiski", label: "Smiski", description: "Soft sage green, cozy glow" },
+// `accent` is the swatch colour shown in the Settings picker (the 400 shade of
+// each ramp). The CSS in globals.css owns the actual palette.
+export const THEMES: { id: ThemeId; label: string; description: string; accent: string }[] = [
+  { id: "default", label: "Emerald", description: "Fresh green", accent: "#34d399" },
+  { id: "ocean", label: "Ocean", description: "Calm blue", accent: "#60a5fa" },
+  { id: "violet", label: "Violet", description: "Bold purple", accent: "#a78bfa" },
+  { id: "rose", label: "Rose", description: "Warm rose", accent: "#fb7185" },
+  { id: "amber", label: "Amber", description: "Golden glow", accent: "#fbbf24" },
 ];
 
 export const THEME_STORAGE_KEY = "jmind:theme";
+
+const THEME_IDS = THEMES.map((t) => t.id);
+
+function isThemeId(value: unknown): value is ThemeId {
+  return typeof value === "string" && (THEME_IDS as string[]).includes(value);
+}
 
 function applyTheme(theme: ThemeId) {
   if (theme === "default") {
@@ -24,7 +35,7 @@ export function useTheme() {
     if (typeof window === "undefined") return "default";
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
-      return saved === "smiski" ? "smiski" : "default";
+      return isThemeId(saved) ? saved : "default";
     } catch {
       return "default";
     }

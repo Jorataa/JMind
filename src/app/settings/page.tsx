@@ -193,19 +193,19 @@ export default function SettingsPage() {
               <h4 className="text-[14px] font-semibold text-zinc-200">Theme</h4>
               <p className="text-[12px] text-zinc-500">Choose how JMind looks to you.</p>
             </div>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {THEMES.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => changeTheme(t.id)}
                   className={cn(
-                    "flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-all duration-150 cursor-pointer",
+                    "flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-all duration-150 cursor-pointer",
                     theme === t.id
-                      ? "border-emerald-500/60 bg-emerald-500/8 shadow-[0_0_12px_rgba(52,211,153,0.12)]"
+                      ? "border-emerald-500/60 bg-emerald-500/8 shadow-lg shadow-emerald-500/15"
                       : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                   )}
                 >
-                  <ThemePreview id={t.id} active={theme === t.id} />
+                  <ThemePreview accent={t.accent} active={theme === t.id} />
                   <span className={cn("text-[13px] font-semibold", theme === t.id ? "text-zinc-100" : "text-zinc-300")}>
                     {t.label}
                   </span>
@@ -352,34 +352,27 @@ export default function SettingsPage() {
   );
 }
 
-function ThemePreview({ id, active }: { id: string; active: boolean }) {
-  const isSmiski = id === "smiski";
+function ThemePreview({ accent, active }: { accent: string; active: boolean }) {
   return (
-    <div
-      className={cn(
-        "relative h-14 w-28 overflow-hidden rounded-lg border",
-        isSmiski ? "border-green-900/60 bg-[#070e08]" : "border-white/8 bg-zinc-950"
-      )}
-    >
+    <div className="relative h-14 w-full overflow-hidden rounded-lg border border-white/8 bg-zinc-950">
       {/* Simulated sidebar strip */}
-      <div className={cn("absolute inset-y-0 left-0 w-5", isSmiski ? "bg-[#050c05]" : "bg-black/40")} />
-      {/* Simulated content area lines */}
+      <div className="absolute inset-y-0 left-0 w-5 bg-black/40" />
+      {/* Simulated content lines — the top one is tinted so each card shows its hue */}
       <div className="absolute left-7 top-3 flex flex-col gap-1.5">
-        <div className={cn("h-1.5 w-12 rounded-full", isSmiski ? "bg-green-300/30" : "bg-zinc-700/60")} />
-        <div className={cn("h-1.5 w-8 rounded-full", isSmiski ? "bg-green-300/20" : "bg-zinc-700/40")} />
+        <div className="h-1.5 w-12 rounded-full" style={{ backgroundColor: accent, opacity: 0.55 }} />
+        <div className="h-1.5 w-8 rounded-full bg-zinc-700/50" />
       </div>
       {/* Accent dot */}
       <div
-        className={cn(
-          "absolute bottom-2.5 right-3 h-2 w-2 rounded-full",
-          isSmiski ? "bg-green-300 shadow-[0_0_6px_rgba(134,239,172,0.8)]" : "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.6)]"
-        )}
+        className="absolute bottom-2.5 right-3 h-2 w-2 rounded-full"
+        style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
       />
+      {/* Active highlight — an inner ring in the theme's own colour */}
       {active && (
-        <div className={cn(
-          "absolute inset-0 rounded-lg ring-1",
-          isSmiski ? "ring-green-400/50" : "ring-emerald-500/50"
-        )} />
+        <div
+          className="pointer-events-none absolute inset-0 rounded-lg"
+          style={{ boxShadow: `inset 0 0 0 1.5px ${accent}` }}
+        />
       )}
     </div>
   );

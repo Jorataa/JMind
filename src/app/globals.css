@@ -3,17 +3,70 @@
 :root {
   --background: #09090b;
   --foreground: #f4f4f5;
-  --accent-focus: rgba(52, 211, 153, 0.55);
-  --accent-select: rgba(52, 211, 153, 0.9);
-  --accent-edge: rgba(161, 161, 170, 0.5);
+
+  /* ── Accent ramp ──────────────────────────────────────────────
+     The single source of truth for the app's accent colour. Every
+     `emerald-*` utility is remapped onto these vars in @theme below,
+     so swapping this ramp (via [data-theme] on <html>) recolours the
+     whole UI at once. Default = Emerald. */
+  --accent-50: #ecfdf5;
+  --accent-100: #d1fae5;
+  --accent-200: #a7f3d0;
+  --accent-300: #6ee7b7;
+  --accent-400: #34d399;
+  --accent-500: #10b981;
+  --accent-600: #059669;
+  --accent-700: #047857;
+
+  /* Derived accents — defined once here against the ramp, so each
+     theme only needs to override the ramp above and these follow. */
+  --accent-focus: color-mix(in srgb, var(--accent-400) 55%, transparent);
+  --accent-select: color-mix(in srgb, var(--accent-400) 90%, transparent);
+  --accent-edge: rgba(161, 161, 170, 0.5); /* edges stay neutral grey */
 }
 
-[data-theme="smiski"] {
-  --background: #070e08;
-  --foreground: #f0f4f0;
-  --accent-focus: rgba(134, 239, 172, 0.5);
-  --accent-select: rgba(134, 239, 172, 0.88);
-  --accent-edge: rgba(134, 239, 172, 0.25);
+[data-theme="ocean"] {
+  --accent-50: #eff6ff;
+  --accent-100: #dbeafe;
+  --accent-200: #bfdbfe;
+  --accent-300: #93c5fd;
+  --accent-400: #60a5fa;
+  --accent-500: #3b82f6;
+  --accent-600: #2563eb;
+  --accent-700: #1d4ed8;
+}
+
+[data-theme="violet"] {
+  --accent-50: #f5f3ff;
+  --accent-100: #ede9fe;
+  --accent-200: #ddd6fe;
+  --accent-300: #c4b5fd;
+  --accent-400: #a78bfa;
+  --accent-500: #8b5cf6;
+  --accent-600: #7c3aed;
+  --accent-700: #6d28d9;
+}
+
+[data-theme="rose"] {
+  --accent-50: #fff1f2;
+  --accent-100: #ffe4e6;
+  --accent-200: #fecdd3;
+  --accent-300: #fda4af;
+  --accent-400: #fb7185;
+  --accent-500: #f43f5e;
+  --accent-600: #e11d48;
+  --accent-700: #be123c;
+}
+
+[data-theme="amber"] {
+  --accent-50: #fffbeb;
+  --accent-100: #fef3c7;
+  --accent-200: #fde68a;
+  --accent-300: #fcd34d;
+  --accent-400: #fbbf24;
+  --accent-500: #f59e0b;
+  --accent-600: #d97706;
+  --accent-700: #b45309;
 }
 
 @theme inline {
@@ -21,6 +74,23 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), "Segoe UI", Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+/* Route every emerald utility through the accent ramp. This is why a single
+   [data-theme] swap restyles buttons, rings, badges, edges, etc. across all
+   50+ files without touching any of them.
+   NOTE: intentionally NOT `inline` — the --color-emerald-* vars must be emitted
+   so opacity modifiers (e.g. bg-emerald-500/30) resolve via color-mix instead
+   of collapsing to transparent. They still cascade with [data-theme]. */
+@theme {
+  --color-emerald-50: var(--accent-50);
+  --color-emerald-100: var(--accent-100);
+  --color-emerald-200: var(--accent-200);
+  --color-emerald-300: var(--accent-300);
+  --color-emerald-400: var(--accent-400);
+  --color-emerald-500: var(--accent-500);
+  --color-emerald-600: var(--accent-600);
+  --color-emerald-700: var(--accent-700);
 }
 
 body {
