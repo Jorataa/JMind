@@ -7,6 +7,9 @@ interface UIState {
   commandPaletteOpen: boolean;
   quickCaptureOpen: boolean;
   userName: string;
+  // True once the visitor has told us their name via the welcome gate. Kept
+  // separate from `userName` so a blank/edited name never re-triggers the gate.
+  hasOnboarded: boolean;
   // Actions
   actions: {
     toggleSidebar: () => void;
@@ -18,6 +21,8 @@ interface UIState {
     toggleQuickCapture: () => void;
     setQuickCaptureOpen: (open: boolean) => void;
     setUserName: (name: string) => void;
+    // Save the name from the welcome gate and mark onboarding done.
+    completeOnboarding: (name: string) => void;
   };
 }
 
@@ -28,7 +33,9 @@ export const useUIStore = create<UIState>()(
       mobileSidebarOpen: false,
       commandPaletteOpen: false,
       quickCaptureOpen: false,
-      userName: "Jovan",
+      // Empty by default — the welcome gate fills this in on first visit.
+      userName: "",
+      hasOnboarded: false,
       actions: {
         toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
         setSidebarCollapsed: (collapsed: boolean) => set({ sidebarCollapsed: collapsed }),
@@ -39,6 +46,8 @@ export const useUIStore = create<UIState>()(
         toggleQuickCapture: () => set((state) => ({ quickCaptureOpen: !state.quickCaptureOpen })),
         setQuickCaptureOpen: (open: boolean) => set({ quickCaptureOpen: open }),
         setUserName: (name: string) => set({ userName: name }),
+        completeOnboarding: (name: string) =>
+          set({ userName: name.trim(), hasOnboarded: true }),
       },
     }),
     {
@@ -46,6 +55,7 @@ export const useUIStore = create<UIState>()(
       partialize: (state) => ({
         sidebarCollapsed: state.sidebarCollapsed,
         userName: state.userName,
+        hasOnboarded: state.hasOnboarded,
       }),
     }
   )
@@ -53,3 +63,4 @@ export const useUIStore = create<UIState>()(
 
 export const useUIActions = () => useUIStore((state) => state.actions);
 export const useUserName = () => useUIStore((state) => state.userName);
+export const useHasOnboarded = () => useUIStore((state) => state.hasOnboarded);

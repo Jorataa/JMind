@@ -6,6 +6,7 @@ import CommandPalette from "@/features/command/components/CommandPalette";
 import QuickCaptureOverlay from "@/features/command/components/QuickCaptureOverlay";
 import FocusHUD from "./FocusHUD";
 import QuickActions from "./QuickActions";
+import NameGate from "@/features/onboarding/NameGate";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -43,6 +44,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         <QuickCaptureOverlay />
         <FocusHUD />
       </div>
+
+      {/* First-run name gate + returning-visitor session logging */}
+      <NameGate />
     </div>
   );
 }
