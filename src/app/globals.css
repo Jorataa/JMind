@@ -131,6 +131,65 @@ select:focus-visible {
   }
 }
 
+/* ── Daily Wisdom "Sanctuary" scene animations ──────────────────────
+   GPU-friendly (transform/opacity only), long and gentle so the scene feels
+   alive without ever distracting. All motion is disabled under
+   prefers-reduced-motion — the still composition stays beautifully composed. */
+@keyframes wisdom-kenburns {
+  0%   { transform: scale(1.05) translate3d(0, 0, 0); }
+  50%  { transform: scale(1.12) translate3d(-1.5%, -1%, 0); }
+  100% { transform: scale(1.05) translate3d(0, 0, 0); }
+}
+@keyframes wisdom-drift {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  15%  { opacity: var(--p-opacity, 0.5); }
+  85%  { opacity: var(--p-opacity, 0.5); }
+  100% { transform: translate3d(var(--p-dx, 16px), calc(-1 * var(--p-rise, 140px)), 0); opacity: 0; }
+}
+@keyframes wisdom-breathe {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+@keyframes wisdom-shimmer {
+  0%, 100% { transform: translateX(-10%); opacity: 0.35; }
+  50%      { transform: translateX(10%); opacity: 0.75; }
+}
+@keyframes wisdom-aurora {
+  0%   { transform: translateX(-8%) translateY(0) skewX(-12deg); opacity: 0.35; }
+  50%  { transform: translateX(8%) translateY(-5%) skewX(-7deg); opacity: 0.8; }
+  100% { transform: translateX(-8%) translateY(0) skewX(-12deg); opacity: 0.35; }
+}
+@keyframes wisdom-ray-sway {
+  0%, 100% { transform: rotate(var(--ray-rot, 8deg)) translateX(-2%); opacity: 0.35; }
+  50%      { transform: rotate(calc(var(--ray-rot, 8deg) - 3deg)) translateX(2%); opacity: 0.7; }
+}
+@keyframes wisdom-orb {
+  0%   { transform: translateY(8%) scale(0.95); opacity: 0; }
+  25%  { opacity: var(--orb-opacity, 0.8); }
+  75%  { opacity: var(--orb-opacity, 0.8); }
+  100% { transform: translateY(-26%) scale(1.06); opacity: 0; }
+}
+@keyframes wisdom-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50%      { opacity: var(--p-opacity, 0.9); }
+}
+
+.wisdom-kenburns   { animation: wisdom-kenburns 44s ease-in-out infinite; will-change: transform; }
+.wisdom-breathe    { animation: wisdom-breathe 9s ease-in-out infinite; }
+.wisdom-particle   { animation: wisdom-drift var(--p-dur, 16s) ease-in-out infinite; animation-delay: var(--p-delay, 0s); will-change: transform, opacity; }
+.wisdom-twinkle    { animation: wisdom-twinkle var(--p-dur, 4s) ease-in-out infinite; animation-delay: var(--p-delay, 0s); }
+.wisdom-shimmer    { animation: wisdom-shimmer var(--shim-dur, 12s) ease-in-out infinite; will-change: transform, opacity; }
+.wisdom-aurora-band{ animation: wisdom-aurora var(--aur-dur, 15s) ease-in-out infinite; animation-delay: var(--aur-delay, 0s); will-change: transform, opacity; }
+.wisdom-ray        { animation: wisdom-ray-sway var(--ray-dur, 11s) ease-in-out infinite; animation-delay: var(--ray-delay, 0s); transform-origin: top center; will-change: transform, opacity; }
+.wisdom-orb        { animation: wisdom-orb var(--orb-dur, 18s) ease-in-out infinite; animation-delay: var(--orb-delay, 0s); will-change: transform, opacity; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wisdom-kenburns, .wisdom-breathe, .wisdom-particle, .wisdom-twinkle,
+  .wisdom-shimmer, .wisdom-aurora-band, .wisdom-ray, .wisdom-orb {
+    animation: none !important;
+  }
+}
+
 /* Recharts Tooltip Customization override */
 .recharts-default-tooltip {
   @apply !bg-zinc-900/90 !border-white/10 !rounded-xl !shadow-2xl !backdrop-blur-md !p-3 !text-[12px] !font-medium;
