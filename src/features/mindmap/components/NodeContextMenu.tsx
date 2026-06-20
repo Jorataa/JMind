@@ -2,8 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Trash2, Copy, CheckCircle2, PanelRight, PenLine } from "lucide-react";
+import { Trash2, Copy, CheckCircle2, PanelRight, PenLine, Wand2 } from "lucide-react";
 import { useMindMapActions, useMindMapStore } from "@/stores/use-mindmap-store";
+import { expandNodeWithAi } from "@/features/ai/useAiGenerate";
 import { cn } from "@/lib/cn";
 
 interface NodeContextMenuProps {
@@ -61,6 +62,13 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
           shortcut="I"
           onClick={() => handleAction(() => openInspector(id))}
         />
+        {!isSticky && (
+          <ContextItem
+            icon={<Wand2 size={14} className="text-violet-300" />}
+            label="Expand with AI"
+            onClick={() => handleAction(() => expandNodeWithAi(id))}
+          />
+        )}
         <div className="h-px bg-white/5 my-1" />
 
         {!isLinked && !isRoot && (

@@ -16,6 +16,7 @@ import {
 } from "@/types/mindmap";
 import { MindMapService } from "@/services/mindmap-service";
 import { calculateTreeLayout } from "@/lib/layout";
+import { mindMapTreeToFlow, type AiTreeNode } from "@/lib/mindmap-ai";
 import { useTaskStore } from "./use-task-store";
 import { useActivityStore } from "./use-activity-store";
 
@@ -94,6 +95,12 @@ interface MindMapState {
     switchMap: (id: string) => void;
     deleteMap: (id: string) => void;
     renameMap: (id: string, title: string) => void;
+
+    // AI generation
+    /** Build a brand-new workspace from an AI-generated tree and switch to it. */
+    generateMapFromTree: (tree: AiTreeNode) => string;
+    /** Append AI-suggested child nodes under an existing node (non-destructive). */
+    expandNodeWithChildren: (parentId: string, titles: string[]) => void;
   };
 }
 
@@ -847,6 +854,75 @@ export const useMindMapStore = create<MindMapState>()(
               }
             };
           });
+        },
+
+        generateMapFromTree: (tree) => {
+          // JSON → flow → balanced positions, all via existing utilities.
+          const { nodes, edges } = mindMapTreeToFlow(tree);
+          const laidOut = calculateTreeLayout(nodes, edges);
+          const id = crypto.randomUUID();
+          const now = nowIso();
+
+          set((state) => ({
+            maps: {
+              ...state.maps,
+              [id]: {
+                id,
+                title: tree.title || "Generated Map",
+                nodes: laidOut,
+                edges,
+                viewport: DEFAULT_VIEWPORT,
+                createdAt: now,
+                updatedAt: now,
+              },
+            },
+          }));
+
+          // Reuse switchMap: commits the current map, loads + sanitizes the new
+          // one, and resets viewport/history so the canvas auto-fits it.
+          get().actions.switchMap(id);
+          return id;
+        },
+
+        expandNodeWithChildren: (parentId, titles) => {
+          const state = get();
+          const parent = state.nodes.find((n) => n.id === parentId);
+          if (!parent || titles.length === 0) return;
+
+          // Continue fanning out from where this node's existing children stop,
+          // so AI suggestions don't land on top of manually-added ones.
+          const existingChildCount = state.edges.filter((e) => e.source === parentId).length;
+
+          const newNodes: MindMapNode[] = [];
+          const newEdges: MindMapEdge[] = [];
+          titles.forEach((title, index) => {
+            const node = MindMapService.createNode(
+              title,
+              parent,
+              undefined,
+              existingChildCount + index
+            );
+            // Generated nodes must not pop into edit mode the way a single
+            // hand-added node does.
+            node.data.isNew = false;
+            newNodes.push(node);
+            newEdges.push(MindMapService.createEdge(parent.id, node.id));
+          });
+
+          useActivityStore.getState().actions.logActivity(
+            "node_created",
+            `AI expanded "${parent.data.label}" with ${newNodes.length} ideas`,
+            { nodeId: parentId, mapId: state.activeMapId }
+          );
+
+          takeSnapshot();
+          set((s) => ({
+            nodes: [
+              ...s.nodes.map((n) => (n.selected ? { ...n, selected: false } : n)),
+              ...newNodes,
+            ],
+            edges: [...s.edges, ...newEdges],
+          }));
         },
       }
       };

@@ -2,12 +2,13 @@
 
 import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
 import { Panel, useReactFlow } from "@xyflow/react";
-import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote } from "lucide-react";
+import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
 import { exportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
+import AiGenerateModal from "@/features/ai/AiGenerateModal";
 
 export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => void; onAddSticky: () => void }) {
   const nodes = useMindMapNodes();
@@ -18,6 +19,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
   const { addNode, selectNode, toggleSidebar, undo, redo } = useMindMapActions();
   const { fitView, setCenter } = useReactFlow();
   const [search, setSearch] = useState("");
+  const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
 
   const matchingNode = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -60,6 +62,18 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* Which map am I in? Click to switch or create. */}
         <MapSwitcher />
+
+        {/* Generate a whole map from one topic. */}
+        <Button
+          size="sm"
+          className="h-9 gap-2 rounded-full border border-violet-500/30 bg-violet-500/15 px-4 text-violet-200 shadow-xl hover:bg-violet-500/25"
+          variant="secondary"
+          onClick={() => setAiGenerateOpen(true)}
+          title="Generate a mind map with AI"
+        >
+          <Wand2 size={14} className="text-violet-300" />
+          <span className="hidden md:inline">AI Generate</span>
+        </Button>
 
         <div className="relative hidden sm:block">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
@@ -160,6 +174,8 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
           <PanelRight size={14} />
         </Button>
       </div>
+
+      {aiGenerateOpen && <AiGenerateModal onClose={() => setAiGenerateOpen(false)} />}
     </Panel>
   );
 }
