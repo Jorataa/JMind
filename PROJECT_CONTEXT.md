@@ -1,16 +1,16 @@
-# JMind Project Context
+# Jorata Project Context
 
-Saved from `C:\Users\jovan\Downloads\JMind Project Context.pdf` and current workspace inspection on 2026-05-30. Code snapshot refreshed 2026-06-12 after the multi-map & sticky completion pass (see `PRODUCT_AUDIT.md`).
+Saved from `C:\Users\jovan\Downloads\Jorata Project Context.pdf` and current workspace inspection on 2026-05-30. Code snapshot refreshed 2026-06-12 after the multi-map & sticky completion pass (see `PRODUCT_AUDIT.md`).
 
-This document is the practical project memory for future coding agents working on JMind. Keep it beginner-friendly, current-stage focused, and useful for deciding what to build next.
+This document is the practical project memory for future coding agents working on Jorata. Keep it beginner-friendly, current-stage focused, and useful for deciding what to build next.
 
 See also: `PRODUCT_STRATEGY.md` (philosophical and strategic compass — read before proposing features) and `PRODUCT_AUDIT.md` (historical record of what shipped and the agreed backlog).
 
 ## Product Vision
 
-JMind is a Personal Operating System for Thinking and Execution.
+Jorata is a Personal Operating System for Thinking and Execution.
 
-The product goal is not to create another simple todo app. JMind should become a centralized personal productivity platform where users can think, plan, execute, track progress, and grow.
+The product goal is not to create another simple todo app. Jorata should become a centralized personal productivity platform where users can think, plan, execute, track progress, and grow.
 
 Long-term product loop:
 
@@ -18,7 +18,7 @@ Long-term product loop:
 Think -> Plan -> Execute -> Measure -> Improve
 ```
 
-JMind should eventually combine:
+Jorata should eventually combine:
 
 - Mind Mapping
 - Task Management

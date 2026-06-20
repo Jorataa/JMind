@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("[JMind] Uncaught error:", error, errorInfo);
+    console.error("[Jorata] Uncaught error:", error, errorInfo);
   }
 
   private handleReset = () => {
@@ -45,7 +45,7 @@ export class ErrorBoundary extends Component<Props, State> {
               {this.props.fallbackTitle || "Something went wrong"}
             </h2>
             <p className="max-w-md text-sm text-zinc-500">
-              JMind encountered an unexpected error. Your data is likely safe in local storage. 
+              Jorata encountered an unexpected error. Your data is likely safe in local storage. 
               Try refreshing the page to recover.
             </p>
             {this.state.error && (
@@ -59,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className="gap-2"
           >
             <RefreshCw size={16} />
-            Refresh JMind
+            Refresh Jorata
           </Button>
         </div>
       );

@@ -1,6 +1,6 @@
 # Visitor log → Google Sheet
 
-Every time someone enters their name (or returns), JMind appends a row to a
+Every time someone enters their name (or returns), Jorata appends a row to a
 Google Sheet you own, so you can see **who is using the site**. No database, no
 service account — just a Google Sheet and a tiny script.
 
@@ -24,7 +24,7 @@ One clean, sortable row per entry:
 ## One-time setup (~5 minutes)
 
 ### 1. Create the sheet
-Go to [sheets.new](https://sheets.new) and name it e.g. **JMind Visitors**.
+Go to [sheets.new](https://sheets.new) and name it e.g. **Jorata Visitors**.
 (Leave it empty — the script writes the header row for you.)
 
 ### 2. Add the script
@@ -67,7 +67,7 @@ For local testing, put the same two lines in `.env.local` and restart `next dev`
 2. A new `joined` row appears in the sheet within a second or two.
 
 Nothing showing up? Check **Vercel → Deployment → Runtime Logs** for
-`[JMind visitor]` warnings, and confirm the deployment URL ends in `/exec`.
+`[Jorata visitor]` warnings, and confirm the deployment URL ends in `/exec`.
 
 > Changed the script later? Use **Deploy → Manage deployments → Edit → New
 > version** so the live URL picks up your edit.

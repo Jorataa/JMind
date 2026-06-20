@@ -1,4 +1,4 @@
-# JMind — Product Strategy
+# Jorata — Product Strategy
 
 *The strategic and philosophical compass of the product. Read this before proposing features, changing UX, or introducing new surfaces. Read `PROJECT_CONTEXT.md` for architecture. Read `PRODUCT_AUDIT.md` for what has been built and why.*
 
@@ -6,21 +6,21 @@
 
 ---
 
-## What JMind Is
+## What Jorata Is
 
-JMind is a calm, private space where your thinking becomes visible — and visible thinking can become action.
+Jorata is a calm, private space where your thinking becomes visible — and visible thinking can become action.
 
 You draw a map. You branch it. You name the parts of your life you're trying to hold together. And instead of that map becoming an artifact that rots in a folder, the things on it *do* something: they link to tasks, their completion echoes back, and the loop — thought → action → resolution — closes quietly inside the same tool where the thought began.
 
 No other tool in this space closes that loop without asking for an account, a monthly subscription, a team, or a learning curve measured in weeks.
 
-That is what JMind is. One person, one screen, their whole mind — laid out, connected, and at peace.
+That is what Jorata is. One person, one screen, their whole mind — laid out, connected, and at peace.
 
 ---
 
-## What JMind Is Not
+## What Jorata Is Not
 
-JMind is not:
+Jorata is not:
 - a project management tool for teams
 - a replacement for Notion or Obsidian
 - a productivity dashboard that scores your life
@@ -30,7 +30,7 @@ JMind is not:
 - software that needs an internet connection to be useful
 - something you "onboard" to
 
-These are not modest disclaimers. They are the product's identity. Every one of them is a direction JMind has consciously refused, and the refusal is the point.
+These are not modest disclaimers. They are the product's identity. Every one of them is a direction Jorata has consciously refused, and the refusal is the point.
 
 ---
 
@@ -38,21 +38,21 @@ These are not modest disclaimers. They are the product's identity. Every one of 
 
 **Finish choosing yourself before choosing new features.**
 
-The strongest version of JMind is not a wider one. It is a *clearer* one: a product that knows precisely what it is, expresses it in every pixel and every sentence, and trusts that clarity to find its audience.
+The strongest version of Jorata is not a wider one. It is a *clearer* one: a product that knows precisely what it is, expresses it in every pixel and every sentence, and trusts that clarity to find its audience.
 
 Three principles that flow from this:
 
 1. **The canvas is the hero.** Everything else — the dashboard, the KPIs, the reflection card — is a hallway that leads back to the canvas. If a feature does not serve the canvas or the canvas-to-action loop, it earns its place only by being deeply, genuinely useful as a standalone thing.
 
-2. **Calm is the product.** Not calm *design*, not calm *aesthetics* — calm as a functional output. A user opening JMind should exhale slightly. If a new surface makes that harder, it does not belong.
+2. **Calm is the product.** Not calm *design*, not calm *aesthetics* — calm as a functional output. A user opening Jorata should exhale slightly. If a new surface makes that harder, it does not belong.
 
 3. **Honest surfaces only.** No number the user didn't earn. No judgment they didn't ask for. No state that implies failure. The product should never tell the user they are behind, insufficient, or losing. It can tell them what is true. It cannot tell them what to feel about it.
 
 ---
 
-## The Feeling JMind Should Create
+## The Feeling Jorata Should Create
 
-A user who sits down with JMind should feel:
+A user who sits down with Jorata should feel:
 
 - mentally clearer after than before
 - like their thoughts have somewhere to live
@@ -60,7 +60,7 @@ A user who sits down with JMind should feel:
 - not rushed, not scored, not watched
 - like the software respects them
 
-A user who shares something from JMind should feel:
+A user who shares something from Jorata should feel:
 
 - proud of what they made
 - understood by the tool that helped them make it
@@ -69,7 +69,7 @@ These feelings are the product's north star. When there is doubt about a decisio
 
 ---
 
-## Who JMind Is For
+## Who Jorata Is For
 
 The ideal user is someone organizing a life in progress:
 
@@ -81,13 +81,13 @@ The ideal user is someone organizing a life in progress:
 
 They value privacy. They think in shapes, not spreadsheets. They are skeptical of software that promises too much. They do not want to be managed; they want to think clearly.
 
-JMind exists for the person who needs to see their own mind before they can act on it.
+Jorata exists for the person who needs to see their own mind before they can act on it.
 
 ---
 
-## Who JMind Is Not For
+## Who Jorata Is Not For
 
-- teams and collaborative work (JMind has no concept of "another person")
+- teams and collaborative work (Jorata has no concept of "another person")
 - users who need complex workflows (databases, formulas, automations)
 - people who are motivated by leaderboards, streaks, and competition
 - enterprises looking for auditability and permissions
@@ -99,7 +99,7 @@ These are not failures of imagination. Saying "not for" is what makes the "for" 
 
 ## Emotional Direction
 
-JMind's emotional register is: **a desk lamp in a quiet room.**
+Jorata's emotional register is: **a desk lamp in a quiet room.**
 
 Not a stadium screen. Not ambient music. Not a coach. A single source of warm, directed light that makes the work visible and leaves everything else in comfortable shadow.
 
@@ -114,7 +114,7 @@ Translate that to design:
 
 The verbal voice is that of a calm friend, present tense. If the sentence sounds like it belongs in a performance review, replace it.
 
-Words and phrases that do not belong in JMind:
+Words and phrases that do not belong in Jorata:
 - Mission, Protocol, Intelligence, Velocity, Objectives, Warrior, Execution Engine, Primary Loop, Daily Mission Log
 - Score, Streak, XP, Achievement, Level, Rank
 - "You should", "Don't forget", "Stay on track", "Keep going"
@@ -134,7 +134,7 @@ Navigation should never require more than one keystroke to reach the canvas from
 Every empty state is an invitation. Every error has a way forward. No screen should make the user feel stuck or lost.
 
 **4. Interactions should feel earned, not instructed.**
-Good UX in JMind is not about guiding users through flows. It is about the satisfaction of discovering that a shortcut works, that undo covers you, that the thing you just drew can be turned into a task with one keystroke. Discovery, not tutorial.
+Good UX in Jorata is not about guiding users through flows. It is about the satisfaction of discovering that a shortcut works, that undo covers you, that the thing you just drew can be turned into a task with one keystroke. Discovery, not tutorial.
 
 **5. What you see is what is true.**
 No metrics that cannot be explained in plain language. No graphs that imply a trend that doesn't exist. No UI chrome that is decorative rather than functional.
@@ -168,13 +168,13 @@ A card with ten data points is not more useful than a card with three. Default t
 
 **The product does not interrupt.** No toast appears unless something unusual happened. No modal appears unprompted. No notification arrives ever. The user controls when they receive information.
 
-**State is remembered without being asked.** Sidebar collapsed, panel open, which map was active, where the viewport was — all of this is restored silently. JMind knows where you were because it kept watching, quietly, without announcing it.
+**State is remembered without being asked.** Sidebar collapsed, panel open, which map was active, where the viewport was — all of this is restored silently. Jorata knows where you were because it kept watching, quietly, without announcing it.
 
 ---
 
 ## Product Boundaries
 
-These are the edges of JMind. Features that require crossing these edges do not belong in this product, regardless of how useful they might be in isolation.
+These are the edges of Jorata. Features that require crossing these edges do not belong in this product, regardless of how useful they might be in isolation.
 
 | Boundary | What it protects |
 |---|---|
@@ -194,7 +194,7 @@ Before any new feature is proposed or built, it must pass all four filters:
 1. **The calm filter:** Does this increase noise more than clarity? If yes, it does not belong.
 2. **The loop filter:** Does this serve the canvas-to-action loop, or does it live entirely outside it? If entirely outside, what exactly justifies it?
 3. **The voice filter:** Can every label, button, and empty state in this feature be written in calm, human language without reaching for urgency or performance framing?
-4. **The trust filter:** Does this feature require the user to give JMind something — data, permission, attention — that they haven't explicitly offered? If yes, is that tradeoff clearly in their favor?
+4. **The trust filter:** Does this feature require the user to give Jorata something — data, permission, attention — that they haven't explicitly offered? If yes, is that tradeoff clearly in their favor?
 
 Features that fail these filters are not bad ideas. They are ideas for a different product.
 
@@ -225,7 +225,7 @@ Use these when deciding what to build next:
 
 ---
 
-## Things That Must Never Happen to JMind
+## Things That Must Never Happen to Jorata
 
 These are not preferences. They are lines.
 
@@ -244,9 +244,9 @@ These are not preferences. They are lines.
 
 ## Long-Term Identity
 
-JMind's long-term identity is **the calm thinking space** — a category it can credibly own because no serious competitor occupies it.
+Jorata's long-term identity is **the calm thinking space** — a category it can credibly own because no serious competitor occupies it.
 
-The competitors are noisier (Notion, ClickUp), more complex (Obsidian, Heptabase), more specialized (XMind), or more opinionated about productivity as performance (every tool with a habit tracker). JMind's position is not technical differentiation; it is *emotional* differentiation: the only tool in the category that explicitly refuses to judge you.
+The competitors are noisier (Notion, ClickUp), more complex (Obsidian, Heptabase), more specialized (XMind), or more opinionated about productivity as performance (every tool with a habit tracker). Jorata's position is not technical differentiation; it is *emotional* differentiation: the only tool in the category that explicitly refuses to judge you.
 
 That refusal is a philosophy and a promise. It is also, stated plainly, a marketing position: **calm software in a noisy category.**
 
@@ -258,7 +258,7 @@ Monetization, when it arrives, should respect this identity completely: sync acr
 
 ## Positioning Statement
 
-> JMind is a calm, private thinking space where your ideas live on a canvas and quietly become action. No accounts, no feeds, no scores — just you, thinking clearly.
+> Jorata is a calm, private thinking space where your ideas live on a canvas and quietly become action. No accounts, no feeds, no scores — just you, thinking clearly.
 
 **Tagline:** *A quiet place to think.*
 
@@ -266,7 +266,7 @@ Monetization, when it arrives, should respect this identity completely: sync acr
 
 ## Docs-as-Memory Integration
 
-This document is part of JMind's intentional project memory. The three documents that together form the complete project context are:
+This document is part of Jorata's intentional project memory. The three documents that together form the complete project context are:
 
 | Document | Purpose |
 |---|---|

@@ -277,7 +277,7 @@ export default function Sidebar() {
         {!isCompact && (
           <div className="flex flex-col gap-1">
             <span className="text-[15px] font-semibold tracking-tight text-zinc-50">
-              JMind
+              Jorata
             </span>
             {/* The four-pillar loop, paired into its two halves — thinking, then
                 doing — so it reads as intentional rather than an awkward wrap. */}

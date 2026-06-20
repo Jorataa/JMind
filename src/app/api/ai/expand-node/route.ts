@@ -69,7 +69,7 @@ export async function POST(request: Request) {
       const tree = normalizeAiTree(parseJson(raw));
       children = tree ? childTitles(tree) : [];
     } catch (error) {
-      console.error("[JMind AI] Expand JSON parse failed:", error, raw);
+      console.error("[Jorata AI] Expand JSON parse failed:", error, raw);
     }
 
     if (children.length === 0) {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     if (error instanceof GeminiError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    console.error("[JMind AI] Node expansion failed:", error);
+    console.error("[Jorata AI] Node expansion failed:", error);
     return NextResponse.json(
       { error: "Couldn't reach the AI service. Please try again." },
       { status: 500 }

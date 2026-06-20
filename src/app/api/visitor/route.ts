@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JMind visitor log — server-side bridge to a Google Sheet.
+// Jorata visitor log — server-side bridge to a Google Sheet.
 //
 // The browser POSTs a small "someone is using the app" entry here; this route
 // enriches it (geo/IP/user-agent are only trustworthy on the server) and
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
   // Not configured yet? Accept the request but skip forwarding, so the name
   // gate keeps working before the sheet is wired up.
   if (!webhookUrl) {
-    console.warn("[JMind visitor] GSHEET_WEBHOOK_URL not set — skipping log.");
+    console.warn("[Jorata visitor] GSHEET_WEBHOOK_URL not set — skipping log.");
     return NextResponse.json({ ok: true, logged: false });
   }
 
@@ -84,14 +84,14 @@ export async function POST(request: Request) {
 
     if (!res.ok) {
       const detail = await res.text().catch(() => "");
-      console.error("[JMind visitor] Sheet webhook error:", res.status, detail);
+      console.error("[Jorata visitor] Sheet webhook error:", res.status, detail);
       // Don't surface infra errors to the visitor — logging is non-critical.
       return NextResponse.json({ ok: true, logged: false });
     }
 
     return NextResponse.json({ ok: true, logged: true });
   } catch (error) {
-    console.error("[JMind visitor] Forward failed:", error);
+    console.error("[Jorata visitor] Forward failed:", error);
     return NextResponse.json({ ok: true, logged: false });
   }
 }

@@ -1,4 +1,4 @@
-# JMind Product Audit — 2026-06-11
+# Jorata Product Audit — 2026-06-11
 
 Deep audit + improvement pass performed in "founding engineer mode". This file records what was found, what was changed and why, and what should happen next. Read alongside `PROJECT_CONTEXT.md` and `PRODUCT_STRATEGY.md` (the strategic compass — read that first for *why* decisions were made).
 
@@ -134,7 +134,7 @@ Files: `MapSwitcher.tsx`, `Topbar.tsx`, `EditableNode.tsx`, `CanvasToolbar.tsx`,
 ## Verified (cold prod bundle :3100, mobile 375×812)
 - `tsc --noEmit` ✓, `eslint src` ✓ (0 problems), `next build` ✓ (9 routes).
 - DOM @375px: map switcher visible ("My Mindmap"); Tidy/Export hidden; Idea/Undo/Redo/Fit/Details visible; header text "Workspace Mind Maps" (no duplicate map title); mobile empty-hint present.
-- Synthetic double-tap on the root node opened the rename editor (value "JMind"). Programmatic focus did not apply under synthetic (untrusted) events — **confirm the keyboard pops up on a physical device**; the focus path is identical to the working desktop double-click.
+- Synthetic double-tap on the root node opened the rename editor (value "Jorata"). Programmatic focus did not apply under synthetic (untrusted) events — **confirm the keyboard pops up on a physical device**; the focus path is identical to the working desktop double-click.
 - Screenshot timed out (known harness quirk on this machine), so verification is DOM-based.
 
 ## Remaining weaknesses (updated, ordered)
@@ -224,11 +224,11 @@ The founder pasted a 15-item prioritized evaluation of the LIVE app (P1 bugs, P2
 ## Verified
 - `tsc` / `eslint` / `next build` green on every increment; each pushed commit reached Vercel READY.
 - Configurable name round-trip DOM-verified on cold prod :3100 (Settings "Jovan"→"Sam" → persisted → dashboard "Good morning, Sam." + sidebar). Empty/date/preview changes verified earlier.
-- **Canvas interactions are code-verified only** — this machine's headless preview reports `innerWidth: 0`, so React Flow renders no nodes there. Double-click, F2, "+ Idea" connect, handle visibility, and activity→node jumps need a **real-device smoke test** on j-mind.vercel.app.
+- **Canvas interactions are code-verified only** — this machine's headless preview reports `innerWidth: 0`, so React Flow renders no nodes there. Double-click, F2, "+ Idea" connect, handle visibility, and activity→node jumps need a **real-device smoke test** on jorata.vercel.app.
 
 ## Then shipped too (the founder said "continue development")
 5. **#13 collapse/expand branches (`ac7d5ac`)** — parent nodes get a collapse toggle; collapsing hides all descendant nodes + edges, the folded node shows a persistent **+N** badge (N hidden) so the branch stays findable, and the toggle reveals on hover when expanded. Hidden state is derived at render by a **pure, cycle-safe `getHiddenNodeIds(nodes, edges)`** (`lib/collapse.ts`) — **unit-verified** against tree / nested / mid-branch / multi-collapse / root / cycle cases (7/7) since the harness can't render the canvas; only a per-node `collapsed` flag is persisted (through the sanitizer); toggling is undoable. The *visual* toggle still wants a real-device check.
-6. **Per-map export (`de6c38f`)** — Settings exports the open map as a Markdown outline or raw JSON structure (wires up the previously-dead `exportToMarkdown`/`downloadMarkdown`); slugified filenames; verified on cold prod :3100 (`# JMind` / valid `{app,type,title,exportedAt,nodes,edges}`).
+6. **Per-map export (`de6c38f`)** — Settings exports the open map as a Markdown outline or raw JSON structure (wires up the previously-dead `exportToMarkdown`/`downloadMarkdown`); slugified filenames; verified on cold prod :3100 (`# Jorata` / valid `{app,type,title,exportedAt,nodes,edges}`).
 
 ## Genuinely not done (decision / out of scope)
 - **React Flow attribution** — **cannot be removed without a React Flow Pro/commercial license** (`proOptions.hideAttribution` is gated by their terms). Left in place on purpose; a licensing call for the founder, not a code task.

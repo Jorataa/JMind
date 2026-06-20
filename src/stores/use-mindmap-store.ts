@@ -161,7 +161,7 @@ const createDebouncedStorage = (storage: Storage, wait = 500) => {
       try {
         storage.setItem(pendingKey, pendingValue);
       } catch (error) {
-        console.error("[JMind] Persistence failed:", error);
+        console.error("[Jorata] Persistence failed:", error);
       }
       pendingKey = null;
       pendingValue = null;
@@ -207,7 +207,7 @@ const createRootNode = (): MindMapNode => {
     position: { x: 0, y: 0 },
     selected: false,
     data: {
-      label: "JMind",
+      label: "Jorata",
       category: "default",
       priority: "none",
       status: "none",
@@ -258,7 +258,7 @@ const sanitizeNodeData = (value: unknown, id: string): MindMapNodeData => {
 
   return {
     ...data,
-    label: sanitizeString(data.label, isRoot ? "JMind" : "Untitled Idea"),
+    label: sanitizeString(data.label, isRoot ? "Jorata" : "Untitled Idea"),
     category: validCategories.has(category) ? (category as MindMapNodeData["category"]) : "default",
     priority: validPriorities.has(priority) ? (priority as MindMapNodeData["priority"]) : "none",
     status: validStatuses.has(status) ? (status as MindMapNodeData["status"]) : "none",
@@ -772,7 +772,7 @@ export const useMindMapStore = create<MindMapState>()(
             
             if (!nextMap) {
                if (process.env.NODE_ENV === 'development') {
-                 console.error(`[JMind] Failed to switch: Map ${id} not found.`);
+                 console.error(`[Jorata] Failed to switch: Map ${id} not found.`);
                }
                return state;
             }
@@ -791,7 +791,7 @@ export const useMindMapStore = create<MindMapState>()(
             }
 
             if (process.env.NODE_ENV === 'development') {
-              console.log(`[JMind] Switching to workspace: ${nextMap.title} (${id})`);
+              console.log(`[Jorata] Switching to workspace: ${nextMap.title} (${id})`);
             }
 
             // 2. Load target data and finalize ID
@@ -956,7 +956,7 @@ export const useMindMapStore = create<MindMapState>()(
           // store silently runs on defaults — which would then persist over
           // the user's real data. Log loudly and let the workspace guard
           // below rebuild a safe state.
-          console.error("[JMind] Mindmap hydration failed:", error);
+          console.error("[Jorata] Mindmap hydration failed:", error);
         }
         // Covers every path that can leave the store without a workspace:
         // brand-new user (nothing persisted → merge never runs), corrupted
@@ -990,7 +990,7 @@ export const useMindMapStore = create<MindMapState>()(
 
         if (!hasMaps && hasLegacyData) {
           if (process.env.NODE_ENV === 'development') {
-            console.log("[JMind] Migrating legacy mindmap data to workspace system...");
+            console.log("[Jorata] Migrating legacy mindmap data to workspace system...");
           }
           const legacyId = crypto.randomUUID();
           const now = nowIso();

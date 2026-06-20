@@ -15,7 +15,7 @@ import { exportToMarkdown, downloadMarkdown } from "@/lib/export-markdown";
 const slugify = (s: string) =>
   s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "mind-map";
 
-const JMIND_KEYS = [
+const STORAGE_KEYS = [
   "jmind:mindmap",
   "jmind:tasks",
   "jmind:kpis",
@@ -62,7 +62,7 @@ export default function SettingsPage() {
 
   const handleExport = () => {
     const data: Record<string, unknown> = {};
-    for (const key of JMIND_KEYS) {
+    for (const key of STORAGE_KEYS) {
       const raw = localStorage.getItem(key);
       if (!raw) continue;
       try {
@@ -81,7 +81,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `jmind-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `jorata-backup-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
     addToast("Workspace exported", "success");
@@ -96,7 +96,7 @@ export default function SettingsPage() {
       }
 
       let applied = 0;
-      for (const key of JMIND_KEYS) {
+      for (const key of STORAGE_KEYS) {
         if (key in data) {
           localStorage.setItem(key, JSON.stringify(data[key]));
           applied++;
@@ -108,7 +108,7 @@ export default function SettingsPage() {
       // data gets exactly the same validation as any persisted data.
       window.location.reload();
     } catch {
-      addToast("Import failed — that file isn't a JMind backup", "error");
+      addToast("Import failed — that file isn't a Jorata backup", "error");
     }
   };
 
@@ -147,7 +147,7 @@ export default function SettingsPage() {
       setConfirmingClear(true);
       return;
     }
-    JMIND_KEYS.forEach((key) => localStorage.removeItem(key));
+    STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
     window.location.reload();
   };
 
@@ -191,7 +191,7 @@ export default function SettingsPage() {
           <Card className="flex flex-col gap-4 p-6" hoverable={false}>
             <div className="flex flex-col gap-1">
               <h4 className="text-[14px] font-semibold text-zinc-200">Theme</h4>
-              <p className="text-[12px] text-zinc-500">Choose how JMind looks to you.</p>
+              <p className="text-[12px] text-zinc-500">Choose how Jorata looks to you.</p>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {THEMES.map((t) => (
@@ -339,7 +339,7 @@ export default function SettingsPage() {
             About
           </SectionTitle>
           <Card className="flex flex-col gap-2 p-6" hoverable={false}>
-            <p className="text-[14px] font-semibold text-zinc-200">JMind v0.1</p>
+            <p className="text-[14px] font-semibold text-zinc-200">Jorata v0.1</p>
             <p className="text-[13px] leading-relaxed text-zinc-500">
               A personal operating system for thinking and execution: capture thoughts,
               shape them on the canvas, and turn them into action. Built local-first —

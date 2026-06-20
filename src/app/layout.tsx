@@ -11,9 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "JMind - Think. Plan. Execute.",
+  title: "Jorata - Think. Plan. Execute.",
   description:
-    "JMind is a personal operating system for thinking and execution.",
+    "Jorata is a personal operating system for thinking and execution.",
 };
 
 export default function RootLayout({

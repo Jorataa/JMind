@@ -76,7 +76,7 @@ export default function NameGate() {
           id="namegate-title"
           className="mt-4 text-[20px] font-semibold text-zinc-50"
         >
-          Welcome to JMind
+          Welcome to Jorata
         </h2>
         <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
           Your personal space to think, plan, and execute. What should we call

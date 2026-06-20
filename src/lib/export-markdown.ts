@@ -42,7 +42,7 @@ export function exportToMarkdown(nodes: MindMapNode[], edges: MindMapEdge[]): st
 /**
  * Triggers a download of the generated Markdown content.
  */
-export function downloadMarkdown(content: string, fileName: string = "jmind-outline.md") {
+export function downloadMarkdown(content: string, fileName: string = "jorata-outline.md") {
   const blob = new Blob([content], { type: "text/markdown" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

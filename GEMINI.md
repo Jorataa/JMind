@@ -1,9 +1,9 @@
-# JMind Project Instructions
+# Jorata Project Instructions
 
-This file contains team-shared architecture, conventions, and workflows for the JMind project.
+This file contains team-shared architecture, conventions, and workflows for the Jorata project.
 
 ## Project Vision
-JMind is a Personal Operating System for Thinking and Execution.
+Jorata is a Personal Operating System for Thinking and Execution.
 **Loop:** Think -> Plan -> Execute -> Measure -> Improve.
 
 ## Tech Stack

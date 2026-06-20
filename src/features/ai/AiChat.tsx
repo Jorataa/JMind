@@ -50,7 +50,7 @@ export default function AiChat({ mindMapNodes, open, onClose }: AiChatProps) {
             <div className="flex items-center gap-2">
               <Sparkles size={15} className="text-emerald-400" />
               <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-400">
-                JMind AI
+                Jorata AI
               </span>
             </div>
             <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={onClose}>
@@ -116,7 +116,7 @@ export default function AiChat({ mindMapNodes, open, onClose }: AiChatProps) {
                     handleSend();
                   }
                 }}
-                placeholder="Message JMind AI…"
+                placeholder="Message Jorata AI…"
                 rows={1}
                 className="max-h-32 min-h-[40px] flex-1 resize-none rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2.5 text-[13px] text-zinc-200 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30"
               />

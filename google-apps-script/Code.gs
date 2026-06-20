@@ -1,5 +1,5 @@
 /**
- * JMind — Visitor Log (Google Apps Script Web App)
+ * Jorata — Visitor Log (Google Apps Script Web App)
  * ------------------------------------------------------------------
  * Appends one row per visit to the bound Google Sheet. Deploy this as a Web App
  * and put its /exec URL into Vercel as GSHEET_WEBHOOK_URL. See SETUP-VISITOR-LOG.md.
@@ -69,7 +69,7 @@ function doPost(e) {
 
 // Lets you open the /exec URL in a browser to confirm the deployment is live.
 function doGet() {
-  return json_({ ok: true, service: "jmind-visitor-log" });
+  return json_({ ok: true, service: "jorata-visitor-log" });
 }
 
 function json_(obj) {

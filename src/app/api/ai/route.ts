@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JMind AI — server-side Gemini bridge.
+// Jorata AI — server-side Gemini bridge.
 //
 // WHY this lives on the server: the Gemini API key is a secret. If we called
 // Gemini from the browser, anyone could open DevTools and steal the key. This
@@ -18,13 +18,13 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 // Two personalities, picked based on what the client asked for.
 const CHAT_SYSTEM_PROMPT =
-  "You are JMind AI, a helpful assistant inside a personal mind mapping and " +
+  "You are Jorata AI, a helpful assistant inside a personal mind mapping and " +
   "productivity tool. Help the user think clearly, plan effectively, and " +
   "understand topics better. Keep responses concise and structured. Use bullet " +
   "points when helpful.";
 
 const buildMindMapPrompt = (titles: string[]) =>
-  `You are JMind AI. The user has a mind map with the following topics: ` +
+  `You are Jorata AI. The user has a mind map with the following topics: ` +
   `${titles.join(", ")}. Your job is to give them the latest, most relevant, ` +
   `and useful information about these topics. Structure your response clearly ` +
   `with each topic as a section. Keep it concise but informative. Focus on what ` +
@@ -121,7 +121,7 @@ export async function POST(request: Request) {
       // Surface Gemini's own message in the server log; keep the client message
       // friendly and non-leaky.
       const detail = await response.text();
-      console.error("[JMind AI] Gemini error:", response.status, detail);
+      console.error("[Jorata AI] Gemini error:", response.status, detail);
       return NextResponse.json(
         { error: "The AI service is unavailable right now. Please try again." },
         { status: 502 }
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ reply });
   } catch (error) {
-    console.error("[JMind AI] Request failed:", error);
+    console.error("[Jorata AI] Request failed:", error);
     return NextResponse.json(
       { error: "Couldn't reach the AI service. Check your connection and try again." },
       { status: 500 }

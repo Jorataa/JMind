@@ -183,7 +183,7 @@ function Flourish({ kind }: { kind: SceneConfig["flourish"] }) {
               }}
             />
           ))}
-          {/* Glowing jellyfish drifting upward — JMind's signature */}
+          {/* Glowing jellyfish drifting upward — Jorata's signature */}
           {[
             { left: 46, top: 40, size: 150, dur: 22, delay: 0, op: 0.85 },
             { left: 16, top: 58, size: 88, dur: 26, delay: -6, op: 0.6 },

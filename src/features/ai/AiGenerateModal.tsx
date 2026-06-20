@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAiGenerate } from "./useAiGenerate";
 
-const EXAMPLES = ["Photosynthesis", "Build a Startup", "World War II", "Launch JMind"];
+const EXAMPLES = ["Photosynthesis", "Build a Startup", "World War II", "Launch Jorata"];
 
 // The "AI Generate" modal: type one topic, get a full mind map on the canvas.
 export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
@@ -24,7 +24,7 @@ export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
   return (
     <Modal
       title="AI Generate"
-      description="Type a topic and JMind builds the whole mind map for you."
+      description="Type a topic and Jorata builds the whole mind map for you."
       onClose={onClose}
     >
       <div className="flex flex-col gap-5">

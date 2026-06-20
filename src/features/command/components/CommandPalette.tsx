@@ -308,7 +308,7 @@ export default function CommandPalette() {
                 <Helper hint="Navigate" keys={["↑", "↓"]} />
                 <Helper hint="Select" keys={["ENTER"]} />
               </div>
-              <p className="text-[11px] font-medium italic text-zinc-600">JMind Command Center</p>
+              <p className="text-[11px] font-medium italic text-zinc-600">Jorata Command Center</p>
             </div>
           </motion.div>
         </>

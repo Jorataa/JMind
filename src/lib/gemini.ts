@@ -95,7 +95,7 @@ export async function callGemini({
 
     if (!response.ok) {
       const detail = await response.text();
-      console.error("[JMind AI] Gemini error:", response.status, detail);
+      console.error("[Jorata AI] Gemini error:", response.status, detail);
       throw new GeminiError("The AI service is unavailable right now.", 502);
     }
 

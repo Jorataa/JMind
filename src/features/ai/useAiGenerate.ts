@@ -39,7 +39,7 @@ export function useAiGenerate() {
       useToastStore.getState().addToast(`Generated "${tree.title}"`, "success");
       return true;
     } catch (error) {
-      console.error("[JMind AI] generate failed:", error);
+      console.error("[Jorata AI] generate failed:", error);
       useToastStore.getState().addToast("Unable to generate mind map.", "error");
       return false;
     } finally {
@@ -83,7 +83,7 @@ export async function expandNodeWithAi(nodeId: string): Promise<void> {
     useMindMapStore.getState().actions.expandNodeWithChildren(nodeId, titles);
     addToast(`Added ${titles.length} ideas to "${node.data.label}"`, "success");
   } catch (error) {
-    console.error("[JMind AI] expand failed:", error);
+    console.error("[Jorata AI] expand failed:", error);
     addToast("Unable to expand this node.", "error");
   }
 }

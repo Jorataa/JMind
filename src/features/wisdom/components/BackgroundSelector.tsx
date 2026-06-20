@@ -58,7 +58,7 @@ export function BackgroundSelector({ onClose }: BackgroundSelectorProps) {
   return (
     <Modal
       title="Daily Wisdom Background"
-      description="A small peaceful corner inside JMind."
+      description="A small peaceful corner inside Jorata."
       onClose={onClose}
       className="max-w-lg"
     >

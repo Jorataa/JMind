@@ -3,7 +3,7 @@ import { toPng } from "html-to-image";
 /**
  * Captures the target element and downloads it as a PNG image.
  */
-export async function exportToPng(element: HTMLElement, fileName: string = "jmind-map.png") {
+export async function exportToPng(element: HTMLElement, fileName: string = "jorata-map.png") {
   try {
     const dataUrl = await toPng(element, {
       backgroundColor: "#09090b",

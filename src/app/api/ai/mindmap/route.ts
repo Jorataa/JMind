@@ -71,7 +71,7 @@ export async function POST(request: Request) {
     try {
       tree = normalizeAiTree(parseJson(raw));
     } catch (error) {
-      console.error("[JMind AI] Mind map JSON parse failed:", error, raw);
+      console.error("[Jorata AI] Mind map JSON parse failed:", error, raw);
       tree = null;
     }
 
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     if (error instanceof GeminiError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    console.error("[JMind AI] Mind map generation failed:", error);
+    console.error("[Jorata AI] Mind map generation failed:", error);
     return NextResponse.json(
       { error: "Couldn't reach the AI service. Please try again." },
       { status: 500 }

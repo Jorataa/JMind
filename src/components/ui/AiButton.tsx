@@ -17,7 +17,7 @@ export default function AiButton({
     <button
       type="button"
       onClick={onClick}
-      aria-label="Open JMind AI"
+      aria-label="Open Jorata AI"
       className={cn(
         "group flex h-11 items-center gap-2 rounded-full border border-emerald-500/30",
         "bg-zinc-900/80 px-4 text-[13px] font-semibold text-emerald-300 shadow-xl backdrop-blur-md",

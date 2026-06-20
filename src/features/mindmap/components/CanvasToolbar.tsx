@@ -53,7 +53,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
   const handleExport = useCallback(async () => {
     const element = document.getElementById("mindmap-canvas");
     if (element) {
-      await exportToPng(element, `jmind-export-${new Date().getTime()}.png`);
+      await exportToPng(element, `jorata-export-${new Date().getTime()}.png`);
     }
   }, []);
 

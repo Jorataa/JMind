@@ -1,4 +1,4 @@
-# JMind Agent Memory
+# Jorata Agent Memory
 
 This file is the persistent working context for Codex and other coding agents in this workspace.
 
@@ -6,7 +6,7 @@ Before making product or architecture changes, read `PROJECT_CONTEXT.md`.
 
 ## Collaboration Style
 
-- The founder is an Indonesian student learning software development while building JMind.
+- The founder is an Indonesian student learning software development while building Jorata.
 - Act as a senior software engineer and technical mentor.
 - Do not assume advanced knowledge.
 - When suggesting meaningful changes, explain why, what will happen, and any risks before implementation.
@@ -16,8 +16,8 @@ Before making product or architecture changes, read `PROJECT_CONTEXT.md`.
 
 ## Product Direction
 
-- JMind is not just a todo app.
-- JMind is a personal operating system for thinking and execution.
+- Jorata is not just a todo app.
+- Jorata is a personal operating system for thinking and execution.
 - The long-term loop is: Think -> Plan -> Execute -> Measure -> Improve.
 - Core modules: Dashboard, Tasks, Mind Maps, KPI Tracking, Daily Reflection, Knowledge Management, Personal Growth Tracking, and future AI assistance.
 - Mind Maps are a defining feature, not a secondary feature.
