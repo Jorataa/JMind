@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ChevronsUpDown, FileText, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, FileText, Plus, Edit3 } from "lucide-react";
 import { useShallow } from "zustand/shallow";
 import { useMindMapStore, useMindMapNodes, useMindMapEdges } from "@/stores/use-mindmap-store";
 import { cn } from "@/lib/cn";
@@ -16,17 +16,20 @@ import { cn } from "@/lib/cn";
 export default function MapSwitcher() {
   const nodes = useMindMapNodes();
   const edges = useMindMapEdges();
-  const { maps, activeMapId, createMap, switchMap } = useMindMapStore(
+  const { maps, activeMapId, createMap, switchMap, renameMap } = useMindMapStore(
     useShallow((state) => ({
       maps: state.maps,
       activeMapId: state.activeMapId,
       createMap: state.actions.createMap,
       switchMap: state.actions.switchMap,
+      renameMap: state.actions.renameMap,
     }))
   );
   const activeTitle = maps[activeMapId]?.title ?? "Mind Map";
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Quiet autosave acknowledgement: appears shortly after edits settle,
@@ -51,6 +54,11 @@ export default function MapSwitcher() {
       if (hideTimer) window.clearTimeout(hideTimer);
     };
   }, [nodes, edges]);
+
+  // Leaving the popover abandons any in-progress rename.
+  useEffect(() => {
+    if (!open) setEditingId(null);
+  }, [open]);
 
   // Dismiss on click-away or Escape — standard menu manners.
   useEffect(() => {
@@ -81,6 +89,21 @@ export default function MapSwitcher() {
   const handleCreate = () => {
     createMap();
     setOpen(false);
+  };
+
+  const handleStartRename = (id: string, title: string) => {
+    setEditingId(id);
+    setEditTitle(title);
+  };
+
+  const handleCommitRename = () => {
+    if (editingId) {
+      const trimmed = editTitle.trim();
+      if (trimmed && trimmed.length <= 40 && trimmed !== maps[editingId]?.title) {
+        renameMap(editingId, trimmed);
+      }
+      setEditingId(null);
+    }
   };
 
   const sortedMaps = Object.values(maps).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -133,15 +156,21 @@ export default function MapSwitcher() {
             <div className="max-h-[280px] overflow-y-auto p-1.5 custom-scrollbar">
               {sortedMaps.map((map) => {
                 const isActive = map.id === activeMapId;
+                const isEditing = editingId === map.id;
                 const nodeCount = isActive ? nodes.length : map.nodes.length;
 
                 return (
-                  <button
+                  <div
                     key={map.id}
-                    type="button"
-                    onClick={() => handleSwitch(map.id)}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => !isEditing && handleSwitch(map.id)}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      handleStartRename(map.id, map.title);
+                    }}
                     className={cn(
-                      "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors",
+                      "group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-[13px] font-medium transition-colors",
                       isActive
                         ? "bg-emerald-500/10 text-emerald-50"
                         : "text-zinc-400 hover:bg-white/5 hover:text-zinc-200"
@@ -151,12 +180,51 @@ export default function MapSwitcher() {
                       size={13}
                       className={cn("shrink-0", isActive ? "text-emerald-400" : "text-zinc-600")}
                     />
-                    <span className="min-w-0 flex-1 truncate">{map.title}</span>
-                    <span className="shrink-0 text-[10px] font-semibold text-zinc-600">
-                      {nodeCount} {nodeCount === 1 ? "idea" : "ideas"}
-                    </span>
-                    {isActive && <Check size={13} className="shrink-0 text-emerald-400" />}
-                  </button>
+
+                    {isEditing ? (
+                      <input
+                        autoFocus
+                        value={editTitle}
+                        maxLength={40}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onBlur={handleCommitRename}
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleCommitRename();
+                          if (e.key === "Escape") {
+                            e.stopPropagation();
+                            setEditingId(null);
+                          }
+                        }}
+                        className="min-w-0 flex-1 bg-transparent text-inherit outline-none"
+                      />
+                    ) : (
+                      <span className="min-w-0 flex-1 truncate">{map.title}</span>
+                    )}
+
+                    {isEditing ? null : (
+                      <>
+                        {/* Pencil on hover; the idea count gives way to it so the
+                            row never grows. */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartRename(map.id, map.title);
+                          }}
+                          className="hidden shrink-0 rounded p-0.5 text-zinc-500 hover:text-zinc-200 group-hover:block"
+                          title="Rename"
+                          aria-label={`Rename ${map.title}`}
+                        >
+                          <Edit3 size={12} />
+                        </button>
+                        <span className="shrink-0 text-[10px] font-semibold text-zinc-600 group-hover:hidden">
+                          {nodeCount} {nodeCount === 1 ? "idea" : "ideas"}
+                        </span>
+                        {isActive && <Check size={13} className="shrink-0 text-emerald-400" />}
+                      </>
+                    )}
+                  </div>
                 );
               })}
             </div>
