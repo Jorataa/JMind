@@ -38,7 +38,7 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
         category: category.trim() || undefined,
       });
     } else {
-      addKPI(label.trim(), targetVal, unit.trim(), category.trim() || undefined);
+      addKPI(label.trim(), targetVal, unit.trim(), category.trim() || undefined, currentVal);
     }
     onClose();
   };
@@ -79,16 +79,15 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
           />
         </div>
 
-        {kpi && (
-          <Input
-            label="Current Progress"
-            type="number"
-            step="any"
-            min="0"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-          />
-        )}
+        <Input
+          label={kpi ? "Current Progress" : "Starting value (Optional)"}
+          type="number"
+          step="any"
+          min="0"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+          placeholder="0"
+        />
 
         <Input
           label="Category (Optional)"

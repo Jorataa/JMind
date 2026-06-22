@@ -7,17 +7,18 @@ export const KPIService = {
   /**
    * Creates a new KPI
    */
-  createKPI: (label: string, target: number, unit: string, category?: string): KPI => {
+  createKPI: (label: string, target: number, unit: string, category?: string, current = 0): KPI => {
     const now = new Date().toISOString();
+    const value = Math.max(current, 0);
     return {
       id: crypto.randomUUID(),
       label,
-      value: 0,
+      value,
       target,
       unit,
       category,
       updatedAt: now,
-      history: [{ value: 0, timestamp: now }],
+      history: [{ value, timestamp: now }],
     };
   },
 

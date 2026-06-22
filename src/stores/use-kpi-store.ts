@@ -61,7 +61,7 @@ interface KPIState {
   kpis: KPI[];
   // Actions
   actions: {
-    addKPI: (label: string, target: number, unit: string, category?: string) => void;
+    addKPI: (label: string, target: number, unit: string, category?: string, current?: number) => void;
     updateProgress: (id: string, value: number) => void;
     editKPI: (id: string, updates: Partial<Omit<KPI, "id" | "updatedAt" | "history">>) => void;
     removeKPI: (id: string) => void;
@@ -73,8 +73,8 @@ export const useKPIStore = create<KPIState>()(
     (set) => ({
       kpis: [],
       actions: {
-        addKPI: (label, target, unit, category) => {
-          const newKPI = KPIService.createKPI(label, Math.max(target, 1), unit, category);
+        addKPI: (label, target, unit, category, current) => {
+          const newKPI = KPIService.createKPI(label, Math.max(target, 1), unit, category, current);
           set((state) => ({ kpis: [newKPI, ...state.kpis] }));
         },
         updateProgress: (id, value) =>
