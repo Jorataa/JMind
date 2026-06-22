@@ -7,6 +7,7 @@ import QuickCaptureOverlay from "@/features/command/components/QuickCaptureOverl
 import FocusHUD from "./FocusHUD";
 import QuickActions from "./QuickActions";
 import NameGate from "@/features/onboarding/NameGate";
+import SyncProvider from "@/features/sync/SyncProvider";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
@@ -51,6 +52,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
       {/* First-run name gate + returning-visitor session logging */}
       <NameGate />
+
+      {/* Optional cloud sync — no-op unless the owner configured Supabase */}
+      <SyncProvider />
     </div>
   );
 }

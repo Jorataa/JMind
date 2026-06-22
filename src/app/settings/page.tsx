@@ -11,6 +11,7 @@ import { useTheme, THEMES } from "@/hooks/use-theme";
 import { useUserName, useUIActions } from "@/stores/use-ui-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { exportToMarkdown, downloadMarkdown } from "@/lib/export-markdown";
+import SyncSettings from "@/features/sync/SyncSettings";
 
 const slugify = (s: string) =>
   s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "mind-map";
@@ -157,7 +158,8 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-1">
           <h2 className="text-[22px] font-bold tracking-tight text-zinc-50">Settings</h2>
           <p className="text-[13px] text-zinc-500">
-            Your workspace lives entirely on this device — no account, no cloud.
+            Your data stays on this device by default — turn on Sync to securely back it up
+            and use it everywhere.
           </p>
         </div>
 
@@ -181,6 +183,9 @@ export default function SettingsPage() {
             />
           </Card>
         </section>
+
+        {/* Cloud sync (opt-in) — only renders when Supabase is configured */}
+        <SyncSettings />
 
         {/* Appearance */}
         <section className="flex flex-col gap-3">
@@ -342,8 +347,9 @@ export default function SettingsPage() {
             <p className="text-[14px] font-semibold text-zinc-200">Jorata v0.1</p>
             <p className="text-[13px] leading-relaxed text-zinc-500">
               A personal operating system for thinking and execution: capture thoughts,
-              shape them on the canvas, and turn them into action. Built local-first —
-              your data never leaves this browser.
+              shape them on the canvas, and turn them into action. Built local-first — your
+              data stays on this device by default, and you can turn on Sync to securely
+              back it up and use it on all your devices.
             </p>
           </Card>
         </section>
