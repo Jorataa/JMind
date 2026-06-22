@@ -7,6 +7,7 @@ import QuickCaptureOverlay from "@/features/command/components/QuickCaptureOverl
 import FocusHUD from "./FocusHUD";
 import QuickActions from "./QuickActions";
 import NameGate from "@/features/onboarding/NameGate";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -35,7 +36,10 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
             transition={{ duration: 0.18, ease: "easeOut" }}
             className="h-full"
           >
-            {children}
+            {/* Keyed by route: any uncaught render error degrades to a calm
+                recovery card instead of white-screening, and navigating to
+                another page remounts the boundary so it clears itself. */}
+            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
           </motion.div>
         </main>
 
