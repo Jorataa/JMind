@@ -207,7 +207,7 @@ const createRootNode = (): MindMapNode => {
     position: { x: 0, y: 0 },
     selected: false,
     data: {
-      label: "Jorata",
+      label: "Your idea starts here",
       category: "default",
       priority: "none",
       status: "none",
@@ -258,7 +258,7 @@ const sanitizeNodeData = (value: unknown, id: string): MindMapNodeData => {
 
   return {
     ...data,
-    label: sanitizeString(data.label, isRoot ? "Jorata" : "Untitled Idea"),
+    label: sanitizeString(data.label, isRoot ? "Your idea starts here" : "Untitled Idea"),
     category: validCategories.has(category) ? (category as MindMapNodeData["category"]) : "default",
     priority: validPriorities.has(priority) ? (priority as MindMapNodeData["priority"]) : "none",
     status: validStatuses.has(status) ? (status as MindMapNodeData["status"]) : "none",

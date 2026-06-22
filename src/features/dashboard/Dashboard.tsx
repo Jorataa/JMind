@@ -53,9 +53,11 @@ export default function Dashboard() {
   }
 
   if (isFreshWorkspace) {
+    // A first-time, zero-data workspace: lead with one clear welcome and one
+    // action. The greeting/anchor header is reserved for returning users with
+    // a day already in motion.
     return (
       <div className="flex flex-col gap-8 p-4 sm:p-6 lg:p-8 max-w-[1400px] mx-auto w-full">
-        <DashboardHeader />
         <GettingStarted />
 
         <section className="grid gap-6 lg:grid-cols-2">

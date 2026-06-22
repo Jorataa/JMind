@@ -28,6 +28,7 @@ export default function TaskForm() {
       className="grid gap-3 border-b border-white/10 p-6 lg:grid-cols-[1fr_140px_140px_140px_auto]"
     >
       <input
+        id="task-title"
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}

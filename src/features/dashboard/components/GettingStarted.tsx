@@ -2,111 +2,59 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Network, CheckSquare, Inbox, ArrowRight } from "lucide-react";
+import { Network, ArrowRight } from "lucide-react";
 import { useUIActions } from "@/stores/use-ui-store";
-import { cn } from "@/lib/cn";
 
 /**
- * Shown only while the workspace is empty — three clear entry points instead
- * of a wall of zero-metrics. Disappears on its own once real data exists.
+ * The first thing a brand-new user sees: one calm line explaining what Jorata
+ * is, and one clear action to begin. Quieter secondary entry points sit below
+ * so there's a single obvious place to start. Shown only while the workspace is
+ * empty; it disappears on its own once real data exists.
  */
 export default function GettingStarted() {
   const { setQuickCaptureOpen } = useUIActions();
 
   return (
-    <section className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-          Getting Started
-        </h3>
-        <span className="h-px flex-1 mx-4 bg-white/5" />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StartCard
-          href="/mindmap"
-          icon={<Network size={18} />}
-          color="violet"
-          title="Open the canvas"
-          description="Map your thinking visually. Double-click anywhere to drop an idea."
-          delay={0}
-        />
-        <StartCard
-          href="/tasks"
-          icon={<CheckSquare size={18} />}
-          color="emerald"
-          title="Plan your first action"
-          description="Turn intentions into a short, honest list for today."
-          delay={0.05}
-        />
-        <StartCard
-          onClick={() => setQuickCaptureOpen(true)}
-          icon={<Inbox size={18} />}
-          color="sky"
-          title="Capture a thought"
-          description="Get it out of your head now, organize it later."
-          kbd="Ctrl + J"
-          delay={0.1}
-        />
-      </div>
-    </section>
-  );
-}
-
-interface StartCardProps {
-  icon: React.ReactNode;
-  color: "violet" | "emerald" | "sky";
-  title: string;
-  description: string;
-  href?: string;
-  onClick?: () => void;
-  kbd?: string;
-  delay: number;
-}
-
-function StartCard({ icon, color, title, description, href, onClick, kbd, delay }: StartCardProps) {
-  const colorMap = {
-    violet: "text-violet-400 border-violet-500/20 bg-violet-500/[0.03] hover:border-violet-500/40",
-    emerald: "text-emerald-400 border-emerald-500/20 bg-emerald-500/[0.03] hover:border-emerald-500/40",
-    sky: "text-sky-400 border-sky-500/20 bg-sky-500/[0.03] hover:border-sky-500/40",
-  };
-
-  const content = (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
+    <motion.section
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay }}
-      className={cn(
-        "group flex h-full flex-col gap-4 rounded-2xl border p-5 text-left transition-all",
-        colorMap[color]
-      )}
+      transition={{ duration: 0.3 }}
+      className="flex flex-col items-center gap-7 rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top,rgba(52,211,153,0.10),transparent_55%)] px-6 py-14 text-center"
     >
-      <div className="flex items-start justify-between">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/5 bg-white/5">
-          {icon}
-        </div>
-        {kbd ? (
-          <kbd className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-bold text-zinc-500">
-            {kbd}
-          </kbd>
-        ) : (
-          <ArrowRight size={16} className="text-zinc-600 transition-transform group-hover:translate-x-1" />
-        )}
+      <div className="flex flex-col items-center gap-3">
+        <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-400/80">
+          Welcome to Jorata
+        </span>
+        <h2 className="max-w-xl text-balance text-[26px] font-semibold leading-tight tracking-tight text-zinc-50 sm:text-[32px]">
+          A calm space to map your thinking and turn it into action.
+        </h2>
+        <p className="text-[14px] text-zinc-500">
+          Start with a map — everything connects from there.
+        </p>
       </div>
-      <div className="flex flex-col gap-1">
-        <h4 className="text-[14px] font-semibold text-zinc-100">{title}</h4>
-        <p className="text-[12px] leading-relaxed text-zinc-500">{description}</p>
+
+      <Link
+        href="/mindmap"
+        className="group inline-flex h-12 items-center gap-2.5 rounded-xl bg-emerald-500 px-6 text-[15px] font-semibold text-zinc-950 shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
+      >
+        <Network size={18} />
+        Create your first mind map
+        <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
+      <div className="flex items-center gap-5 text-[13px] text-zinc-500">
+        <Link href="/tasks" className="transition-colors hover:text-zinc-300">
+          Add a task
+        </Link>
+        <span className="h-3 w-px bg-white/10" aria-hidden="true" />
+        <button
+          type="button"
+          onClick={() => setQuickCaptureOpen(true)}
+          className="transition-colors hover:text-zinc-300"
+        >
+          Capture a thought
+        </button>
       </div>
-    </motion.div>
-  );
-
-  if (href) {
-    return <Link href={href} className="h-full">{content}</Link>;
-  }
-
-  return (
-    <button type="button" onClick={onClick} className="h-full">
-      {content}
-    </button>
+    </motion.section>
   );
 }
