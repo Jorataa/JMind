@@ -82,6 +82,27 @@ export const useFocusStore = create<FocusState>()(
     }),
     {
       name: 'jmind:focus',
+      // Persist only data — never the actions. Older builds serialized the whole
+      // state, and JSON.stringify turns the actions object into {} (functions are
+      // dropped). On reload the default merge then clobbered the real actions with
+      // that empty object, so callers like useSessionContinuity hit
+      // "checkNewDay is not a function" and the dashboard crashed.
+      partialize: (state) => ({
+        dailyAnchor: state.dailyAnchor,
+        anchorCompleted: state.anchorCompleted,
+        deepWorkMode: state.deepWorkMode,
+        deepWorkStartedAt: state.deepWorkStartedAt,
+        activeTaskId: state.activeTaskId,
+        lastResetAt: state.lastResetAt,
+        lastReflectionAt: state.lastReflectionAt,
+      }),
+      // Force actions to come from the live store, healing any already-persisted
+      // blob that still carries an empty actions object from an older build.
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as Partial<FocusState>),
+        actions: current.actions,
+      }),
     }
   )
 );
