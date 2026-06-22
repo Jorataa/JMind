@@ -36,7 +36,7 @@ export default function KPIList() {
         <SectionTitle>What you&rsquo;re tracking</SectionTitle>
         <Button size="sm" variant="secondary" onClick={() => setShowForm(true)} className="gap-1.5">
           <Plus size={14} />
-          Add KPI
+          Add Goal
         </Button>
       </div>
 

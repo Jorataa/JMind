@@ -53,7 +53,7 @@ export default function KPICard({ kpi }: { kpi: KPI }) {
             className="h-7 w-7 p-0"
             onClick={() => setIsEditing(true)}
             aria-label={`Edit ${kpi.label}`}
-            title="Edit KPI"
+            title="Edit Goal"
           >
             <Pencil size={14} />
           </Button>
@@ -64,7 +64,7 @@ export default function KPICard({ kpi }: { kpi: KPI }) {
             className="h-7 w-7 p-0"
             onClick={() => removeKPI(kpi.id)}
             aria-label={`Delete ${kpi.label}`}
-            title="Delete KPI"
+            title="Delete Goal"
           >
             <Trash2 size={14} />
           </Button>

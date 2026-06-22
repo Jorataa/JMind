@@ -298,13 +298,13 @@ export default function NodeIntelligenceSidebar() {
 
                   {!isSticky && (
                     <div className="flex flex-col gap-3">
-                      <SectionTitle className="text-[10px]">Linked Metrics</SectionTitle>
+                      <SectionTitle className="text-[10px]">Linked Goals</SectionTitle>
                       <div className="flex flex-col gap-2">
                         {data.linkedKpiIds.length === 0 ? (
-                          <p className="text-[12px] italic text-zinc-600">No KPIs linked yet.</p>
+                          <p className="text-[12px] italic text-zinc-600">No goals linked yet.</p>
                         ) : (
                           data.linkedKpiIds.map((id) => (
-                            <LinkedItem key={id} label={`KPI ${id}`} icon={<Target size={12} />} />
+                            <LinkedItem key={id} label={`Goal ${id}`} icon={<Target size={12} />} />
                           ))
                         )}
                       </div>

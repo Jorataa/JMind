@@ -116,7 +116,7 @@ export default function CommandPalette() {
         { id: "nav-dashboard", section: "Navigation", icon: <LayoutDashboard size={16} />, label: "Go to Dashboard", run: () => router.push("/dashboard") },
         { id: "nav-mindmap", section: "Navigation", icon: <Network size={16} />, label: "Go to Mind Map", run: () => router.push("/mindmap") },
         { id: "nav-tasks", section: "Navigation", icon: <CheckSquare size={16} />, label: "Go to Tasks", run: () => router.push("/tasks") },
-        { id: "nav-kpi", section: "Navigation", icon: <Target size={16} />, label: "Go to KPIs", run: () => router.push("/kpi") },
+        { id: "nav-kpi", section: "Navigation", icon: <Target size={16} />, label: "Go to Goals", run: () => router.push("/kpi") },
       );
       kpis.slice(0, 3).forEach((kpi) => {
         result.push({
@@ -186,7 +186,7 @@ export default function CommandPalette() {
     searchResults.kpis.forEach((kpi) => {
       result.push({
         id: `kpi-${kpi.id}`,
-        section: "KPIs",
+        section: "Goals",
         icon: <Target size={16} />,
         label: kpi.label,
         run: () => router.push("/kpi"),

@@ -45,8 +45,8 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
 
   return (
     <Modal
-      title={kpi ? "Edit KPI" : "Create KPI"}
-      description={kpi ? "Update your performance indicator." : "Set a new target to track."}
+      title={kpi ? "Edit Goal" : "Create Goal"}
+      description={kpi ? "Update your goal." : "Set a new target to track."}
       onClose={onClose}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -102,7 +102,7 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
             Cancel
           </Button>
           <Button type="submit" className="flex-1">
-            {kpi ? "Save Changes" : "Create KPI"}
+            {kpi ? "Save Changes" : "Create Goal"}
           </Button>
         </div>
       </form>
