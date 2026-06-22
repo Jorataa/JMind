@@ -125,7 +125,7 @@ const navItems: NavItem[] = [
   },
   {
     id: "kpi",
-    label: "KPI",
+    label: "Goals",
     href: "/kpi",
     icon: (
       <svg

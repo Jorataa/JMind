@@ -22,7 +22,7 @@ export default function KPIQuickAccess() {
           <Target size={24} />
         </div>
         <div className="flex flex-col gap-1">
-          <p className="text-[14px] font-medium text-zinc-400">No KPIs tracked yet</p>
+          <p className="text-[14px] font-medium text-zinc-400">No goals tracked yet</p>
           <p className="text-[12px] text-zinc-600">Track the numbers that matter to you.</p>
         </div>
         <Link href="/kpi">
@@ -49,7 +49,7 @@ export default function KPIQuickAccess() {
 
               <div className="relative z-10 flex items-center justify-between">
                 <div className="flex flex-col min-w-0">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">{kpi.category || 'Metric'}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">{kpi.category || 'Goal'}</span>
                   <h4 className="text-[14px] font-semibold text-zinc-200 truncate">{kpi.label}</h4>
                   <div className="flex items-center gap-1.5 mt-1">
                     <span className="text-[16px] font-bold text-zinc-50">{kpi.value}</span>

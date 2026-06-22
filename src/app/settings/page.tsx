@@ -239,7 +239,7 @@ export default function SettingsPage() {
               <div className="flex flex-col gap-1">
                 <h4 className="text-[14px] font-semibold text-zinc-200">Export backup</h4>
                 <p className="text-[12px] text-zinc-500">
-                  Download everything — maps, tasks, KPIs, reflections — as a JSON file.
+                  Download everything — maps, tasks, goals, reflections — as a JSON file.
                 </p>
               </div>
               <Button variant="secondary" size="sm" className="gap-2 shrink-0" onClick={handleExport}>

@@ -12,9 +12,9 @@ export default function EmptyKPIState({ onAdd }: { onAdd: () => void }) {
           <circle cx="19" cy="5" r="2" fill="currentColor" />
         </svg>
       }
-      title="Measure what matters"
-      description="A metric is one number you want to move over time."
-      action={<Button onClick={onAdd}>Track your first metric</Button>}
+      title="Track what matters"
+      description="A goal is one number you want to move over time."
+      action={<Button onClick={onAdd}>Add your first goal</Button>}
       footer={
         <div className="flex flex-col items-center gap-2.5">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-600">
