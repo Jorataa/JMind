@@ -10,6 +10,7 @@
     "backgrounds:optimize": "node scripts/optimize-backgrounds.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "@xyflow/react": "^12.11.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",
