@@ -38,7 +38,10 @@ export function getLocalDateKey(date: Date = new Date()): string {
 }
 
 export function formatRelativeTime(date: string | Date): string {
-  const d = typeof date === "string" ? new Date(date) : date;
+  const d = typeof date === "string" ? new Date(date) : date instanceof Date ? date : new Date(NaN);
+  // Guard against missing or malformed timestamps from older/corrupted storage —
+  // a bad value here would otherwise throw and take the whole view down.
+  if (Number.isNaN(d.getTime())) return "";
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
 
