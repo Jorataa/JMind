@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
-import { Panel, useReactFlow } from "@xyflow/react";
+import { Panel, useReactFlow, getNodesBounds, getViewportForBounds } from "@xyflow/react";
 import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
-import { exportToPng } from "@/lib/export";
+import { exportViewportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
 import AiGenerateModal from "@/features/ai/AiGenerateModal";
@@ -17,7 +17,7 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const { addNode, selectNode, toggleSidebar, undo, redo } = useMindMapActions();
-  const { fitView, setCenter } = useReactFlow();
+  const { fitView, setCenter, getNodes } = useReactFlow();
   const [search, setSearch] = useState("");
   const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
 
@@ -51,11 +51,31 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
   }, [fitView]);
 
   const handleExport = useCallback(async () => {
-    const element = document.getElementById("mindmap-canvas");
-    if (element) {
-      await exportToPng(element, `jorata-export-${new Date().getTime()}.png`);
-    }
-  }, []);
+    const viewport = document
+      .getElementById("mindmap-canvas")
+      ?.querySelector<HTMLElement>(".react-flow__viewport");
+    // Frame on the visible nodes, not the collapsed/hidden ones (they aren't
+    // in the DOM, so including them would leave dead space in the export).
+    const visibleNodes = getNodes().filter((node) => !node.hidden);
+    if (!viewport || visibleNodes.length === 0) return;
+
+    const bounds = getNodesBounds(visibleNodes);
+    const aspect = bounds.width / bounds.height || 1;
+    // Tight-but-not-tiny: scale the map's own aspect ratio so the longer side
+    // lands between 900 and 2600px; pixelRatio:2 keeps text crisp on top.
+    const longSide = Math.min(Math.max(bounds.width, bounds.height, 900), 2600);
+    const width = Math.round(aspect >= 1 ? longSide : longSide * aspect);
+    const height = Math.round(aspect >= 1 ? longSide / aspect : longSide);
+    const transform = getViewportForBounds(bounds, width, height, 0.1, 2, 0.14);
+
+    await exportViewportToPng(
+      viewport,
+      width,
+      height,
+      transform,
+      `jorata-export-${Date.now()}.png`,
+    );
+  }, [getNodes]);
 
   return (
     <Panel position="top-left" className="z-10 ml-4 mt-4">
