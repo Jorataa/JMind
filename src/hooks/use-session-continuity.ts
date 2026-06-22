@@ -21,14 +21,14 @@ export function useSessionContinuity() {
       if (dailyAnchor) {
         logActivity(
           'mindset_reflection',
-          `Yesterday's anchor — "${dailyAnchor}" — was ${anchorCompleted ? 'complete' : 'left open'}.`,
+          `Yesterday's focus — "${dailyAnchor}" — was ${anchorCompleted ? 'done' : 'left open'}.`,
           { type: 'daily_summary', anchor: dailyAnchor, completed: anchorCompleted }
         );
 
         addToast(
           anchorCompleted
-            ? "Yesterday's anchor was complete. A fresh day."
-            : "A new day — your anchor is clear.",
+            ? "Yesterday's focus was done. A fresh day."
+            : "A new day — your focus is clear.",
           "info"
         );
       }
@@ -37,7 +37,7 @@ export function useSessionContinuity() {
       setDeepWorkMode(false);
     } else if (!hasAnnouncedResume.current) {
       if (deepWorkMode) {
-        addToast("Deep work is still running.", "info");
+        addToast("Your focus session is still running.", "info");
         hasAnnouncedResume.current = true;
       } else if (activeTaskId) {
         const activeTask = tasks.find(t => t.id === activeTaskId);

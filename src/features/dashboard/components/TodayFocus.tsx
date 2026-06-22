@@ -46,7 +46,7 @@ export default function TodayFocus() {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
-        <SectionTitle>Today&apos;s Focus</SectionTitle>
+        <SectionTitle>Today&apos;s Tasks</SectionTitle>
         <Link href="/tasks">
           <Button variant="ghost" size="sm" className="gap-2 text-zinc-500 hover:text-zinc-200">
             View All Tasks
@@ -76,7 +76,7 @@ export default function TodayFocus() {
                     <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                       <CheckCircle2 size={20} />
                     </div>
-                    <p className="text-[13px] text-zinc-500 font-medium">All objectives met. Clear space for deep thinking.</p>
+                    <p className="text-[13px] text-zinc-500 font-medium">All done for today. Enjoy the clear space.</p>
                   </>
                 )}
               </motion.div>
@@ -153,7 +153,7 @@ export default function TodayFocus() {
               type="text"
               value={newTaskTitle}
               onChange={(e) => setNewTaskTitle(e.target.value)}
-              placeholder="Quick add a focus area..."
+              placeholder="Quick add a task..."
               className="w-full bg-white/[0.03] border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-[13px] text-zinc-200 placeholder:text-zinc-600 outline-none focus:border-emerald-500/20 focus:bg-white/[0.05] transition-all"
             />
           </div>

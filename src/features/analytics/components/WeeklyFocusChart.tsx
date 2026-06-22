@@ -10,7 +10,7 @@ export default function WeeklyFocusChart() {
 
   return (
     <div className="flex flex-col gap-3">
-      <SectionTitle>Weekly Velocity</SectionTitle>
+      <SectionTitle>Tasks Completed This Week</SectionTitle>
       <Card className="p-6">
         <div className="mb-4">
           <p className="text-[13px] text-zinc-400">

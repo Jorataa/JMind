@@ -27,18 +27,18 @@ export default function ReflectionOverlay({ isOpen, onClose }: ReflectionOverlay
 
   const steps = [
     {
-      title: "Impact Check",
+      title: "What Got Done",
       question: "What actually moved forward today?",
       placeholder: "I completed the core logic for the...",
     },
     {
-      title: "Friction Audit",
-      question: "What created the most friction?",
+      title: "What Slowed You Down",
+      question: "What got in your way today?",
       placeholder: "The CSS grid layout was trickier than expected...",
     },
     {
-      title: "Future Intent",
-      question: "What deserves focus tomorrow?",
+      title: "Tomorrow's Plan",
+      question: "What should you focus on tomorrow?",
       placeholder: "Tomorrow I will tackle the...",
     }
   ];
@@ -69,7 +69,7 @@ export default function ReflectionOverlay({ isOpen, onClose }: ReflectionOverlay
                     <Sparkles size={20} />
                   </div>
                   <div>
-                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-400">Momentum Reflection</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-400">Quick Reflection</h3>
                     <p className="text-[14px] font-semibold text-zinc-100">{currentStep.title}</p>
                   </div>
                 </div>
@@ -130,7 +130,7 @@ export default function ReflectionOverlay({ isOpen, onClose }: ReflectionOverlay
             <div className="bg-black/20 border-t border-white/5 px-8 py-4 flex items-center gap-2">
               <MessageSquare size={14} className="text-zinc-600" />
               <p className="text-[11px] font-medium text-zinc-600 italic">
-                Reflection builds emotional attachment and focus clarity.
+                A quick look back helps you stay focused and motivated.
               </p>
             </div>
           </motion.div>

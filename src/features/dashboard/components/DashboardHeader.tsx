@@ -70,7 +70,7 @@ export default function DashboardHeader() {
             className="h-2 w-2 rounded-full bg-emerald-400" 
           />
           <span className="text-[12px] font-bold uppercase tracking-[0.2em] text-emerald-400/80">
-            Thinking space
+            Your workspace
           </span>
         </div>
         
@@ -79,9 +79,9 @@ export default function DashboardHeader() {
             type="button"
             onClick={() => setDailyAnchor(null)}
             className="text-[10px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
-            aria-label="Reset daily anchor"
+            aria-label="Clear today's focus"
           >
-            Reset Anchor
+            Clear Focus
           </button>
         )}
       </div>
@@ -102,7 +102,7 @@ export default function DashboardHeader() {
             <InsightBadge icon={<Zap size={14} />} label={focusBadgeLabel} />
             <div className="h-4 w-px bg-white/10 my-auto" />
             <span className="text-[13px] font-medium text-zinc-500">
-              Current focus: <span className="text-zinc-200">{dailyAnchor ? "Anchor set" : "Open day"}</span>
+              Today&apos;s focus: <span className="text-zinc-200">{dailyAnchor ? "Set" : "Not set yet"}</span>
             </span>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function DashboardHeader() {
           )}>
             <div className="mb-4 flex items-center gap-2">
               <Target size={14} className={anchorCompleted ? "text-emerald-400" : "text-zinc-500"} />
-              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Daily Anchor</span>
+              <span className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Today&apos;s Focus</span>
             </div>
 
             <AnimatePresence mode="wait">
@@ -136,7 +136,7 @@ export default function DashboardHeader() {
                         ? "bg-emerald-500 border-emerald-500 text-zinc-950" 
                         : "border-white/20 text-zinc-500 hover:border-emerald-500/50 hover:text-emerald-500"
                     )}
-                    aria-label={anchorCompleted ? "Mark daily anchor as incomplete" : "Mark daily anchor as complete"}
+                    aria-label={anchorCompleted ? "Mark today's focus as not done" : "Mark today's focus as done"}
                   >
                     {anchorCompleted ? <CheckCircle2 size={18} strokeWidth={2.5} /> : <Circle size={18} strokeWidth={2.5} />}
                   </button>
@@ -163,11 +163,11 @@ export default function DashboardHeader() {
                         autoFocus
                         value={anchorInput}
                         onChange={(e) => setAnchorInput(e.target.value)}
-                        placeholder="What's your anchor for today?"
+                        placeholder="What's your main focus today?"
                         className="w-full bg-transparent text-[18px] font-semibold text-zinc-100 outline-none placeholder:text-zinc-700"
                       />
                       <div className="flex gap-2">
-                        <button type="submit" className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300">Set Anchor</button>
+                        <button type="submit" className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 hover:text-emerald-300">Set Focus</button>
                         <button type="button" onClick={() => setIsEditing(false)} className="text-[11px] font-bold uppercase tracking-widest text-zinc-600 hover:text-zinc-400">Cancel</button>
                       </div>
                     </form>
@@ -176,7 +176,7 @@ export default function DashboardHeader() {
                       onClick={() => setIsEditing(true)}
                       className="group flex flex-col gap-1 text-left"
                     >
-                      <p className="text-[18px] font-semibold text-zinc-600 group-hover:text-zinc-400 transition-colors italic">Define your anchor...</p>
+                      <p className="text-[18px] font-semibold text-zinc-600 group-hover:text-zinc-400 transition-colors italic">Set today&apos;s focus...</p>
                       <span className="text-[11px] font-medium text-zinc-700">Set one thing that makes today a win</span>
                     </button>
                   )}

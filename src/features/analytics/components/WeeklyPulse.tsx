@@ -17,7 +17,7 @@ export default function WeeklyPulse() {
   return (
     <Card className="p-6">
       <div className="mb-6">
-        <SectionTitle>Weekly Pulse</SectionTitle>
+        <SectionTitle>This Week</SectionTitle>
       </div>
 
       <div className="flex items-end gap-3 h-[100px]">
