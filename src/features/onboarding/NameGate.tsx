@@ -79,8 +79,8 @@ export default function NameGate() {
           Welcome to Jorata
         </h2>
         <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
-          Your personal space to think, plan, and execute. What should we call
-          you?
+          Your personal space to think, plan, and get things done. What should
+          we call you?
         </p>
 
         <form

@@ -70,17 +70,17 @@ export default function CommandPalette() {
         id: "deep-work",
         section: "Quick Actions",
         icon: <Zap size={16} className="text-emerald-400" />,
-        label: deepWorkMode ? "End Deep Work Session" : "Start Deep Work Session",
+        label: deepWorkMode ? "End Focus Session" : "Start Focus Session",
         run: () => {
           setDeepWorkMode(!deepWorkMode);
-          addToast(`Deep Work ${!deepWorkMode ? "started" : "ended"}`, "info");
+          addToast(`Focus session ${!deepWorkMode ? "started" : "ended"}`, "info");
         },
       });
       result.push({
         id: "daily-reset",
         section: "Quick Actions",
         icon: <RefreshCw size={16} className="text-sky-400" />,
-        label: "Daily Focus Reset",
+        label: "Reset Today's Focus",
         run: () => {
           resetDaily();
           addToast("Focus reset for a new session", "info");

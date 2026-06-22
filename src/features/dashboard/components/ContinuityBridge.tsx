@@ -41,7 +41,7 @@ export default function ContinuityBridge() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-          Momentum Bridge
+          Pick up where you left off
         </h3>
         <span className="h-px flex-1 mx-4 bg-white/5" />
       </div>
@@ -52,8 +52,8 @@ export default function ContinuityBridge() {
           {deepWorkMode && (
             <ContinuityCard
               icon={<Zap className="text-emerald-400" size={18} />}
-              title="Deep Work Active"
-              description="Your focus sanctuary is still open."
+              title="Focus Session Active"
+              description="Your focus session is still open."
               actionLabel="Resume Session"
               color="emerald"
               onClick={() => beginFocus(activeTask?.id ?? null)}
@@ -76,7 +76,7 @@ export default function ContinuityBridge() {
           {dailyAnchor && !anchorCompleted && !activeTaskId && (
             <ContinuityCard
               icon={<Target className="text-amber-400" size={18} />}
-              title="Daily Objective"
+              title="Today's Focus"
               description={dailyAnchor}
               actionLabel="Focus Now"
               color="amber"
@@ -88,9 +88,9 @@ export default function ContinuityBridge() {
           {inboxItems.length > 0 && (
             <ContinuityCard
               icon={<Inbox className="text-violet-400" size={18} />}
-              title="Unprocessed Thoughts"
+              title="Notes to Sort"
               description={`You have ${inboxItems.length} items in your inbox.`}
-              actionLabel="Process Now"
+              actionLabel="Sort Now"
               color="violet"
               onClick={processInbox}
             />

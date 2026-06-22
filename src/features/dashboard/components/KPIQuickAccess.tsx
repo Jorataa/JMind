@@ -23,7 +23,7 @@ export default function KPIQuickAccess() {
         </div>
         <div className="flex flex-col gap-1">
           <p className="text-[14px] font-medium text-zinc-400">No KPIs tracked yet</p>
-          <p className="text-[12px] text-zinc-600">Metrics turn data into momentum.</p>
+          <p className="text-[12px] text-zinc-600">Track the numbers that matter to you.</p>
         </div>
         <Link href="/kpi">
           <Button variant="secondary" size="sm" className="mt-2">Set Your First Goal</Button>

@@ -56,7 +56,7 @@ export default function KPIForm({ kpi, onClose }: KPIFormProps) {
           required
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          placeholder="e.g. Deep Work Hours"
+          placeholder="e.g. Focus Hours"
         />
 
         <div className="grid grid-cols-2 gap-4">

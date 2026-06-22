@@ -27,10 +27,10 @@ export default function FocusHUD() {
 
   const elapsedSeconds = getElapsedSeconds(deepWorkStartedAt, now);
 
-  const focusTitle = activeTask?.title ?? dailyAnchor ?? "Choose one focused outcome";
+  const focusTitle = activeTask?.title ?? dailyAnchor ?? "Choose one thing to focus on";
   const focusStatus = useMemo(() => {
     if (activeTask) return "Task Focus";
-    if (dailyAnchor) return "Daily Anchor";
+    if (dailyAnchor) return "Today's Focus";
     return "Open Focus";
   }, [activeTask, dailyAnchor]);
 
@@ -59,7 +59,7 @@ export default function FocusHUD() {
                 <Zap size={20} fill="currentColor" />
               </div>
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500/80">Deep Work</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500/80">Focus Session</span>
                 <span className="text-[14px] font-semibold text-zinc-100">Session Active</span>
               </div>
             </div>
