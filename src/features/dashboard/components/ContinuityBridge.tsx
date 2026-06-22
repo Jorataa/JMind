@@ -89,7 +89,7 @@ export default function ContinuityBridge() {
             <ContinuityCard
               icon={<Inbox className="text-violet-400" size={18} />}
               title="Notes to Sort"
-              description={`You have ${inboxItems.length} items in your inbox.`}
+              description={`You have ${inboxItems.length} item${inboxItems.length === 1 ? "" : "s"} in your inbox.`}
               actionLabel="Sort Now"
               color="violet"
               onClick={processInbox}

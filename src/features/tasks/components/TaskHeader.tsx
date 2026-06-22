@@ -12,7 +12,7 @@ export default function TaskHeader({ completedCount, totalCount, progress }: Tas
   return (
     <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-5 sm:flex-row sm:items-center sm:justify-between bg-white/[0.02]">
       <div className="flex flex-col gap-1">
-        <h3 className="text-[16px] font-bold text-zinc-50">Your actions</h3>
+        <h3 className="text-[16px] font-bold text-zinc-50">Your tasks</h3>
         <p className="text-[12px] text-zinc-500 font-medium uppercase tracking-widest">
           {completedCount} / {totalCount} done
         </p>

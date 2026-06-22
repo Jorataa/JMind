@@ -22,7 +22,7 @@ export default function TaskPanel() {
 
   return (
     <div className="flex flex-col gap-6">
-      <TaskToolbar />
+      {tasks.length > 0 && <TaskToolbar />}
 
       <Card className="p-0 overflow-hidden border-white/5 bg-zinc-900/50 shadow-2xl">
         <TaskHeader 

@@ -32,7 +32,7 @@ export default function TaskForm() {
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="Define next action..."
+        placeholder="Add a task..."
         className="h-10 rounded-xl border border-white/10 bg-zinc-950/50 px-4 text-[13px] text-zinc-100 outline-none transition-all placeholder:text-zinc-600 focus:border-emerald-400/30 focus:ring-2 focus:ring-emerald-400/5"
       />
       <input
@@ -61,7 +61,7 @@ export default function TaskForm() {
         <option value="low">Low Energy</option>
       </select>
       <Button type="submit" className="h-10 px-6 font-bold uppercase tracking-widest text-[11px]">
-        Add Action
+        Add Task
       </Button>
     </form>
   );
