@@ -37,6 +37,14 @@ export const useInboxStore = create<InboxState>()(
     }),
     {
       name: 'jmind:inbox',
+      // Persist only the items — never the actions (see use-focus-store for why
+      // a serialized actions object wipes the real ones on reload).
+      partialize: (state) => ({ items: state.items }),
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as Partial<InboxState>),
+        actions: current.actions,
+      }),
     }
   )
 );
