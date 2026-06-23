@@ -12,6 +12,12 @@
 
 const GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
 
+// Transient 5xx retry tuning. Kept small so a serverless request stays snappy.
+const MAX_ATTEMPTS_PER_MODEL = 3;
+const RETRY_BACKOFF_MS = 600;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /** A Gemini failure that already carries the HTTP status a route should return. */
 export class GeminiError extends Error {
   status: number;
@@ -81,40 +87,53 @@ export async function callGemini({
   let lastError: GeminiError | null = null;
 
   for (const model of models) {
-    const response = await fetch(`${GEMINI_ENDPOINT}/${model}:generateContent`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body,
-    });
+    // Gemini's free tier frequently returns transient 5xx ("model overloaded",
+    // "internal error"). Retry the same model a couple of times with backoff
+    // before falling through to the next model — most blips clear in ~1s.
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_MODEL; attempt++) {
+      const response = await fetch(`${GEMINI_ENDPOINT}/${model}:generateContent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body,
+      });
 
-    // Any failure on one model — 404 (not available to this key/region), or a
-    // 5xx (overloaded/internal) — should fall through to the NEXT model in the
-    // list rather than killing the request. That's the whole point of passing a
-    // fallback list; we only give up once every model has failed.
-    if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json();
+        const text: string | undefined =
+          data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) return text;
+        // Empty completion (safety block / token cutoff) — try the next model.
+        lastError = new GeminiError("The AI didn't return a response.", 502);
+        break;
+      }
+
       const detail = await response.text();
-      console.error("[Jorata AI] Gemini error:", response.status, "model:", model, detail);
+      console.error(
+        "[Jorata AI] Gemini error:",
+        response.status,
+        "model:",
+        model,
+        "attempt:",
+        attempt,
+        detail,
+      );
+
+      // 5xx = transient server-side error → wait and retry the same model.
+      if (response.status >= 500 && attempt < MAX_ATTEMPTS_PER_MODEL) {
+        lastError = new GeminiError("The AI service is unavailable right now.", 502);
+        await sleep(RETRY_BACKOFF_MS * attempt);
+        continue;
+      }
+
+      // 404 (model unavailable) or exhausted retries → fall through to next model.
       lastError = new GeminiError(
         response.status === 404
           ? `Model "${model}" is unavailable.`
           : "The AI service is unavailable right now.",
         502,
       );
-      continue;
+      break;
     }
-
-    const data = await response.json();
-    const text: string | undefined =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
-    if (!text) {
-      // Empty completion (safety block or token cutoff) — try the next model
-      // before giving up.
-      lastError = new GeminiError("The AI didn't return a response.", 502);
-      continue;
-    }
-
-    return text;
   }
 
   throw lastError ?? new GeminiError("No usable AI model was found.", 502);

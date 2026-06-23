@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { callGemini, GeminiError } from "@/lib/gemini";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata AI — server-side Gemini bridge.
@@ -6,15 +7,14 @@ import { NextResponse } from "next/server";
 // WHY this lives on the server: the Gemini API key is a secret. If we called
 // Gemini from the browser, anyone could open DevTools and steal the key. This
 // route runs only on the server (Vercel), so the key never reaches the client.
+//
+// The actual Gemini call goes through callGemini() (src/lib/gemini.ts), which
+// adds transient-5xx retry with backoff and model fallback — so a momentary
+// "model overloaded" from Google's free tier self-heals instead of erroring.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// The Gemini model. Kept as ONE constant so it's a one-line change later.
-// NOTE: the original spec asked for "gemini-1.5-flash", but Google retired the
-// 1.5 series in Sept 2025 — it now returns 404. "gemini-2.5-flash" is the
-// current FREE-tier replacement.
-const GEMINI_MODEL = "gemini-2.5-flash";
-
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// Models to try in order: the proven flash, then lite as a fallback.
+const CHAT_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 // Two personalities, picked based on what the client asked for.
 const CHAT_SYSTEM_PROMPT =
@@ -93,55 +93,18 @@ export async function POST(request: Request) {
   const systemPrompt = isMindMapMode ? buildMindMapPrompt(nodes) : CHAT_SYSTEM_PROMPT;
 
   try {
-    const response = await fetch(GEMINI_URL, {
-      method: "POST",
-      // Send the key as a header instead of a `?key=` query param so it can't
-      // leak into any URL/access log along the request path.
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: userMessage }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        generationConfig: {
-          maxOutputTokens: 2048,
-          temperature: 0.7,
-          // gemini-2.5-flash "thinks" before replying, and those hidden
-          // thinking tokens count against maxOutputTokens. Left on, longer
-          // answers get truncated (finishReason: MAX_TOKENS) or come back
-          // empty. This is a fast chat helper, so switch thinking off for
-          // complete, snappy replies.
-          thinkingConfig: { thinkingBudget: 0 },
-        },
-      }),
+    const reply = await callGemini({
+      system: systemPrompt,
+      user: userMessage,
+      models: CHAT_MODELS,
+      maxOutputTokens: 2048,
+      temperature: 0.7,
     });
-
-    if (!response.ok) {
-      // Surface Gemini's own message in the server log; keep the client message
-      // friendly and non-leaky.
-      const detail = await response.text();
-      console.error("[Jorata AI] Gemini error:", response.status, detail);
-      return NextResponse.json(
-        { error: "The AI service is unavailable right now. Please try again." },
-        { status: 502 }
-      );
-    }
-
-    const data = await response.json();
-    const reply: string | undefined =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-
-    if (!reply) {
-      // Empty completions usually mean a safety block or token cutoff.
-      return NextResponse.json(
-        { error: "The AI didn't return a response. Try rephrasing." },
-        { status: 502 }
-      );
-    }
-
     return NextResponse.json({ reply });
   } catch (error) {
+    if (error instanceof GeminiError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error("[Jorata AI] Request failed:", error);
     return NextResponse.json(
       { error: "Couldn't reach the AI service. Check your connection and try again." },
