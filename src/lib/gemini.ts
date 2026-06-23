@@ -87,16 +87,20 @@ export async function callGemini({
       body,
     });
 
-    // Model not available to this key/region — try the next one in the list.
-    if (response.status === 404) {
-      lastError = new GeminiError(`Model "${model}" is unavailable.`, 502);
-      continue;
-    }
-
+    // Any failure on one model — 404 (not available to this key/region), or a
+    // 5xx (overloaded/internal) — should fall through to the NEXT model in the
+    // list rather than killing the request. That's the whole point of passing a
+    // fallback list; we only give up once every model has failed.
     if (!response.ok) {
       const detail = await response.text();
-      console.error("[Jorata AI] Gemini error:", response.status, detail);
-      throw new GeminiError("The AI service is unavailable right now.", 502);
+      console.error("[Jorata AI] Gemini error:", response.status, "model:", model, detail);
+      lastError = new GeminiError(
+        response.status === 404
+          ? `Model "${model}" is unavailable.`
+          : "The AI service is unavailable right now.",
+        502,
+      );
+      continue;
     }
 
     const data = await response.json();
@@ -104,8 +108,10 @@ export async function callGemini({
       data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
 
     if (!text) {
-      // Usually a safety block or a token cutoff.
-      throw new GeminiError("The AI didn't return a response.", 502);
+      // Empty completion (safety block or token cutoff) — try the next model
+      // before giving up.
+      lastError = new GeminiError("The AI didn't return a response.", 502);
+      continue;
     }
 
     return text;

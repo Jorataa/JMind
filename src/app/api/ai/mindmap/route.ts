@@ -11,8 +11,10 @@ import { normalizeAiTree } from "@/lib/mindmap-ai";
 
 const MAX_PROMPT_CHARS = 200;
 
-// Prefer the cheaper/faster lite model; fall back to flash if it's unavailable.
-const GENERATION_MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
+// Lead with gemini-2.5-flash — the same model the chat route uses successfully.
+// gemini-2.5-flash-lite stays as a secondary fallback (callGemini now falls
+// through to it on any error, not just a 404).
+const GENERATION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 const SYSTEM_PROMPT = `You are an expert mind map generator.
 Return ONLY valid JSON.
@@ -30,12 +32,23 @@ Rules:
 Return an object of this exact shape:
 { "title": "", "children": [ { "title": "", "children": [] } ] }`;
 
-/** Strips a ```json … ``` fence if the model wraps its JSON despite instructions. */
+/**
+ * Pulls the JSON object out of the model's reply. Strips a ```json … ``` fence
+ * if present, then — as a belt-and-braces step for when the model adds a stray
+ * sentence around the JSON — slices to the outermost { … } before parsing.
+ */
 function parseJson(text: string): unknown {
-  const cleaned = text
+  let cleaned = text
     .replace(/^```(?:json)?/i, "")
     .replace(/```$/i, "")
     .trim();
+
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first !== -1 && last > first) {
+    cleaned = cleaned.slice(first, last + 1);
+  }
+
   return JSON.parse(cleaned);
 }
 
@@ -59,11 +72,14 @@ export async function POST(request: Request) {
   }
 
   try {
+    // No responseMimeType:json — we send the exact request shape as the working
+    // chat route and lean on the strict prompt + parseJson() to extract the
+    // object. (Forcing JSON mode was a second variable that differed from the
+    // route that works.)
     const raw = await callGemini({
       system: SYSTEM_PROMPT,
       user: `Topic:\n${prompt}`,
       models: GENERATION_MODELS,
-      json: true,
       temperature: 0.6,
     });
 

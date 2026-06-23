@@ -13,7 +13,9 @@ import { normalizeAiTree, childTitles } from "@/lib/mindmap-ai";
 
 const MAX_TITLE_CHARS = 200;
 
-const EXPANSION_MODELS = ["gemini-2.5-flash-lite", "gemini-2.5-flash"];
+// Lead with the proven gemini-2.5-flash; lite stays as a fallback (callGemini
+// now falls through to it on any error, not just a 404).
+const EXPANSION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 const SYSTEM_PROMPT = `You are an expert mind map generator expanding ONE node of an existing mind map.
 Return ONLY valid JSON.
@@ -30,10 +32,18 @@ Return an object of this exact shape:
 { "title": "", "children": [ { "title": "", "children": [] } ] }`;
 
 function parseJson(text: string): unknown {
-  const cleaned = text
+  let cleaned = text
     .replace(/^```(?:json)?/i, "")
     .replace(/```$/i, "")
     .trim();
+
+  // Slice to the outermost { … } in case the model adds stray prose.
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first !== -1 && last > first) {
+    cleaned = cleaned.slice(first, last + 1);
+  }
+
   return JSON.parse(cleaned);
 }
 
@@ -60,7 +70,6 @@ export async function POST(request: Request) {
       system: SYSTEM_PROMPT,
       user: userPrompt,
       models: EXPANSION_MODELS,
-      json: true,
       temperature: 0.7,
     });
 
