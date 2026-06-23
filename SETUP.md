@@ -30,20 +30,20 @@ Estimated time: ~10 minutes.
 2. Pick a name, a strong database password, and a region close to your users.
 3. Wait for it to finish provisioning.
 
-## 2. Configure auth (magic links)
+## 2. Configure auth (email + password)
+
+Sign-in is **email + password** — no emails are sent during normal use, so there
+are no rate limits or magic-link round-trips.
 
 1. **Authentication → Sign In / Providers → Email**: ensure **Email** is enabled.
-   Magic links work out of the box — no password required. (You may turn off
-   "Confirm email" if you want the very first link to also act as confirmation.)
-2. **Authentication → URL Configuration**:
-   - Set **Site URL** to where the app runs (e.g. `http://localhost:3000` for local
-     dev, or your production URL).
-   - Add the same URL(s) under **Redirect URLs**. The magic link returns the user
-     to this origin, where the app finishes sign-in client-side.
+2. **Turn OFF "Confirm email"** (same Email provider panel). This lets a new
+   account sign in immediately after choosing a password, with no email step at
+   all. If you leave it ON, new users must click a confirmation link once before
+   they can sign in (and you'll hit the built-in email rate limit) — turning it
+   off is strongly recommended for this app.
 
-> The app uses the **implicit (hash) auth flow** with `detectSessionInUrl`, so the
-> magic link resolves entirely in the browser — there is no server callback route
-> to deploy.
+> No **Redirect URLs** or **Site URL** changes are needed — password auth never
+> leaves the app, so there is no server callback route to deploy.
 
 ## 3. Create the tables + RLS policies
 
@@ -115,11 +115,11 @@ Restart `npm run dev` (env vars are read at build/boot).
 
 ## 6. Verify
 
-1. Open **Settings → Cloud Sync** → enter your email → **Send magic link**.
-2. Open the link from your inbox on the same device → you're signed in.
-3. Create a task / node, then open the app on a second device and sign in with the
-   same email → your data appears.
-4. On a device that already had local work, the first sign-in shows a one-time
+1. Open **Settings → Cloud Sync** → **Create an account** with an email + password.
+   (With "Confirm email" off, you're signed in instantly.)
+2. Create a task / node, then open the app on a second device and **Sign in** with
+   the same email + password → your data appears.
+3. On a device that already had local work, the first sign-in shows a one-time
    **Keep / Use synced / Merge** prompt before anything is combined.
 
 ---
@@ -143,7 +143,7 @@ Restart `npm run dev` (env vars are read at build/boot).
 
 This was built and type-checked/built green in a sandbox **without network access
 to Supabase**, so the end-to-end auth + database round-trip must be verified by the
-owner against a real project. Specifically confirm: magic-link delivery and
-redirect, the RLS policies (a second account must NOT see your row), realtime
-propagation, and the first-run reconcile prompt. The local-first path (no env vars)
-is fully exercised by `npm run build` and needs no Supabase.
+owner against a real project. Specifically confirm: email + password sign-up/sign-in,
+the RLS policies (a second account must NOT see your row), realtime propagation, and
+the first-run reconcile prompt. The local-first path (no env vars) is fully exercised
+by `npm run build` and needs no Supabase.

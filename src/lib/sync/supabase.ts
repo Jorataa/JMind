@@ -47,10 +47,10 @@ let client: SyncClient | null = null;
 
 /**
  * Lazily builds the browser Supabase client. Returns null when sync isn't
- * configured so callers can no-op cleanly. We use the implicit (hash) auth flow
- * with `detectSessionInUrl` so magic links resolve entirely client-side — no
- * server callback route is required, which keeps this app deployable as a pure
- * static/SPA-style front end.
+ * configured so callers can no-op cleanly. Auth is email + password, so the
+ * session is simply persisted to localStorage and refreshed automatically —
+ * no email round-trip or redirect handling required, which keeps this app
+ * deployable as a pure static/SPA-style front end.
  */
 export function getSupabaseClient(): SyncClient | null {
   if (!isSyncConfigured() || typeof window === "undefined") return null;
@@ -59,8 +59,6 @@ export function getSupabaseClient(): SyncClient | null {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
-        flowType: "implicit",
         storageKey: "jmind:sync:auth",
       },
     });

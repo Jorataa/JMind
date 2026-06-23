@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { SectionTitle } from "@/components/ui/SectionTitle";
 import { isSyncConfigured } from "@/lib/sync/supabase";
-import { signInWithEmail, signOut } from "@/lib/sync/sync-engine";
+import { signInWithPassword, signUpWithPassword, signOut } from "@/lib/sync/sync-engine";
 import {
   useLastSyncedAt,
   useSyncError,
@@ -42,40 +42,55 @@ function SyncBody() {
 }
 
 function SignedOut() {
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmSent, setConfirmSent] = useState(false);
 
-  const valid = EMAIL_RE.test(email.trim());
+  const valid = EMAIL_RE.test(email.trim()) && password.length >= 6;
 
-  const handleSend = async () => {
+  const handleSubmit = async () => {
     if (!valid || busy) return;
     setBusy(true);
     setError(null);
-    const { error } = await signInWithEmail(email.trim());
-    setBusy(false);
-    if (error) setError(error);
-    else setSent(true);
+    if (mode === "signup") {
+      const { error, needsConfirmation } = await signUpWithPassword(email.trim(), password);
+      setBusy(false);
+      if (error) {
+        setError(error);
+        return;
+      }
+      if (needsConfirmation) setConfirmSent(true);
+      // Otherwise the auth listener signs us in automatically — nothing to do.
+    } else {
+      const { error } = await signInWithPassword(email.trim(), password);
+      setBusy(false);
+      if (error) setError(error);
+    }
   };
 
-  if (sent) {
+  if (confirmSent) {
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-emerald-400">
           <Mail size={16} />
-          <h4 className="text-[14px] font-semibold">Check your email</h4>
+          <h4 className="text-[14px] font-semibold">Confirm your email to finish</h4>
         </div>
         <p className="text-[12px] leading-relaxed text-zinc-500">
-          We sent a magic sign-in link to <span className="text-zinc-300">{email.trim()}</span>.
-          Open it on this device to finish turning on Sync. You can keep working in the
-          meantime — nothing here changes until you sign in.
+          We sent a confirmation link to <span className="text-zinc-300">{email.trim()}</span>.
+          Open it once, then come back and sign in. (Tip: the owner can disable email
+          confirmation in Supabase to skip this step entirely.)
         </p>
         <button
-          onClick={() => setSent(false)}
+          onClick={() => {
+            setConfirmSent(false);
+            setMode("signin");
+          }}
           className="self-start text-[12px] text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
         >
-          Use a different email
+          Back to sign in
         </button>
       </div>
     );
@@ -88,14 +103,13 @@ function SignedOut() {
         <p className="text-[12px] leading-relaxed text-zinc-500">
           Your data stays on this device by default. Turn on Sync to securely back it up and
           use the same maps, tasks, goals and reflections on every device you sign in on.
-          We&apos;ll email you a magic link — no password to remember.
         </p>
       </div>
       <form
-        className="flex flex-col gap-2 sm:flex-row sm:items-start"
+        className="flex flex-col gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          void handleSend();
+          void handleSubmit();
         }}
       >
         <input
@@ -107,12 +121,38 @@ function SignedOut() {
           aria-label="Email address"
           className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[14px] text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30 sm:max-w-xs"
         />
-        <Button type="submit" size="md" disabled={!valid || busy} className="shrink-0 gap-2">
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password (at least 6 characters)"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          aria-label="Password"
+          className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[14px] text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30 sm:max-w-xs"
+        />
+        <Button type="submit" size="md" disabled={!valid || busy} className="shrink-0 gap-2 sm:max-w-xs">
           <Cloud size={14} />
-          {busy ? "Sending…" : "Send magic link"}
+          {busy
+            ? mode === "signup"
+              ? "Creating account…"
+              : "Signing in…"
+            : mode === "signup"
+              ? "Create account & turn on Sync"
+              : "Sign in & turn on Sync"}
         </Button>
       </form>
       {error && <p className="text-[12px] text-rose-400">{error}</p>}
+      <button
+        onClick={() => {
+          setMode((m) => (m === "signin" ? "signup" : "signin"));
+          setError(null);
+        }}
+        className="self-start text-[12px] text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
+      >
+        {mode === "signin"
+          ? "New here? Create an account"
+          : "Already have an account? Sign in"}
+      </button>
     </div>
   );
 }

@@ -73,15 +73,32 @@ export function isSyncAvailable(): boolean {
   return isSyncConfigured();
 }
 
-/** Send the magic link. Carries the visitor's display name through the redirect. */
-export async function signInWithEmail(email: string): Promise<{ error: string | null }> {
+/** Sign in with an existing email + password. */
+export async function signInWithPassword(
+  email: string,
+  password: string,
+): Promise<{ error: string | null }> {
   const supabase = getSupabaseClient();
   if (!supabase) return { error: "Sync is not configured." };
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.origin },
-  });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   return { error: error?.message ?? null };
+}
+
+/**
+ * Create a new account with email + password. When the owner has disabled email
+ * confirmation (recommended — see SETUP.md), Supabase returns a session right
+ * away and `onAuthStateChange` signs the user in with no email round-trip. If
+ * confirmation is still on, no session comes back and we surface that so the UI
+ * can tell the user to check their inbox.
+ */
+export async function signUpWithPassword(
+  email: string,
+  password: string,
+): Promise<{ error: string | null; needsConfirmation: boolean }> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return { error: "Sync is not configured.", needsConfirmation: false };
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  return { error: error?.message ?? null, needsConfirmation: !error && !data.session };
 }
 
 /** Sign out, leaving all local data on the device exactly as-is. */
