@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence, type Transition } from "framer-motion";
 import { X, Send, Sparkles, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import AiMessage from "./AiMessage";
 import { useAiChat } from "./useAiChat";
+import { getVisitorId } from "@/lib/visitor-log";
 
 const panelTransition: Transition = { type: "spring", stiffness: 300, damping: 30 };
 
@@ -31,6 +32,26 @@ export default function AiChat({ mindMapNodes, open, onClose }: AiChatProps) {
     sendMessage(input);
     setInput("");
   };
+
+  // Fire-and-forget POST to our /api/ai-feedback route. Derives the question
+  // from the message immediately before the AI reply in the list.
+  const handleFeedback = useCallback(
+    (messageIndex: number, rating: "up" | "down") => {
+      const reply = messages[messageIndex]?.text ?? "";
+      const question =
+        messageIndex > 0 && messages[messageIndex - 1]?.role === "user"
+          ? messages[messageIndex - 1].text
+          : "";
+
+      void fetch("/api/ai-feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, reply, rating, visitorId: getVisitorId() }),
+        keepalive: true,
+      }).catch(() => {/* non-critical — never surface to user */});
+    },
+    [messages]
+  );
 
   const hasNodes = mindMapNodes.some((title) => title.trim().length > 0);
   const isEmpty = messages.length === 0 && !isLoading;
@@ -70,8 +91,16 @@ export default function AiChat({ mindMapNodes, open, onClose }: AiChatProps) {
               </div>
             )}
 
-            {messages.map((message) => (
-              <AiMessage key={message.id} message={message} />
+            {messages.map((message, index) => (
+              <AiMessage
+                key={message.id}
+                message={message}
+                onFeedback={
+                  message.role === "ai"
+                    ? (rating) => handleFeedback(index, rating)
+                    : undefined
+                }
+              />
             ))}
 
             {isLoading && (

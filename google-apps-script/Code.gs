@@ -1,18 +1,20 @@
 /**
- * Jorata — Visitor Log (Google Apps Script Web App)
+ * Jorata — Visitor Log + AI Feedback (Google Apps Script Web App)
  * ------------------------------------------------------------------
- * Appends one row per visit to the bound Google Sheet. Deploy this as a Web App
- * and put its /exec URL into Vercel as GSHEET_WEBHOOK_URL. See SETUP-VISITOR-LOG.md.
+ * Routes incoming rows to one of two sheet tabs:
+ *   • "Visitors"    — join/visit events from the name gate
+ *   • "AI Feedback" — thumbs-up / thumbs-down on AI replies
  *
- * If you set a SECRET below, also set GSHEET_TOKEN to the same value in Vercel —
- * requests without a matching token are rejected (stops randoms spamming rows).
- * Leave SECRET = "" to disable the check.
+ * Deploy as a Web App (Execute as: Me, Who has access: Anyone) and put
+ * its /exec URL into Vercel as GSHEET_WEBHOOK_URL. See SETUP-VISITOR-LOG.md.
+ *
+ * If you set a SECRET below, also set GSHEET_TOKEN in Vercel — requests
+ * without a matching token are rejected. Leave SECRET = "" to disable.
  */
 
 var SECRET = ""; // e.g. "a-long-random-string"; must equal GSHEET_TOKEN in Vercel.
 
-// Column order written to the sheet. Edit freely — the header auto-syncs.
-var HEADERS = [
+var VISITOR_HEADERS = [
   "Timestamp",
   "Event",
   "Name",
@@ -28,6 +30,32 @@ var HEADERS = [
   "IP",
 ];
 
+var FEEDBACK_HEADERS = [
+  "Timestamp",
+  "Rating",
+  "Question",
+  "Reply",
+  "Visitor ID",
+  "Country",
+  "Device",
+  "IP",
+];
+
+/** Returns the named sheet, creating it with a bold frozen header if missing. */
+function getOrCreateSheet(name, headers) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+  }
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+    sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold");
+    sheet.setFrozenRows(1);
+  }
+  return sheet;
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
@@ -36,30 +64,36 @@ function doPost(e) {
       return json_({ ok: false, error: "unauthorized" });
     }
 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-
-    // First write: lay down a bold, frozen header row so the sheet reads cleanly.
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(HEADERS);
-      sheet.getRange(1, 1, 1, HEADERS.length).setFontWeight("bold");
-      sheet.setFrozenRows(1);
+    if (data.type === "ai_feedback") {
+      var fbSheet = getOrCreateSheet("AI Feedback", FEEDBACK_HEADERS);
+      fbSheet.appendRow([
+        data.timestamp || new Date().toISOString(),
+        data.rating || "",
+        data.question || "",
+        data.reply || "",
+        data.visitorId || "",
+        data.country || "",
+        data.userAgent || "",
+        data.ip || "",
+      ]);
+    } else {
+      var visitorSheet = getOrCreateSheet("Visitors", VISITOR_HEADERS);
+      visitorSheet.appendRow([
+        data.timestamp || new Date().toISOString(),
+        data.event || "",
+        data.name || "",
+        data.visitorId || "",
+        data.country || "",
+        data.city || "",
+        data.region || "",
+        data.timeZone || "",
+        data.language || "",
+        data.path || "",
+        data.referrer || "",
+        data.userAgent || "",
+        data.ip || "",
+      ]);
     }
-
-    sheet.appendRow([
-      data.timestamp || new Date().toISOString(),
-      data.event || "",
-      data.name || "",
-      data.visitorId || "",
-      data.country || "",
-      data.city || "",
-      data.region || "",
-      data.timeZone || "",
-      data.language || "",
-      data.path || "",
-      data.referrer || "",
-      data.userAgent || "",
-      data.ip || "",
-    ]);
 
     return json_({ ok: true });
   } catch (err) {
