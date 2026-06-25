@@ -427,8 +427,8 @@ function MindMapFlow() {
                       transition={{ duration: 0.3 }}
                       className="flex select-none flex-col items-center gap-4 rounded-3xl border border-white/5 bg-zinc-900/60 p-6 backdrop-blur-xl shadow-2xl"
                     >
-                      <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                        Quick Start
+                      <p className="text-[14px] font-semibold text-zinc-200">
+                        Double-click anywhere to add your first idea
                       </p>
                       <div className="hidden items-center gap-6 sm:flex">
                         <EmptyHint keyName="2× Click" action="New idea" />
@@ -440,8 +440,8 @@ function MindMapFlow() {
                         <EmptyHint keyName="Enter" action="Rename" />
                       </div>
                       <p className="text-center text-[12px] font-medium text-zinc-400 sm:hidden">
-                        Tap <span className="font-semibold text-emerald-400">+ Idea</span> to begin
-                        <span className="mt-1 block text-zinc-500">double-tap a node to rename</span>
+                        Tap <span className="font-semibold text-emerald-400">+ Idea</span> to add your first idea
+                        <span className="mt-1 block text-zinc-500">double-tap a node to rename it</span>
                       </p>
                     </motion.div>
                   </div>

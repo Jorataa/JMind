@@ -25,12 +25,14 @@ export default function TaskPanel() {
       {tasks.length > 0 && <TaskToolbar />}
 
       <Card className="p-0 overflow-hidden border-white/5 bg-zinc-900/50 shadow-2xl">
-        <TaskHeader 
-          completedCount={completedCount} 
-          totalCount={tasks.length} 
-          progress={progress} 
-        />
-        
+        {tasks.length > 0 && (
+          <TaskHeader
+            completedCount={completedCount}
+            totalCount={tasks.length}
+            progress={progress}
+          />
+        )}
+
         <TaskForm />
 
         <TaskList />
