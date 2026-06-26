@@ -49,7 +49,7 @@ function SignedOut() {
   const [error, setError] = useState<string | null>(null);
   const [confirmSent, setConfirmSent] = useState(false);
 
-  const valid = EMAIL_RE.test(email.trim()) && password.length >= 6;
+  const valid = EMAIL_RE.test(email.trim()) && password.length >= 8;
 
   const handleSubmit = async () => {
     if (!valid || busy) return;
@@ -125,7 +125,7 @@ function SignedOut() {
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password (at least 6 characters)"
+          placeholder="Password (at least 8 characters)"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           aria-label="Password"
           className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[14px] text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30 sm:max-w-xs"

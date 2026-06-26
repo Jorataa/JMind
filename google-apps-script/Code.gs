@@ -4,12 +4,14 @@
  * Appends one row per visit to the bound Google Sheet. Deploy this as a Web App
  * and put its /exec URL into Vercel as GSHEET_WEBHOOK_URL. See SETUP-VISITOR-LOG.md.
  *
- * If you set a SECRET below, also set GSHEET_TOKEN to the same value in Vercel —
- * requests without a matching token are rejected (stops randoms spamming rows).
- * Leave SECRET = "" to disable the check.
+ * SECURITY: Set SECRET to a long random string (e.g. from
+ * https://generate.plus/en/base64?len=32) AND set GSHEET_TOKEN to the same
+ * value in Vercel's Environment Variables. Requests without a matching token
+ * are rejected, preventing anyone who discovers the /exec URL from spamming
+ * your sheet. Leaving SECRET empty disables this check — NOT recommended.
  */
 
-var SECRET = ""; // e.g. "a-long-random-string"; must equal GSHEET_TOKEN in Vercel.
+var SECRET = ""; // REQUIRED: set to a long random string; match GSHEET_TOKEN in Vercel.
 
 // Column order written to the sheet. Edit freely — the header auto-syncs.
 var HEADERS = [
@@ -28,11 +30,22 @@ var HEADERS = [
   "IP",
 ];
 
+/**
+ * Prefix any value that starts with =, +, -, or @ with a single quote so
+ * Google Sheets treats it as plain text rather than a formula. This prevents
+ * formula-injection attacks via crafted visitor names, referrers, etc.
+ */
+function sanitizeCell_(value) {
+  var s = String(value || "");
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
 
     if (SECRET && data.token !== SECRET) {
+      // Do not reveal the expected token or any details.
       return json_({ ok: false, error: "unauthorized" });
     }
 
@@ -45,25 +58,29 @@ function doPost(e) {
       sheet.setFrozenRows(1);
     }
 
+    // Sanitize every user-supplied field against formula injection before
+    // writing. A value like =IMPORTXML(...) would otherwise execute as a
+    // spreadsheet formula when the sheet owner opens the file.
     sheet.appendRow([
       data.timestamp || new Date().toISOString(),
-      data.event || "",
-      data.name || "",
-      data.visitorId || "",
-      data.country || "",
-      data.city || "",
-      data.region || "",
-      data.timeZone || "",
-      data.language || "",
-      data.path || "",
-      data.referrer || "",
-      data.userAgent || "",
-      data.ip || "",
+      sanitizeCell_(data.event),
+      sanitizeCell_(data.name),
+      sanitizeCell_(data.visitorId),
+      sanitizeCell_(data.country),
+      sanitizeCell_(data.city),
+      sanitizeCell_(data.region),
+      sanitizeCell_(data.timeZone),
+      sanitizeCell_(data.language),
+      sanitizeCell_(data.path),
+      sanitizeCell_(data.referrer),
+      sanitizeCell_(data.userAgent),
+      sanitizeCell_(data.ip),
     ]);
 
     return json_({ ok: true });
   } catch (err) {
-    return json_({ ok: false, error: String(err) });
+    // Don't echo back the raw error — it could reveal sheet structure.
+    return json_({ ok: false, error: "internal error" });
   }
 }
 

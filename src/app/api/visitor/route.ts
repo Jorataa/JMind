@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// 5 visitor-log events per IP per minute: enough for legitimate page navigation,
+// too low to be useful for flooding the Google Sheet with fake rows.
+const limiter = createRateLimiter({ limit: 5, windowMs: 60_000 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata visitor log — server-side bridge to a Google Sheet.
@@ -21,6 +26,27 @@ const MAX_FIELD = 300;
 const clean = (value: unknown, max: number) =>
   String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
+/**
+ * Decode a percent-encoded header value safely. `decodeURIComponent` throws a
+ * URIError on malformed sequences (e.g. `%ZZ`); swallow that so a bad header
+ * never turns into an unhandled 500.
+ */
+const safeDecode = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value; // return the raw value rather than crashing
+  }
+};
+
+/**
+ * Neutralise Google Sheets formula injection. Values that start with =, +, -,
+ * or @ are interpreted as formulas when pasted/appended to a sheet. Prepend a
+ * tab so Sheets treats the cell as plain text instead.
+ */
+const sanitizeForSheet = (value: string): string =>
+  /^[=+\-@]/.test(value) ? `\t${value}` : value;
+
 interface VisitorBody {
   event?: string;
   name?: string;
@@ -32,6 +58,13 @@ interface VisitorBody {
 }
 
 export async function POST(request: Request) {
+  const { success } = limiter.check(getClientIp(request));
+  if (!success) {
+    // Silently succeed from the client's perspective — analytics is non-critical
+    // and we don't want to surface rate-limit errors in the UI.
+    return NextResponse.json({ ok: true, logged: false });
+  }
+
   const webhookUrl = process.env.GSHEET_WEBHOOK_URL;
 
   let body: VisitorBody;
@@ -52,17 +85,19 @@ export async function POST(request: Request) {
   const entry = {
     timestamp: new Date().toISOString(),
     event,
-    name,
-    visitorId: clean(body.visitorId, MAX_FIELD),
-    country: clean(h.get("x-vercel-ip-country"), MAX_FIELD),
-    city: decodeURIComponent(clean(h.get("x-vercel-ip-city"), MAX_FIELD)),
-    region: clean(h.get("x-vercel-ip-country-region"), MAX_FIELD),
-    timeZone: clean(body.timeZone, MAX_FIELD),
-    language: clean(body.language, MAX_FIELD),
-    path: clean(body.path, MAX_FIELD),
-    referrer: clean(body.referrer, MAX_FIELD),
-    userAgent: clean(h.get("user-agent"), MAX_FIELD),
-    ip: clean(ip, MAX_FIELD),
+    // Sanitize all user-supplied / geo fields against Google Sheets formula injection.
+    name: sanitizeForSheet(name),
+    visitorId: sanitizeForSheet(clean(body.visitorId, MAX_FIELD)),
+    country: sanitizeForSheet(clean(h.get("x-vercel-ip-country"), MAX_FIELD)),
+    // Vercel percent-encodes city names with non-ASCII chars; decode safely.
+    city: sanitizeForSheet(safeDecode(clean(h.get("x-vercel-ip-city"), MAX_FIELD))),
+    region: sanitizeForSheet(clean(h.get("x-vercel-ip-country-region"), MAX_FIELD)),
+    timeZone: sanitizeForSheet(clean(body.timeZone, MAX_FIELD)),
+    language: sanitizeForSheet(clean(body.language, MAX_FIELD)),
+    path: sanitizeForSheet(clean(body.path, MAX_FIELD)),
+    referrer: sanitizeForSheet(clean(body.referrer, MAX_FIELD)),
+    userAgent: sanitizeForSheet(clean(h.get("user-agent"), MAX_FIELD)),
+    ip: sanitizeForSheet(clean(ip, MAX_FIELD)),
     // Shared secret so only this app can write to the sheet (optional).
     token: process.env.GSHEET_TOKEN ?? "",
   };

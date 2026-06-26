@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
 import { normalizeAiTree, childTitles } from "@/lib/mindmap-ai";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// 20 node-expansions per IP per minute.
+const limiter = createRateLimiter({ limit: 20, windowMs: 60_000 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ai/expand-node — suggest child ideas for ONE existing node.
@@ -48,6 +52,14 @@ function parseJson(text: string): unknown {
 }
 
 export async function POST(request: Request) {
+  const { success } = limiter.check(getClientIp(request));
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429 }
+    );
+  }
+
   let body: { node?: unknown; root?: unknown };
   try {
     body = await request.json();

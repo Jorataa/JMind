@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
+import { createRateLimiter, getClientIp } from "@/lib/rate-limit";
+
+// 30 AI chat requests per IP per minute (generous for real users, stops bulk abuse).
+const limiter = createRateLimiter({ limit: 30, windowMs: 60_000 });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata AI — server-side Gemini bridge.
@@ -42,18 +46,22 @@ interface AiRequestBody {
 }
 
 export async function POST(request: Request) {
+  // Rate limit before doing any real work.
+  const { success } = limiter.check(getClientIp(request));
+  if (!success) {
+    return NextResponse.json(
+      { error: "Too many requests. Please wait a moment and try again." },
+      { status: 429 }
+    );
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
 
-  // Guard: a missing/placeholder key is the #1 setup mistake. Say so plainly
-  // instead of letting Gemini return a cryptic 400.
   if (!apiKey || apiKey === "your_gemini_api_key_here") {
+    // Don't leak deployment details (env var names, host platform) to callers.
     return NextResponse.json(
-      {
-        error:
-          "GEMINI_API_KEY is not set. Add it to .env.local (and to Vercel's " +
-          "Environment Variables), then restart the dev server.",
-      },
-      { status: 500 }
+      { error: "The AI service is not configured." },
+      { status: 503 }
     );
   }
 
