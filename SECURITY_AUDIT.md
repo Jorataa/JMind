@@ -42,10 +42,15 @@ The material risks are concentrated in **un-throttled, unauthenticated server ro
 | 8 | **Low** | Prompt-injection / cost-amplification in AI routes |
 | 9 | **Info** | Verbose backend error messages surfaced to the client |
 | 10 | **Info** | API routes set no CORS allow-list (open server-to-server) |
+| 11 | **Medium** | Shared Supabase backend has no capacity protection (open signup + unbounded row) — *2nd pass* |
+| 12 | **Low/High** | Rate-limit keying is host-dependent (sound on Vercel, spoofable off-Vercel) — *2nd pass* |
+| 13 | **Low** | No request-body size guard before `request.json()` — *2nd pass* |
 
-There are **no SQL/NoSQL injection, no IDOR/BOLA, no XSS, no SSRF, and no committed
-secrets** in the current tree. The single committed env file (`.env.example`) carries
-only placeholders.
+There are **no SQL/NoSQL injection, no IDOR/BOLA, no XSS, no SSRF, no prototype
+pollution, and no committed secrets** in the current tree. The single committed env file
+(`.env.example`) carries only placeholders. Findings 11–13 come from a second, deeper pass
+(sync/merge engine, deserialization, shared backend); see "Second-Pass Findings" below for
+that round, including the surface it **cleared**.
 
 ---
 
@@ -390,6 +395,131 @@ user-facing strings and log details server-side only.
 Route handlers set no `Access-Control-Allow-Origin`, so browsers enforce same-origin (good),
 but server-to-server callers face no origin check. This is the same exposure as Finding 1 and
 is mitigated by rate limiting + (recommended) auth.
+
+---
+
+# Second-Pass Findings (deep review — maximum-effort round)
+
+A second pass focused on the client-side data plane (sync/merge engine, localStorage
+deserialization, cross-tab channel, import/export, render sinks) and the shared backend.
+Most of that surface proved sound — see "What the second pass cleared" below — but three
+new issues and two corrections came out of it.
+
+## Finding 11 — Shared Supabase backend has no capacity protection (open signup + unbounded row)
+
+**Severity:** Medium
+**CVSS v3.1 estimate:** 6.5 (AV:N/AC:L/PR:L/UI:N/S:C/C:N/I:L/A:H)
+**CWE:** CWE-770 (Resource Consumption), CWE-1188 (Insecure Default), CWE-307 (Improper Restriction of Excessive Auth Attempts)
+
+### Description
+RLS protects **confidentiality** (a user can't read another user's row) but says nothing
+about **capacity**. Two gaps combine:
+1. The `NEXT_PUBLIC_SUPABASE_ANON_KEY` is public, so anyone can call `supabase.auth.signUp`
+   — by default there is no CAPTCHA, so accounts can be scripted.
+2. Neither `user_state.stores` (jsonb) nor `profiles.display_name` has any size limit at the
+   app or DB layer. `upsertCloud()` writes whatever the client holds.
+
+Every user's row lives in the owner's **single** Supabase project, sharing one quota
+(database size, egress, monthly active users). So a signed-in attacker can write multi-MB
+blobs to **their own** rows — fully allowed by RLS — and, by scripting signups, multiply it.
+
+### Attack Scenario
+Attacker scripts N signups against the public anon key, and for each, upserts a
+~50 MB `stores` blob (or a giant `display_name`). RLS authorizes every write (it's their own
+row). The owner's free-tier database / egress quota is exhausted → **cloud sync fails for all
+legitimate users**, and/or the owner's Supabase bill spikes. This is a cross-tenant
+resource-exhaustion DoS that the RLS-centric threat model does not cover.
+
+### Impact
+Availability of cloud sync for all users; financial cost to the owner. No confidentiality loss.
+
+### Likelihood
+Medium — requires scripting against a public key, but no credentials beyond self-registration.
+
+### Remediation (implemented in docs/SQL)
+- Add DB **CHECK constraints** capping `octet_length(stores::text)` (e.g. 512 KB) and
+  `char_length(display_name)` — see updated `SETUP.md` SQL. The cap is enforced server-side by
+  Postgres regardless of what the client sends.
+- Enable Supabase **Attack Protection → CAPTCHA** and keep per-IP signup rate limits.
+- Set Supabase **spend/usage caps** and billing alerts.
+
+### Regression Test
+```sql
+-- A row over the cap must be rejected by Postgres, not just the client.
+insert into user_state (user_id, stores)
+values (auth.uid(), jsonb_build_object('x', repeat('a', 600000)));  -- expect: violates check constraint
+```
+
+### References
+OWASP API4:2023 Unrestricted Resource Consumption; CWE-770.
+
+---
+
+## Finding 12 — Rate-limit keying is host-dependent (correction to round-one mitigation)
+
+**Severity:** Low (on Vercel) / High (off-Vercel)
+**CWE:** CWE-348 (Use of Less Trusted Source), CWE-807 (Reliance on Untrusted Inputs in a Security Decision)
+
+### Description
+Round one's limiter keys on `x-forwarded-for`. Per Vercel's documentation, the platform
+**overwrites** `x-forwarded-for` with the real client IP and does **not** forward an external,
+client-supplied value (non-Enterprise), so the key is **trustworthy on the stated Vercel
+target**. However, the code is host-agnostic: on a self-hosted Node deployment, behind a
+reverse proxy that passes the client header through, or on a Vercel Enterprise "trusted proxy"
+setup, `x-forwarded-for` becomes **client-spoofable**, letting an attacker rotate the value
+to mint a fresh bucket per request and bypass the limit — re-opening Findings 1 and 4.
+
+### Remediation
+Documented the trust assumption inline in `src/lib/rate-limit.ts`. If deploying off-Vercel,
+key on the platform's trusted client-IP source (`ipAddress()` from `@vercel/functions`, or the
+socket peer address) and move the counter to a shared store (Vercel KV / Upstash) so the limit
+is correct across serverless instances — the in-memory limiter is per-instance.
+
+### References
+Vercel docs — Request Headers (`x-forwarded-for` overwrite); CWE-348.
+
+---
+
+## Finding 13 — No request-body size guard before `request.json()`
+
+**Severity:** Low
+**CWE:** CWE-770 (Resource Consumption)
+
+### Description
+Each route's per-field char caps apply only **after** `await request.json()` has buffered and
+parsed the whole body, so a large payload still costs memory/CPU first. Vercel caps request
+bodies at the platform level (~4.5 MB), so impact is bounded, but the limit was implicit.
+
+### Remediation (implemented)
+Added `rejectOversizedBody()` (`src/lib/rate-limit.ts`), called at the top of every route to
+reject on `Content-Length` (64 KB for AI routes, 16 KB for `/api/visitor`) with a 413 before
+parsing.
+
+### Regression Test
+```ts
+const res = await POST(reqWith({ "content-length": String(10_000_000) }));
+expect(res.status).toBe(413);
+```
+
+---
+
+## What the second pass cleared (verified NOT vulnerable)
+
+- **Cross-user sync injection:** the cloud row is per-user (RLS), so a crafted `stores`
+  payload can only affect the *same* account — self-inflicted, never another user.
+- **Prototype pollution in merge:** `mergeSnapshots`/`mergeById` use object spread and `Map`,
+  which define own properties rather than invoking the `__proto__` setter — `JSON.parse` +
+  spread does not pollute `Object.prototype`. Rehydrate re-runs each store's sanitizer.
+- **Stored-data XSS:** mind-map node labels, task titles, KPI names, display name, and AI
+  chat all render as escaped React text (`{value}`); no `dangerouslySetInnerHTML` on user
+  data. The only inline script validates the theme against a fixed allowlist.
+- **Import path:** `handleImportFile` writes only into a fixed `STORAGE_KEYS` allowlist and
+  reloads so sanitizers run — no arbitrary localStorage key write, no code execution.
+- **Open redirect / tabnabbing:** all `href`/`download` sinks are blob/data URLs or internal
+  nav; no user-controlled URL, no external `target="_blank"`.
+- **Cross-tab channel:** `storage` listener only rehydrates known store keys from same-origin
+  localStorage; not reachable cross-origin.
+- **Export (`html-to-image`):** renders the user's own DOM to a PNG they download; no sink.
 
 ---
 

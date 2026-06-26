@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
 import { normalizeAiTree } from "@/lib/mindmap-ai";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, rejectOversizedBody } from "@/lib/rate-limit";
 
 // Cap anonymous callers — this route forwards to the owner's quota'd Gemini key.
 const AI_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
+const MAX_BODY_BYTES = 64 * 1024;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ai/mindmap — generate a complete mind map from a single topic.
@@ -57,6 +58,9 @@ function parseJson(text: string): unknown {
 }
 
 export async function POST(request: Request) {
+  const tooBig = rejectOversizedBody(request, MAX_BODY_BYTES);
+  if (tooBig) return tooBig;
+
   const limited = applyRateLimit(request, AI_RATE_LIMIT);
   if (limited) return limited;
 

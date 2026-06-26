@@ -83,7 +83,24 @@ create policy "own state - insert" on public.user_state
   for insert with check (auth.uid() = user_id);
 create policy "own state - update" on public.user_state
   for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── capacity guards (recommended) ───────────────────────────────────────────
+-- RLS controls WHO can read/write a row, but not HOW BIG it is. Every user's
+-- row lives in YOUR single Supabase project and shares one quota, so cap the
+-- per-row size to stop a single account from filling your DB / egress budget.
+-- Tune the limits to your real data; 512 KB of JSON is already a very large map.
+alter table public.user_state
+  add constraint user_state_size_cap check (octet_length(stores::text) <= 524288);
+alter table public.profiles
+  add constraint profiles_name_len check (char_length(coalesce(display_name, '')) <= 120);
 ```
+
+> **Also enable Supabase attack protection.** The anon key is public, so anyone
+> can call `signUp`. Under **Authentication → Attack Protection**, turn on
+> **CAPTCHA** (and keep the default per-IP signup rate limits) so an attacker
+> can't script thousands of accounts to bypass the per-row cap above. Under
+> **Authentication → Policies**, raise the **minimum password length** to ≥10 and
+> enable **leaked-password protection**.
 
 ## 4. Enable Realtime on `user_state` (recommended)
 

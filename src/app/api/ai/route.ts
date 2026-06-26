@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, rejectOversizedBody } from "@/lib/rate-limit";
 
 // Throttle the AI proxy: it forwards to a quota'd/paid upstream with the owner's
 // secret key, so cap anonymous callers to a sane burst per IP. See SECURITY_AUDIT.md.
 const AI_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
+// Reject oversized bodies before parsing — char caps only apply post-parse.
+const MAX_BODY_BYTES = 64 * 1024;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata AI — server-side Gemini bridge.
@@ -47,6 +49,9 @@ interface AiRequestBody {
 }
 
 export async function POST(request: Request) {
+  const tooBig = rejectOversizedBody(request, MAX_BODY_BYTES);
+  if (tooBig) return tooBig;
+
   const limited = applyRateLimit(request, AI_RATE_LIMIT);
   if (limited) return limited;
 

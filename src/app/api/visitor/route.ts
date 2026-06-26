@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { applyRateLimit } from "@/lib/rate-limit";
+import { applyRateLimit, rejectOversizedBody } from "@/lib/rate-limit";
 
 // This route writes to the owner's Google Sheet; throttle to stop row-spam abuse.
 const VISITOR_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
+const MAX_BODY_BYTES = 16 * 1024;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata visitor log — server-side bridge to a Google Sheet.
@@ -57,6 +58,9 @@ interface VisitorBody {
 }
 
 export async function POST(request: Request) {
+  const tooBig = rejectOversizedBody(request, MAX_BODY_BYTES);
+  if (tooBig) return tooBig;
+
   const limited = applyRateLimit(request, VISITOR_RATE_LIMIT);
   if (limited) return limited;
 

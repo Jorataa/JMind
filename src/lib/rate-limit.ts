@@ -25,15 +25,42 @@ const buckets = new Map<string, Bucket>();
 const MAX_TRACKED = 10_000;
 
 /**
- * Derives a best-effort client identifier from request headers. `x-forwarded-for`
- * is set by Vercel's edge to the real client IP (first hop). Falls back to a
- * constant bucket so a missing header still gets *some* throttling rather than
- * bypassing the limiter entirely.
+ * Derives a best-effort client identifier from request headers.
+ *
+ * TRUST MODEL: on Vercel (non-Enterprise) the platform *overwrites*
+ * `x-forwarded-for` with the real client IP and does not forward an external,
+ * client-supplied value (per Vercel docs), so keying on it is sound there. On
+ * any OTHER host — self-hosted Node, a misconfigured reverse proxy, or a Vercel
+ * Enterprise "trusted proxy" setup — `x-forwarded-for` becomes client-spoofable
+ * and an attacker can rotate it to get a fresh bucket per request, bypassing the
+ * limit. If you deploy off-Vercel, replace this with your platform's trusted
+ * client-IP source (e.g. `ipAddress()` from `@vercel/functions`) and a shared
+ * store. Falls back to a constant bucket so a missing header still gets *some*
+ * throttling rather than no limit at all.
  */
 export function clientKey(request: Request): string {
   const xff = request.headers.get("x-forwarded-for") ?? "";
   const ip = xff.split(",")[0].trim();
   return ip || request.headers.get("x-real-ip")?.trim() || "unknown";
+}
+
+/**
+ * Defense-in-depth body-size guard. The per-field char caps in each route only
+ * apply *after* `request.json()` has buffered and parsed the whole body, so a
+ * huge payload still costs memory/CPU first. Reject anything whose advertised
+ * Content-Length exceeds `maxBytes` before we read it. (Vercel also caps request
+ * bodies at the platform level, but this makes the limit explicit and portable.)
+ * Returns a 413 Response to return early, or null to proceed.
+ */
+export function rejectOversizedBody(request: Request, maxBytes: number): Response | null {
+  const len = Number(request.headers.get("content-length") ?? "");
+  if (Number.isFinite(len) && len > maxBytes) {
+    return new Response(JSON.stringify({ error: "Request body too large." }), {
+      status: 413,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return null;
 }
 
 export interface RateLimitResult {
