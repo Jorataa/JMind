@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
 import { normalizeAiTree, childTitles } from "@/lib/mindmap-ai";
+import { applyRateLimit } from "@/lib/rate-limit";
+
+// Cap anonymous callers — this route forwards to the owner's quota'd Gemini key.
+const AI_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ai/expand-node — suggest child ideas for ONE existing node.
@@ -48,6 +52,9 @@ function parseJson(text: string): unknown {
 }
 
 export async function POST(request: Request) {
+  const limited = applyRateLimit(request, AI_RATE_LIMIT);
+  if (limited) return limited;
+
   let body: { node?: unknown; root?: unknown };
   try {
     body = await request.json();

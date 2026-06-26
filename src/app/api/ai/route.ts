@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
+import { applyRateLimit } from "@/lib/rate-limit";
+
+// Throttle the AI proxy: it forwards to a quota'd/paid upstream with the owner's
+// secret key, so cap anonymous callers to a sane burst per IP. See SECURITY_AUDIT.md.
+const AI_RATE_LIMIT = { limit: 20, windowMs: 60_000 };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata AI — server-side Gemini bridge.
@@ -42,6 +47,9 @@ interface AiRequestBody {
 }
 
 export async function POST(request: Request) {
+  const limited = applyRateLimit(request, AI_RATE_LIMIT);
+  if (limited) return limited;
+
   const apiKey = process.env.GEMINI_API_KEY;
 
   // Guard: a missing/placeholder key is the #1 setup mistake. Say so plainly
