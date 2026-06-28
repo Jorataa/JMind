@@ -14,6 +14,9 @@ export const metadata: Metadata = {
   title: "Jorata - Think. Plan. Execute.",
   description:
     "Jorata is a personal operating system for thinking and execution.",
+  verification: {
+    google: "Bz8T9kP2MnXbD6lC3qqJaa7wm4A25Ko1aKLCICz0AlA",
+  },
 };
 
 export default function RootLayout({
