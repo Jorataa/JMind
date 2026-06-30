@@ -1,4 +1,9 @@
 import { NextResponse } from "next/server";
+import { applyRateLimit, rejectOversizedBody } from "@/lib/rate-limit";
+
+// This route writes to the owner's Google Sheet; throttle to stop row-spam abuse.
+const VISITOR_RATE_LIMIT = { limit: 30, windowMs: 60_000 };
+const MAX_BODY_BYTES = 16 * 1024;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Jorata visitor log — server-side bridge to a Google Sheet.
@@ -21,6 +26,27 @@ const MAX_FIELD = 300;
 const clean = (value: unknown, max: number) =>
   String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
+// Google Sheets evaluates any cell that starts with = + - @ (or a control char)
+// as a formula. Since these values land verbatim in the owner's sheet, prefix a
+// single quote so they're stored as inert text — defeats CSV/formula injection
+// (e.g. =IMPORTXML(...) exfil). See SECURITY_AUDIT.md finding 2.
+const sanitizeCell = (value: string): string =>
+  /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+
+// clean + neutralize a formula trigger in one step, for user-controlled fields.
+const cleanCell = (value: unknown, max: number): string =>
+  sanitizeCell(clean(value, max));
+
+// decodeURIComponent throws URIError on a malformed % sequence; never let an
+// attacker-influenced header 500 the route.
+const safeDecode = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
 interface VisitorBody {
   event?: string;
   name?: string;
@@ -32,6 +58,12 @@ interface VisitorBody {
 }
 
 export async function POST(request: Request) {
+  const tooBig = rejectOversizedBody(request, MAX_BODY_BYTES);
+  if (tooBig) return tooBig;
+
+  const limited = applyRateLimit(request, VISITOR_RATE_LIMIT);
+  if (limited) return limited;
+
   const webhookUrl = process.env.GSHEET_WEBHOOK_URL;
 
   let body: VisitorBody;
@@ -43,7 +75,7 @@ export async function POST(request: Request) {
 
   // Only two known events; anything else is recorded as "visit" to stay safe.
   const event = body.event === "joined" ? "joined" : "visit";
-  const name = clean(body.name, MAX_NAME);
+  const name = cleanCell(body.name, MAX_NAME);
 
   // Vercel populates these geo/IP headers in production (empty in local dev).
   const h = request.headers;
@@ -53,16 +85,17 @@ export async function POST(request: Request) {
     timestamp: new Date().toISOString(),
     event,
     name,
-    visitorId: clean(body.visitorId, MAX_FIELD),
-    country: clean(h.get("x-vercel-ip-country"), MAX_FIELD),
-    city: decodeURIComponent(clean(h.get("x-vercel-ip-city"), MAX_FIELD)),
-    region: clean(h.get("x-vercel-ip-country-region"), MAX_FIELD),
-    timeZone: clean(body.timeZone, MAX_FIELD),
-    language: clean(body.language, MAX_FIELD),
-    path: clean(body.path, MAX_FIELD),
-    referrer: clean(body.referrer, MAX_FIELD),
-    userAgent: clean(h.get("user-agent"), MAX_FIELD),
-    ip: clean(ip, MAX_FIELD),
+    // User-controlled fields → cleanCell neutralizes spreadsheet formula triggers.
+    visitorId: cleanCell(body.visitorId, MAX_FIELD),
+    country: cleanCell(h.get("x-vercel-ip-country"), MAX_FIELD),
+    city: cleanCell(safeDecode(clean(h.get("x-vercel-ip-city"), MAX_FIELD)), MAX_FIELD),
+    region: cleanCell(h.get("x-vercel-ip-country-region"), MAX_FIELD),
+    timeZone: cleanCell(body.timeZone, MAX_FIELD),
+    language: cleanCell(body.language, MAX_FIELD),
+    path: cleanCell(body.path, MAX_FIELD),
+    referrer: cleanCell(body.referrer, MAX_FIELD),
+    userAgent: cleanCell(h.get("user-agent"), MAX_FIELD),
+    ip: cleanCell(ip, MAX_FIELD),
     // Shared secret so only this app can write to the sheet (optional).
     token: process.env.GSHEET_TOKEN ?? "",
   };

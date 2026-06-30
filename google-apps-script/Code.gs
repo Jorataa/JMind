@@ -38,6 +38,14 @@ function doPost(e) {
 
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
 
+    // Defense in depth: even though the Next route sanitizes these, neutralize
+    // any cell that would be interpreted as a formula (=, +, -, @, control char)
+    // by Google Sheets, so a malicious visitor can't inject =IMPORTXML(...) etc.
+    function safe_(v) {
+      v = (v == null ? "" : String(v));
+      return /^[=+\-@\t\r]/.test(v) ? "'" + v : v;
+    }
+
     // First write: lay down a bold, frozen header row so the sheet reads cleanly.
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(HEADERS);
@@ -47,18 +55,18 @@ function doPost(e) {
 
     sheet.appendRow([
       data.timestamp || new Date().toISOString(),
-      data.event || "",
-      data.name || "",
-      data.visitorId || "",
-      data.country || "",
-      data.city || "",
-      data.region || "",
-      data.timeZone || "",
-      data.language || "",
-      data.path || "",
-      data.referrer || "",
-      data.userAgent || "",
-      data.ip || "",
+      safe_(data.event || ""),
+      safe_(data.name || ""),
+      safe_(data.visitorId || ""),
+      safe_(data.country || ""),
+      safe_(data.city || ""),
+      safe_(data.region || ""),
+      safe_(data.timeZone || ""),
+      safe_(data.language || ""),
+      safe_(data.path || ""),
+      safe_(data.referrer || ""),
+      safe_(data.userAgent || ""),
+      safe_(data.ip || ""),
     ]);
 
     return json_({ ok: true });
