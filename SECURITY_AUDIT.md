@@ -315,10 +315,17 @@ CWE-306; OWASP API rate-limiting guidance.
 unescaped `</style>`) pulled transitively, and the bundled `next` version sits in the
 flagged range.
 
-### Remediation
-- Track Next.js patch releases and bump `next` to the latest 16.x patch that resolves the
-  advisory; re-run `npm audit`.
-- Add a CI step: `npm audit --omit=dev` (fail on high) + Dependabot/Renovate.
+### Status: RESOLVED
+- Bumped `next` 16.2.6 → 16.2.9 and `eslint-config-next` to match.
+- Added an `overrides` pin (`"postcss": "^8.5.10"`) — `next` still bundles an older
+  postcss, so the override forces the patched 8.5.x (resolved to 8.5.15) and clears the
+  advisory without a breaking major bump.
+- Ran `npm audit fix` to clear a transitive dev-only `js-yaml` advisory.
+- `npm audit` now reports **0 vulnerabilities**; `npm run build` green.
+
+### Remaining recommendation
+- Add a CI step: `npm audit --omit=dev` (fail on high) + Dependabot/Renovate so this
+  doesn't regress.
 
 ### Regression Test
 CI gate: `npm audit --audit-level=high` must pass.
@@ -469,9 +476,14 @@ reverse proxy that passes the client header through, or on a Vercel Enterprise "
 setup, `x-forwarded-for` becomes **client-spoofable**, letting an attacker rotate the value
 to mint a fresh bucket per request and bypass the limit — re-opening Findings 1 and 4.
 
-### Remediation
-Documented the trust assumption inline in `src/lib/rate-limit.ts`. If deploying off-Vercel,
-key on the platform's trusted client-IP source (`ipAddress()` from `@vercel/functions`, or the
+### Status: NOT EXPLOITABLE on the current target
+The owner confirmed **Vercel is the only deployment target**. Vercel overwrites
+`x-forwarded-for` with the real client IP (non-Enterprise), so the limiter key is
+trustworthy and this is **informational** for now. The assumption is documented inline in
+`src/lib/rate-limit.ts` so it resurfaces if the app is ever ported off Vercel.
+
+### Remediation (only if you leave Vercel)
+Key on the platform's trusted client-IP source (`ipAddress()` from `@vercel/functions`, or the
 socket peer address) and move the counter to a shared store (Vercel KV / Upstash) so the limit
 is correct across serverless instances — the in-memory limiter is per-instance.
 
