@@ -21,7 +21,6 @@ import NodeIntelligenceSidebar from "./components/NodeIntelligenceSidebar";
 import CanvasToolbar from "./components/CanvasToolbar";
 import CanvasHelp from "./components/CanvasHelp";
 import AiChat from "@/features/ai/AiChat";
-import AiButton from "@/components/ui/AiButton";
 
 import {
   useMindMapNodes,
@@ -375,7 +374,7 @@ function MindMapFlow() {
               proOptions={{ hideAttribution: true }}
               className="bg-[#09090b]"
             >
-              <CanvasToolbar onTidy={handleTidy} onAddSticky={addStickyAtCenter} />
+              <CanvasToolbar onTidy={handleTidy} onAddSticky={addStickyAtCenter} onOpenAi={() => setAiOpen(true)} />
               <CanvasHelp />
 
               <Background
@@ -454,10 +453,7 @@ function MindMapFlow() {
         {/* Node details panel — overlays the canvas edge, opens on demand */}
         <NodeIntelligenceSidebar />
 
-        {/* AI chat — floating launcher (top-right) + slide-in panel */}
-        {!aiOpen && (
-          <AiButton onClick={() => setAiOpen(true)} className="absolute right-4 top-4 z-20" />
-        )}
+        {/* AI chat — slide-in panel, launched from the toolbar's "Ask AI" button */}
         <AiChat mindMapNodes={aiNodeTitles} open={aiOpen} onClose={() => setAiOpen(false)} />
       </div>
 

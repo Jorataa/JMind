@@ -10,7 +10,15 @@ import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
 import AiGenerateModal from "@/features/ai/AiGenerateModal";
 
-export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => void; onAddSticky: () => void }) {
+export default function CanvasToolbar({
+  onTidy,
+  onAddSticky,
+  onOpenAi,
+}: {
+  onTidy: () => void;
+  onAddSticky: () => void;
+  onOpenAi: () => void;
+}) {
   const nodes = useMindMapNodes();
   const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
   const sidebarOpen = useMindMapStore((state) => state.sidebarOpen);
@@ -93,6 +101,20 @@ export default function CanvasToolbar({ onTidy, onAddSticky }: { onTidy: () => v
         >
           <Wand2 size={14} className="text-violet-300" />
           <span className="hidden md:inline">AI Generate</span>
+        </Button>
+
+        {/* Chat with the AI about the current map. Lives IN the toolbar (rather
+            than floating over the top-right corner) so it can never overlap the
+            canvas controls or other buttons. */}
+        <Button
+          size="sm"
+          className="h-9 gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-4 text-emerald-200 shadow-xl hover:bg-emerald-500/25"
+          variant="secondary"
+          onClick={onOpenAi}
+          title="Ask Jorata AI"
+        >
+          <Sparkles size={14} className="text-emerald-300" />
+          <span className="hidden md:inline">Ask AI</span>
         </Button>
 
         <div className="relative hidden sm:block">
