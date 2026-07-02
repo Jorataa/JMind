@@ -7,6 +7,7 @@ import { useUIStore, useUIActions, useUserName } from "@/stores/use-ui-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { useShallow } from "zustand/shallow";
 import { cn } from "@/lib/cn";
+import { LogoMark } from "@/components/ui/Logo";
 import { X, Plus, Trash2, Edit3, FileText, Check } from "lucide-react";
 
 type NavItem = {
@@ -273,9 +274,21 @@ export default function Sidebar() {
       style={{ width: isCompact ? "64px" : "256px", minWidth: isCompact ? "64px" : "256px" }}
     >
       {/* Brand */}
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
+      <div
+        className={cn(
+          "flex border-b border-white/10 py-5",
+          isCompact
+            ? "flex-col items-center gap-3 px-2"
+            : "items-center justify-between px-5"
+        )}
+      >
+        {isCompact && (
+          <LogoMark size={24} className="text-emerald-500" title="Jorata" />
+        )}
         {!isCompact && (
-          <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2.5">
+            <LogoMark size={22} className="flex-shrink-0 text-emerald-500" />
+            <div className="flex flex-col gap-1">
             <span className="text-[15px] font-semibold tracking-tight text-zinc-50">
               Jorata
             </span>
@@ -286,6 +299,7 @@ export default function Sidebar() {
               <br />
               Execute · Measure
             </span>
+            </div>
           </div>
         )}
         <button

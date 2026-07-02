@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { LogoMark } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { useHydrated } from "@/hooks/use-hydrated";
 import {
@@ -69,7 +69,7 @@ export default function NameGate() {
     >
       <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-7 shadow-2xl animate-in zoom-in-95 duration-200">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-          <Sparkles size={20} />
+          <LogoMark size={22} title="Jorata" />
         </div>
 
         <h2
