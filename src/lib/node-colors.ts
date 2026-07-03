@@ -23,7 +23,11 @@ export interface BranchColorStyle {
   swatch: string;
 }
 
-/** Assignment order — consecutive branches get maximally distinct hues. */
+/**
+ * Assignment order — consecutive branches get maximally distinct hues. The
+ * first six are frozen (already-generated maps store these names per node);
+ * new hues are appended so bigger maps go longer before wrapping.
+ */
 export const BRANCH_COLOR_ORDER = [
   "sky",
   "amber",
@@ -31,6 +35,9 @@ export const BRANCH_COLOR_ORDER = [
   "rose",
   "teal",
   "indigo",
+  "lime",
+  "orange",
+  "fuchsia",
 ] as const;
 
 export const BRANCH_COLOR_STYLES: Record<string, BranchColorStyle> = {
@@ -40,6 +47,9 @@ export const BRANCH_COLOR_STYLES: Record<string, BranchColorStyle> = {
   rose: { bg: "#881337", text: "#ffe4e6", glow: "rgba(244,63,94,0.2)", swatch: "#f43f5e" },
   teal: { bg: "#134e4a", text: "#ccfbf1", glow: "rgba(20,184,166,0.2)", swatch: "#14b8a6" },
   indigo: { bg: "#1e1b4b", text: "#e0e7ff", glow: "rgba(99,102,241,0.2)", swatch: "#6366f1" },
+  lime: { bg: "#365314", text: "#ecfccb", glow: "rgba(132,204,22,0.2)", swatch: "#84cc16" },
+  orange: { bg: "#7c2d12", text: "#ffedd5", glow: "rgba(249,115,22,0.2)", swatch: "#f97316" },
+  fuchsia: { bg: "#701a75", text: "#fae8ff", glow: "rgba(217,70,239,0.2)", swatch: "#d946ef" },
 };
 
 /** The hue for the Nth main branch (wraps when a map has more branches). */
