@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { useMindMapActions, useMindMapStore, MindMapNodeData } from "@/stores/use-mindmap-store";
 import { motion } from "framer-motion";
 import { AlertCircle, Clock, CheckCircle2, ListTodo, Plus, Minus } from "lucide-react";
+import { BRANCH_COLOR_STYLES } from "@/lib/node-colors";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -24,7 +25,11 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
   const isRoot = data.isRoot ?? false;
   const isLinked = data.linkedTaskIds?.length > 0;
   const category = data.category ?? "default";
-  const style = categoryStyles[category] || categoryStyles.default;
+  // AI-generated maps color nodes by branch (each main branch keeps its own
+  // hue); the branch color wins over category styling on the node face.
+  // Manual nodes have no branch color and keep the category look.
+  const branchStyle = typeof data.color === "string" ? BRANCH_COLOR_STYLES[data.color] : undefined;
+  const style = branchStyle ?? categoryStyles[category] ?? categoryStyles.default;
 
   // Direct children — drives the collapse toggle. Primitive selector, so the
   // node only re-renders when its own child count actually changes.

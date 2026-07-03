@@ -35,6 +35,7 @@ import { useTaskStore } from "@/stores/use-task-store";
 import { useToast } from "@/stores/use-toast-store";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { getHiddenNodeIds } from "@/lib/collapse";
+import { BRANCH_COLOR_STYLES } from "@/lib/node-colors";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 
@@ -399,6 +400,8 @@ function MindMapFlow() {
                       return stickyMiniColors[(node.data?.color as string) ?? "yellow"] ?? "#fde047";
                     }
                     if (node.data?.isRoot) return "#10b981";
+                    const branch = BRANCH_COLOR_STYLES[(node.data?.color as string) ?? ""];
+                    if (branch) return branch.swatch;
                     if (node.data?.category === "goal") return "#6366f1";
                     if (node.data?.category === "task") return "#10b981";
                     if (node.data?.category === "idea") return "#8b5cf6";

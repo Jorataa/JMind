@@ -18,6 +18,7 @@ import { MindMapService } from "@/services/mindmap-service";
 import { calculateTreeLayout } from "@/lib/layout";
 import { mindMapTreeToFlow, type AiTreeNode, type AiChildIdea } from "@/lib/mindmap-ai";
 import { applyFixOperations, type FixOperation } from "@/lib/mindmap-fix";
+import { branchColorAt } from "@/lib/node-colors";
 import { useTaskStore } from "./use-task-store";
 import { useActivityStore } from "./use-activity-store";
 
@@ -924,6 +925,14 @@ export const useMindMapStore = create<MindMapState>()(
             }
             if (idea.description) {
               node.data.aiDescription = idea.description;
+            }
+            // Branch colors: children continue their parent's hue; expanding
+            // the root starts fresh branches, each with its own color.
+            const branchColor = parent.data.isRoot
+              ? branchColorAt(existingChildCount + index)
+              : (parent.data.color as string | undefined);
+            if (branchColor) {
+              node.data.color = branchColor;
             }
             newNodes.push(node);
             newEdges.push(MindMapService.createEdge(parent.id, node.id));

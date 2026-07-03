@@ -1,5 +1,6 @@
 import type { MindMapNode, MindMapEdge, NodeCategory } from "@/types/mindmap";
 import { MindMapService } from "@/services/mindmap-service";
+import { branchColorAt } from "@/lib/node-colors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI mind-map shaping.
@@ -103,7 +104,12 @@ export function childIdeas(tree: AiTreeNode): AiChildIdea[] {
  * the way a single hand-added node does. Position is a placeholder; the tree
  * layout assigns the real coordinates afterwards.
  */
-function buildNode(id: string, source: AiTreeNode, isRoot: boolean): MindMapNode {
+function buildNode(
+  id: string,
+  source: AiTreeNode,
+  isRoot: boolean,
+  branchColor?: string
+): MindMapNode {
   const now = new Date().toISOString();
   return {
     id,
@@ -119,6 +125,7 @@ function buildNode(id: string, source: AiTreeNode, isRoot: boolean): MindMapNode
       // Optional — spread only when present so nodes without one match the
       // manual-node shape exactly.
       ...(source.description ? { aiDescription: source.description } : {}),
+      ...(branchColor ? { color: branchColor } : {}),
       linkedTaskIds: [],
       linkedKpiIds: [],
       tags: [],
@@ -142,13 +149,16 @@ export function mindMapTreeToFlow(tree: AiTreeNode): {
   const nodes: MindMapNode[] = [];
   const edges: MindMapEdge[] = [];
 
-  const walk = (node: AiTreeNode, id: string, isRoot: boolean) => {
-    nodes.push(buildNode(id, node, isRoot));
-    for (const child of node.children) {
+  // Each main branch (direct child of the root) gets its own hue; everything
+  // deeper inherits it, so whole branches stay traceable by color. The root
+  // keeps its emerald treatment (no branch color).
+  const walk = (node: AiTreeNode, id: string, isRoot: boolean, branchColor?: string) => {
+    nodes.push(buildNode(id, node, isRoot, branchColor));
+    node.children.forEach((child, index) => {
       const childId = crypto.randomUUID();
       edges.push(MindMapService.createEdge(id, childId));
-      walk(child, childId, false);
-    }
+      walk(child, childId, false, isRoot ? branchColorAt(index) : branchColor);
+    });
   };
 
   walk(tree, ROOT_ID, true);
