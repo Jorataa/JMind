@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { callGemini, GeminiError } from "@/lib/gemini";
-import { normalizeAiTree, childTitles } from "@/lib/mindmap-ai";
+import { normalizeAiTree, childIdeas, type AiChildIdea } from "@/lib/mindmap-ai";
 import { applyRateLimit, rejectOversizedBody } from "@/lib/rate-limit";
 
 // Cap anonymous callers — this route forwards to the owner's quota'd Gemini key.
@@ -13,7 +13,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 // Body: { node: string, root?: string }
 //   node  — the title of the node being expanded
 //   root  — the overall map topic, for context (optional)
-// Returns: { children: string[] }  (4–6 short, one-level-deep titles)
+// Returns: { children: [{ title, category?, description? }] }  (4–6, one level)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAX_TITLE_CHARS = 200;
@@ -23,18 +23,20 @@ const MAX_TITLE_CHARS = 200;
 const EXPANSION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 const SYSTEM_PROMPT = `You are an expert mind map generator expanding ONE node of an existing mind map.
-Return ONLY valid JSON.
+Return ONLY valid JSON — no preamble, no markdown fences.
 
 Rules:
 - Provide 4 to 6 children, ONE level deep (each child has an empty children array)
 - Children must be relevant sub-topics of the node, within the overall map's context
 - Keep titles short (a few words, no sentences)
+- Every child gets a "description": one plain, calm sentence (under 120 characters) saying what it covers and why it belongs under this node. Write like a calm friend — no hype, no gamified or corporate language.
+- Every child gets a "category": one of "goal" (an outcome to reach), "task" (a concrete action), "idea" (a concept or thought), "warning" (a risk or caution), or "default" (none of those clearly fit).
 - No markdown
-- No explanation
+- No explanation outside the JSON
 - No numbering
 
 Return an object of this exact shape:
-{ "title": "", "children": [ { "title": "", "children": [] } ] }`;
+{ "title": "", "children": [ { "title": "", "category": "", "description": "", "children": [] } ] }`;
 
 function parseJson(text: string): unknown {
   let cleaned = text
@@ -84,10 +86,10 @@ export async function POST(request: Request) {
       temperature: 0.7,
     });
 
-    let children: string[] = [];
+    let children: AiChildIdea[] = [];
     try {
       const tree = normalizeAiTree(parseJson(raw));
-      children = tree ? childTitles(tree) : [];
+      children = tree ? childIdeas(tree) : [];
     } catch (error) {
       console.error("[Jorata AI] Expand JSON parse failed:", error, raw);
     }

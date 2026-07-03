@@ -1,5 +1,6 @@
-import type { MindMapNode, MindMapEdge } from "@/types/mindmap";
+import type { MindMapNode, MindMapEdge, NodeCategory } from "@/types/mindmap";
 import { MindMapService } from "@/services/mindmap-service";
+import { branchColorAt } from "@/lib/node-colors";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AI mind-map shaping.
@@ -13,7 +14,18 @@ import { MindMapService } from "@/services/mindmap-service";
 /** The recursive shape Gemini is asked to produce. */
 export interface AiTreeNode {
   title: string;
+  /** Why the AI added this node — optional; nodes render fine without it. */
+  description?: string;
+  /** Suggested category; anything unrecognized falls back to "default". */
+  category?: NodeCategory;
   children: AiTreeNode[];
+}
+
+/** One AI-suggested child node — the "expand node" flow's unit of work. */
+export interface AiChildIdea {
+  title: string;
+  description?: string;
+  category?: NodeCategory;
 }
 
 // Guardrails matching the prompt's contract — also our defence against a model
@@ -21,6 +33,9 @@ export interface AiTreeNode {
 const MAX_DEPTH = 4; // levels INCLUDING the root
 const MAX_CHILDREN = 6;
 const MAX_TITLE_CHARS = 80;
+const MAX_DESCRIPTION_CHARS = 140;
+
+const AI_CATEGORIES = new Set<NodeCategory>(["default", "goal", "task", "idea", "warning"]);
 
 // Must match ROOT_NODE_ID in the mind-map store. Duplicated (not imported) to
 // keep this module free of any store/client dependency.
@@ -29,11 +44,25 @@ const ROOT_ID = "root";
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const cleanTitle = (value: unknown): string =>
+const cleanText = (value: unknown, maxChars: number): string =>
   String(isRecord(value) ? "" : value ?? "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, MAX_TITLE_CHARS);
+    .slice(0, maxChars);
+
+const cleanTitle = (value: unknown): string => cleanText(value, MAX_TITLE_CHARS);
+
+/** Description and category are best-effort — malformed values become undefined,
+ * never an error, so a node is always created even when the AI skipped them. */
+const cleanDescription = (value: unknown): string | undefined => {
+  const text = cleanText(value, MAX_DESCRIPTION_CHARS);
+  return text.length > 0 ? text : undefined;
+};
+
+const cleanCategory = (value: unknown): NodeCategory | undefined => {
+  const category = String(value ?? "").trim().toLowerCase() as NodeCategory;
+  return AI_CATEGORIES.has(category) ? category : undefined;
+};
 
 /**
  * Coerces arbitrary parsed JSON into a safe AiTreeNode, enforcing the depth,
@@ -54,12 +83,19 @@ export function normalizeAiTree(raw: unknown, depth = 1): AiTreeNode | null {
       .filter((child): child is AiTreeNode => child !== null);
   }
 
-  return { title, children };
+  return {
+    title,
+    description: cleanDescription(raw.description),
+    category: cleanCategory(raw.category),
+    children,
+  };
 }
 
-/** Pulls the direct child titles off a tree — used by the "expand node" flow. */
-export function childTitles(tree: AiTreeNode): string[] {
-  return tree.children.map((child) => child.title).filter(Boolean);
+/** Pulls the direct children off a tree — used by the "expand node" flow. */
+export function childIdeas(tree: AiTreeNode): AiChildIdea[] {
+  return tree.children
+    .filter((child) => Boolean(child.title))
+    .map(({ title, description, category }) => ({ title, description, category }));
 }
 
 /**
@@ -68,19 +104,28 @@ export function childTitles(tree: AiTreeNode): string[] {
  * the way a single hand-added node does. Position is a placeholder; the tree
  * layout assigns the real coordinates afterwards.
  */
-function buildNode(id: string, label: string, isRoot: boolean): MindMapNode {
+function buildNode(
+  id: string,
+  source: AiTreeNode,
+  isRoot: boolean,
+  branchColor?: string
+): MindMapNode {
   const now = new Date().toISOString();
   return {
     id,
     type: "editable",
     position: { x: 0, y: 0 },
     data: {
-      label,
-      category: "default",
+      label: source.title,
+      category: source.category ?? "default",
       priority: "none",
       status: "none",
       isRoot,
       isNew: false,
+      // Optional — spread only when present so nodes without one match the
+      // manual-node shape exactly.
+      ...(source.description ? { aiDescription: source.description } : {}),
+      ...(branchColor ? { color: branchColor } : {}),
       linkedTaskIds: [],
       linkedKpiIds: [],
       tags: [],
@@ -104,13 +149,16 @@ export function mindMapTreeToFlow(tree: AiTreeNode): {
   const nodes: MindMapNode[] = [];
   const edges: MindMapEdge[] = [];
 
-  const walk = (node: AiTreeNode, id: string, isRoot: boolean) => {
-    nodes.push(buildNode(id, node.title, isRoot));
-    for (const child of node.children) {
+  // Each main branch (direct child of the root) gets its own hue; everything
+  // deeper inherits it, so whole branches stay traceable by color. The root
+  // keeps its emerald treatment (no branch color).
+  const walk = (node: AiTreeNode, id: string, isRoot: boolean, branchColor?: string) => {
+    nodes.push(buildNode(id, node, isRoot, branchColor));
+    node.children.forEach((child, index) => {
       const childId = crypto.randomUUID();
       edges.push(MindMapService.createEdge(id, childId));
-      walk(child, childId, false);
-    }
+      walk(child, childId, false, isRoot ? branchColorAt(index) : branchColor);
+    });
   };
 
   walk(tree, ROOT_ID, true);

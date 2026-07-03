@@ -2,13 +2,14 @@
 
 import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
 import { Panel, useReactFlow, getNodesBounds, getViewportForBounds } from "@xyflow/react";
-import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote, Wand2 } from "lucide-react";
+import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote, Wand2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
 import { exportViewportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
 import AiGenerateModal from "@/features/ai/AiGenerateModal";
+import FixMapModal from "@/features/ai/FixMapModal";
 
 export default function CanvasToolbar({
   onTidy,
@@ -28,6 +29,7 @@ export default function CanvasToolbar({
   const { fitView, setCenter, getNodes } = useReactFlow();
   const [search, setSearch] = useState("");
   const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
+  const [fixMapOpen, setFixMapOpen] = useState(false);
 
   const matchingNode = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -115,6 +117,20 @@ export default function CanvasToolbar({
         >
           <Sparkles size={14} className="text-emerald-300" />
           <span className="hidden md:inline">Ask AI</span>
+        </Button>
+
+        {/* Review the whole map's structure — proposals only, applied after
+            the user reviews them. Neutral styling: it's a maintenance tool,
+            not a third accent color. */}
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-9 gap-2 rounded-full border border-white/5 bg-zinc-900/60 px-4 shadow-xl backdrop-blur-xl hover:bg-zinc-900/80"
+          onClick={() => setFixMapOpen(true)}
+          title="Review & improve this map's structure"
+        >
+          <Wrench size={14} className="text-zinc-400" />
+          <span className="hidden md:inline">Fix map</span>
         </Button>
 
         <div className="relative hidden sm:block">
@@ -218,6 +234,7 @@ export default function CanvasToolbar({
       </div>
 
       {aiGenerateOpen && <AiGenerateModal onClose={() => setAiGenerateOpen(false)} />}
+      {fixMapOpen && <FixMapModal onClose={() => setFixMapOpen(false)} />}
     </Panel>
   );
 }
