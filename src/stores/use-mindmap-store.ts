@@ -17,6 +17,7 @@ import {
 import { MindMapService } from "@/services/mindmap-service";
 import { calculateTreeLayout } from "@/lib/layout";
 import { mindMapTreeToFlow, type AiTreeNode, type AiChildIdea } from "@/lib/mindmap-ai";
+import { applyFixOperations, type FixOperation } from "@/lib/mindmap-fix";
 import { useTaskStore } from "./use-task-store";
 import { useActivityStore } from "./use-activity-store";
 
@@ -101,6 +102,12 @@ interface MindMapState {
     generateMapFromTree: (tree: AiTreeNode) => string;
     /** Append AI-suggested child nodes under an existing node (non-destructive). */
     expandNodeWithChildren: (parentId: string, ideas: AiChildIdea[]) => void;
+    /**
+     * Apply user-accepted "fix my mindmap" operations as ONE undo step.
+     * Returns how many operations actually changed something — the live map
+     * may have drifted since the AI reviewed it, and stale ops are skipped.
+     */
+    applyMapFixes: (operations: FixOperation[]) => number;
   };
 }
 
@@ -936,6 +943,29 @@ export const useMindMapStore = create<MindMapState>()(
             ],
             edges: [...s.edges, ...newEdges],
           }));
+        },
+
+        applyMapFixes: (operations) => {
+          const state = get();
+          const result = applyFixOperations(
+            state.nodes,
+            state.edges,
+            operations,
+            ROOT_NODE_ID
+          );
+          if (result.applied === 0) return 0;
+
+          // One snapshot for the whole batch → a single Ctrl+Z reverts it all.
+          takeSnapshot();
+          set((s) => ({
+            nodes: result.nodes,
+            edges: sanitizeEdges(result.edges, result.nodes),
+            selectedNodeId:
+              s.selectedNodeId && result.nodes.some((n) => n.id === s.selectedNodeId)
+                ? s.selectedNodeId
+                : null,
+          }));
+          return result.applied;
         },
       }
       };
