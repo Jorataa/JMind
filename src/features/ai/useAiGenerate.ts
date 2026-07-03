@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { useToastStore } from "@/stores/use-toast-store";
-import type { AiTreeNode } from "@/lib/mindmap-ai";
+import type { AiTreeNode, AiChildIdea } from "@/lib/mindmap-ai";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Client-side glue for AI mind-map generation + node expansion.
@@ -74,14 +74,26 @@ export async function expandNodeWithAi(nodeId: string): Promise<void> {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data?.error ?? "Expansion failed.");
 
-    const titles = (data.children as string[]) ?? [];
-    if (titles.length === 0) {
+    // The route returns structured children; coerce defensively so a stray
+    // plain-string entry still creates a node (just without the extras).
+    const ideas: AiChildIdea[] = (Array.isArray(data.children) ? data.children : [])
+      .map((child: unknown): AiChildIdea =>
+        typeof child === "string"
+          ? { title: child }
+          : {
+              title: String((child as AiChildIdea)?.title ?? "").trim(),
+              description: (child as AiChildIdea)?.description,
+              category: (child as AiChildIdea)?.category,
+            }
+      )
+      .filter((idea: AiChildIdea) => idea.title.length > 0);
+    if (ideas.length === 0) {
       addToast("No suggestions returned. Try again.", "error");
       return;
     }
 
-    useMindMapStore.getState().actions.expandNodeWithChildren(nodeId, titles);
-    addToast(`Added ${titles.length} ideas to "${node.data.label}"`, "success");
+    useMindMapStore.getState().actions.expandNodeWithChildren(nodeId, ideas);
+    addToast(`Added ${ideas.length} ideas to "${node.data.label}"`, "success");
   } catch (error) {
     console.error("[Jorata AI] expand failed:", error);
     addToast("Unable to expand this node.", "error");

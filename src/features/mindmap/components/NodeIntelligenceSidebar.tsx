@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence, type Transition } from "framer-motion";
-import { X, Target, CheckSquare, Clock, Hash, AlignLeft, Plus, Trash2, Edit2 } from "lucide-react";
+import { X, Target, CheckSquare, Clock, Hash, AlignLeft, Plus, Trash2, Edit2, Sparkles } from "lucide-react";
 import { useMindMapStore, useMindMapActions, useSelectedNode, type MindMapNode, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
 import { useTaskActions, useTaskStore } from "@/stores/use-task-store";
 import type { NodePriority, NodeStatus } from "@/types/mindmap";
@@ -114,33 +114,43 @@ export default function NodeIntelligenceSidebar() {
           className="absolute inset-y-0 right-0 z-20 w-full max-w-sm border-l border-white/10 bg-zinc-950/85 p-0 shadow-2xl backdrop-blur-2xl"
         >
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "h-2 w-2 rounded-full",
-                    !isSticky && (
-                      data.category === "goal" ? "bg-indigo-500" :
-                      data.category === "task" ? "bg-emerald-500" :
-                      data.category === "idea" ? "bg-violet-500" :
-                      data.category === "warning" ? "bg-rose-500" : "bg-zinc-500"
-                    )
-                  )}
-                  style={
-                    isSticky
-                      ? { backgroundColor: stickyDotColors[(data.color as string) || "yellow"] ?? stickyDotColors.yellow }
-                      : undefined
-                  }
-                />
-                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-                  {isSticky
-                    ? "Sticky Note"
-                    : data.category === "goal" ? "Goal"
-                    : data.category === "task" ? "Action"
-                    : data.category === "idea" ? "Idea"
-                    : data.category === "warning" ? "Risk"
-                    : "Node"}
-                </span>
+            <div className="flex items-start justify-between border-b border-white/10 px-6 py-4">
+              <div className="flex min-w-0 flex-col gap-1.5">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      "h-2 w-2 rounded-full",
+                      !isSticky && (
+                        data.category === "goal" ? "bg-indigo-500" :
+                        data.category === "task" ? "bg-emerald-500" :
+                        data.category === "idea" ? "bg-violet-500" :
+                        data.category === "warning" ? "bg-rose-500" : "bg-zinc-500"
+                      )
+                    )}
+                    style={
+                      isSticky
+                        ? { backgroundColor: stickyDotColors[(data.color as string) || "yellow"] ?? stickyDotColors.yellow }
+                        : undefined
+                    }
+                  />
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
+                    {isSticky
+                      ? "Sticky Note"
+                      : data.category === "goal" ? "Goal"
+                      : data.category === "task" ? "Action"
+                      : data.category === "idea" ? "Idea"
+                      : data.category === "warning" ? "Risk"
+                      : "Node"}
+                  </span>
+                </div>
+                {/* One-line note the AI wrote when it created this node. Only
+                    AI-generated nodes have it — manual nodes show nothing here. */}
+                {!isSticky && data.aiDescription && (
+                  <p className="flex items-start gap-1.5 text-[12px] leading-relaxed text-zinc-400">
+                    <Sparkles size={11} className="mt-1 shrink-0 text-zinc-500" />
+                    <span>{data.aiDescription}</span>
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 {!isRoot && (

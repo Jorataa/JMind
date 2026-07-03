@@ -16,7 +16,7 @@ import {
 } from "@/types/mindmap";
 import { MindMapService } from "@/services/mindmap-service";
 import { calculateTreeLayout } from "@/lib/layout";
-import { mindMapTreeToFlow, type AiTreeNode } from "@/lib/mindmap-ai";
+import { mindMapTreeToFlow, type AiTreeNode, type AiChildIdea } from "@/lib/mindmap-ai";
 import { useTaskStore } from "./use-task-store";
 import { useActivityStore } from "./use-activity-store";
 
@@ -100,7 +100,7 @@ interface MindMapState {
     /** Build a brand-new workspace from an AI-generated tree and switch to it. */
     generateMapFromTree: (tree: AiTreeNode) => string;
     /** Append AI-suggested child nodes under an existing node (non-destructive). */
-    expandNodeWithChildren: (parentId: string, titles: string[]) => void;
+    expandNodeWithChildren: (parentId: string, ideas: AiChildIdea[]) => void;
   };
 }
 
@@ -256,9 +256,16 @@ const sanitizeNodeData = (value: unknown, id: string): MindMapNodeData => {
   const priority = sanitizeString(data.priority, "none");
   const status = sanitizeString(data.status, "none");
 
+  // Optional AI note: keep only a real non-empty string (bounded), drop anything else.
+  const aiDescription =
+    typeof data.aiDescription === "string" && data.aiDescription.trim().length > 0
+      ? data.aiDescription.trim().slice(0, 200)
+      : undefined;
+
   return {
     ...data,
     label: sanitizeString(data.label, isRoot ? "Your idea starts here" : "Untitled Idea"),
+    aiDescription,
     category: validCategories.has(category) ? (category as MindMapNodeData["category"]) : "default",
     priority: validPriorities.has(priority) ? (priority as MindMapNodeData["priority"]) : "none",
     status: validStatuses.has(status) ? (status as MindMapNodeData["status"]) : "none",
@@ -884,10 +891,10 @@ export const useMindMapStore = create<MindMapState>()(
           return id;
         },
 
-        expandNodeWithChildren: (parentId, titles) => {
+        expandNodeWithChildren: (parentId, ideas) => {
           const state = get();
           const parent = state.nodes.find((n) => n.id === parentId);
-          if (!parent || titles.length === 0) return;
+          if (!parent || ideas.length === 0) return;
 
           // Continue fanning out from where this node's existing children stop,
           // so AI suggestions don't land on top of manually-added ones.
@@ -895,9 +902,9 @@ export const useMindMapStore = create<MindMapState>()(
 
           const newNodes: MindMapNode[] = [];
           const newEdges: MindMapEdge[] = [];
-          titles.forEach((title, index) => {
+          ideas.forEach((idea, index) => {
             const node = MindMapService.createNode(
-              title,
+              idea.title,
               parent,
               undefined,
               existingChildCount + index
@@ -905,6 +912,12 @@ export const useMindMapStore = create<MindMapState>()(
             // Generated nodes must not pop into edit mode the way a single
             // hand-added node does.
             node.data.isNew = false;
+            if (idea.category && validCategories.has(idea.category)) {
+              node.data.category = idea.category;
+            }
+            if (idea.description) {
+              node.data.aiDescription = idea.description;
+            }
             newNodes.push(node);
             newEdges.push(MindMapService.createEdge(parent.id, node.id));
           });

@@ -7,6 +7,12 @@ export type NodeStatus = "todo" | "doing" | "done" | "none";
 export type MindMapNodeData = {
   label: string;
   description?: string;
+  /**
+   * One-sentence note written by the AI when it created this node — why it's
+   * here, in plain language. Only ever set on AI-generated nodes; manual
+   * creation paths leave it undefined.
+   */
+  aiDescription?: string;
   category: NodeCategory;
   priority: NodePriority;
   status: NodeStatus;

@@ -22,20 +22,22 @@ const MAX_PROMPT_CHARS = 200;
 const GENERATION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 const SYSTEM_PROMPT = `You are an expert mind map generator.
-Return ONLY valid JSON.
+Return ONLY valid JSON — no preamble, no markdown fences.
 
 Rules:
 - Maximum depth: 4
 - Maximum children per node: 6
 - Keep titles short (a few words, no sentences)
+- Every node gets a "description": one plain, calm sentence (under 120 characters) saying what this node covers and why it belongs here. Write like a calm friend — no hype, no gamified or corporate language.
+- Every node gets a "category": one of "goal" (an outcome to reach), "task" (a concrete action), "idea" (a concept or thought), "warning" (a risk or caution), or "default" (none of those clearly fit).
 - No markdown
-- No explanation
+- No explanation outside the JSON
 - No numbering
 - Balanced hierarchy
 - Educational and structured
 
 Return an object of this exact shape:
-{ "title": "", "children": [ { "title": "", "children": [] } ] }`;
+{ "title": "", "category": "", "description": "", "children": [ { "title": "", "category": "", "description": "", "children": [] } ] }`;
 
 /**
  * Pulls the JSON object out of the model's reply. Strips a ```json … ``` fence
@@ -92,6 +94,9 @@ export async function POST(request: Request) {
       user: `Topic:\n${prompt}`,
       models: GENERATION_MODELS,
       temperature: 0.6,
+      // Per-node descriptions roughly double the JSON size; the 2048 default
+      // would truncate a full-depth map mid-string and break the parse.
+      maxOutputTokens: 4096,
     });
 
     let tree;
