@@ -349,23 +349,28 @@ export default function Sidebar() {
               href={item.href}
               title={isCompact ? item.label : undefined}
               onClick={() => setMobileSidebarOpen(false)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-100 ${
+              className={cn(
+                "group/nav relative flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium transition-colors duration-100",
                 isActive
-                  ? "bg-white/10 text-zinc-50"
-                  : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200"
-              } ${isCompact ? "justify-center px-0" : ""}`}
+                  ? "bg-white/[0.07] text-zinc-50"
+                  : "text-zinc-500 hover:bg-white/[0.05] hover:text-zinc-200",
+                isCompact && "justify-center px-0"
+              )}
             >
+              {/* Active rail: a 3px accent bar hugging the left edge — a calm,
+                  unambiguous "you are here" that never shifts the row's layout. */}
+              {isActive && (
+                <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-full bg-emerald-400" />
+              )}
               <span
-                className={`flex-shrink-0 ${
-                  isActive ? "text-emerald-300" : "text-zinc-600"
-                }`}
+                className={cn(
+                  "flex-shrink-0 transition-colors",
+                  isActive ? "text-emerald-300" : "text-zinc-600 group-hover/nav:text-zinc-400"
+                )}
               >
                 {item.icon}
               </span>
               {!isCompact && item.label}
-              {!isCompact && isActive && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-300" />
-              )}
             </Link>
           );
         })}

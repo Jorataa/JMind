@@ -22,7 +22,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   }, []);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-100 font-sans selection:bg-emerald-500/30">
+    <div className="app-shell-bg flex h-screen w-screen overflow-hidden text-zinc-100 font-sans selection:bg-emerald-500/30">
       <Sidebar />
 
       <div className="relative flex flex-1 flex-col overflow-hidden">

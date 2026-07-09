@@ -9,10 +9,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", ...props }, ref) => {
     const variants = {
-      primary: "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:bg-emerald-500/50",
-      secondary: "border border-white/10 bg-white/[0.04] text-zinc-200 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] shadow-lg",
-      ghost: "text-zinc-500 hover:bg-white/5 hover:text-zinc-200 active:scale-[0.98]",
-      danger: "text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 active:scale-[0.98]",
+      primary:
+        "bg-emerald-500 text-zinc-950 shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset,0_10px_28px_-12px_var(--accent-glow)] hover:bg-emerald-400 active:translate-y-px disabled:bg-emerald-500/50 disabled:shadow-none",
+      secondary:
+        "border border-white/10 bg-white/[0.04] text-zinc-200 shadow-[0_1px_0_0_rgba(255,255,255,0.06)_inset,0_2px_10px_-4px_rgba(0,0,0,0.5)] hover:border-white/20 hover:bg-white/[0.08] active:translate-y-px",
+      ghost: "text-zinc-500 hover:bg-white/5 hover:text-zinc-200 active:translate-y-px",
+      danger: "text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 active:translate-y-px",
     };
 
     const sizes = {
@@ -25,7 +27,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400/20 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-[background-color,border-color,transform,box-shadow,color] duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-400/25 disabled:pointer-events-none disabled:opacity-50",
           variants[variant],
           sizes[size],
           className

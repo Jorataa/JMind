@@ -23,6 +23,17 @@
   --accent-focus: color-mix(in srgb, var(--accent-400) 55%, transparent);
   --accent-select: color-mix(in srgb, var(--accent-400) 90%, transparent);
   --accent-edge: rgba(161, 161, 170, 0.5); /* edges stay neutral grey */
+  --accent-glow: color-mix(in srgb, var(--accent-500) 45%, transparent);
+
+  /* ── Semantic surfaces & hairlines ────────────────────────────
+     Named neutral tokens so components stop hard-coding white/[0.0x]
+     and every panel reads from the same, tuned ramp. */
+  --surface-1: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.05);
+  --surface-3: rgba(255, 255, 255, 0.08);
+  --line-soft: rgba(255, 255, 255, 0.06);
+  --line: rgba(255, 255, 255, 0.10);
+  --line-strong: rgba(255, 255, 255, 0.16);
 }
 
 [data-theme="ocean"] {
@@ -74,6 +85,13 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter), "Segoe UI", Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* Soft, diffuse elevation tuned for a near-black canvas. Custom keys
+     (not md/lg/xl) so they add `shadow-elevated` / `shadow-panel` /
+     `shadow-float` utilities without overriding Tailwind's own scale. */
+  --shadow-elevated: 0 12px 40px -14px rgba(0, 0, 0, 0.55);
+  --shadow-panel: 0 24px 70px -24px rgba(0, 0, 0, 0.7);
+  --shadow-float: 0 8px 28px -10px rgba(0, 0, 0, 0.6);
 }
 
 /* Route every emerald utility through the accent ramp. This is why a single
@@ -97,7 +115,28 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  /* Turn on Inter's craftsmanship: single-storey a (cv11), tuned round
+     glyphs (ss01), contextual alternates — plus crisp optical rendering.
+     This is the biggest single "premium typography" lever, applied once. */
+  font-feature-settings: "cv11" 1, "ss01" 1, "calt" 1;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings read tighter and calmer with a hair of negative tracking. */
+h1, h2, h3, h4 {
+  letter-spacing: -0.011em;
+}
+
+/* Ambient depth — a whisper of accent light from the top so the near-black
+   canvas reads as a crafted surface, not a flat void. Non-interactive; the
+   accent tint means it re-tones for free with every [data-theme]. */
+.app-shell-bg {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(130% 90% at 50% -12%, color-mix(in srgb, var(--accent-500) 7%, transparent), transparent 55%),
+    radial-gradient(80% 60% at 100% 0%, rgba(255, 255, 255, 0.018), transparent 50%);
 }
 
 /* Keyboard-navigation baseline: a consistent, visible focus ring on
@@ -125,9 +164,16 @@ select:focus-visible {
   .custom-scrollbar::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.08);
     border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.18);
+    background-clip: padding-box;
+  }
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   }
 }
 
