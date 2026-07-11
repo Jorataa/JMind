@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2, Keyboard, Info, HardDrive, Palette, User, Network } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Download, Upload, Trash2, Check } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
-import { SectionTitle } from "@/components/ui/SectionTitle";
 import { useToast } from "@/stores/use-toast-store";
 import { cn } from "@/lib/cn";
-import { useTheme, THEMES } from "@/hooks/use-theme";
-import { useUserName, useUIActions } from "@/stores/use-ui-store";
+import { useTheme, THEMES, THEME_STORAGE_KEY } from "@/hooks/use-theme";
+import { useUserName, useUIActions, useUIStore } from "@/stores/use-ui-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { exportToMarkdown, downloadMarkdown } from "@/lib/export-markdown";
 import SyncSettings from "@/features/sync/SyncSettings";
@@ -16,6 +15,7 @@ import SyncSettings from "@/features/sync/SyncSettings";
 const slugify = (s: string) =>
   s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "mind-map";
 
+// Every JSON-persisted store — the full local workspace, nothing forgotten.
 const STORAGE_KEYS = [
   "jmind:mindmap",
   "jmind:tasks",
@@ -24,26 +24,51 @@ const STORAGE_KEYS = [
   "jmind:activity",
   "jmind:inbox",
   "jmind:wisdom",
+  "jmind:wisdom-bg",
+  "jmind:groves",
+  "jmind:notes",
+  "jmind:knowledge",
+  "jmind:calendar",
   "jmind:ui",
 ];
+// Plain-string keys (not JSON envelopes) — backed up as raw values.
+const RAW_KEYS = [THEME_STORAGE_KEY];
 
 const GLOBAL_SHORTCUTS: [string, string][] = [
-  ["Ctrl + K", "Command palette — search & quick actions"],
-  ["Ctrl + J", "Quick capture a thought"],
+  ["Ctrl + K", "Command palette — find, create, ask"],
+  ["Ctrl + J", "Capture a thought"],
+  ["N", "New thought (capture)"],
+  ["J", "Ask Jorata — the assistant dock"],
 ];
 
 const CANVAS_SHORTCUTS: [string, string][] = [
   ["2× Click", "New idea at cursor"],
   ["Tab", "New child of selected idea"],
+  ["V · N · C", "Select · Node · Connect tools"],
   ["S", "New sticky note"],
-  ["Right-click", "Create & node actions"],
   ["Enter / F2", "Rename selected idea"],
   ["Del / Backspace", "Delete selection"],
-  ["Ctrl + Z", "Undo"],
-  ["Ctrl + Shift + Z", "Redo"],
+  ["Ctrl + Z / + Shift", "Undo / redo"],
   ["I", "Toggle node details"],
   ["F", "Fit map to view"],
   ["Shift + T", "Tidy map layout"],
+  ["Space + drag", "Pan the canvas"],
+  ["Esc", "Cancel AI / close menus"],
+];
+
+const INBOX_SHORTCUTS: [string, string][] = [
+  ["↑ ↓", "Move between captures"],
+  ["N / T / M", "→ Note / → Task / → Map"],
+  ["E", "Archive"],
+];
+
+const ANCHORS = [
+  { id: "account", label: "Account" },
+  { id: "sync", label: "Sync" },
+  { id: "themes", label: "Themes" },
+  { id: "shortcuts", label: "Shortcuts" },
+  { id: "data", label: "Data" },
+  { id: "about", label: "About" },
 ];
 
 export default function SettingsPage() {
@@ -52,7 +77,8 @@ export default function SettingsPage() {
   const [confirmingClear, setConfirmingClear] = useState(false);
   const { theme, changeTheme } = useTheme();
   const userName = useUserName();
-  const { setUserName } = useUIActions();
+  const wisdomStripEnabled = useUIStore((state) => state.wisdomStripEnabled);
+  const { setUserName, setWisdomStripEnabled } = useUIActions();
 
   // Disarm the destructive confirm if the user walks away.
   useEffect(() => {
@@ -71,6 +97,10 @@ export default function SettingsPage() {
       } catch {
         // skip unreadable entries rather than failing the whole backup
       }
+    }
+    for (const key of RAW_KEYS) {
+      const raw = localStorage.getItem(key);
+      if (raw) data[key] = raw;
     }
 
     const payload = JSON.stringify(
@@ -100,6 +130,12 @@ export default function SettingsPage() {
       for (const key of STORAGE_KEYS) {
         if (key in data) {
           localStorage.setItem(key, JSON.stringify(data[key]));
+          applied++;
+        }
+      }
+      for (const key of RAW_KEYS) {
+        if (key in data && typeof data[key] === "string") {
+          localStorage.setItem(key, data[key]);
           applied++;
         }
       }
@@ -148,238 +184,326 @@ export default function SettingsPage() {
       setConfirmingClear(true);
       return;
     }
-    STORAGE_KEYS.forEach((key) => localStorage.removeItem(key));
+    [...STORAGE_KEYS, ...RAW_KEYS].forEach((key) => localStorage.removeItem(key));
     window.location.reload();
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto flex max-w-3xl flex-col gap-8">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-[22px] font-bold tracking-tight text-zinc-50">Settings</h2>
-          <p className="text-[13px] text-zinc-500">
-            Your data stays on this device by default — turn on Sync to securely back it up
-            and use it everywhere.
-          </p>
-        </div>
+    <div className="mx-auto max-w-[1080px] px-5 pb-16 pt-6 md:px-9 md:pt-8">
+      <PageHeader
+        size="h1"
+        context="Settings"
+        title={
+          <>
+            Yours, <em>on your terms.</em>
+          </>
+        }
+      />
 
-        {/* Profile */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <User size={12} />
-            Profile
-          </SectionTitle>
-          <Card className="flex flex-col gap-4 p-6" hoverable={false}>
-            <div className="flex flex-col gap-1">
-              <h4 className="text-[14px] font-semibold text-zinc-200">Your name</h4>
-              <p className="text-[12px] text-zinc-500">Used for the greeting on your dashboard.</p>
-            </div>
-            <input
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="What should we call you?"
-              maxLength={40}
-              className="h-10 w-full max-w-xs rounded-lg border border-white/10 bg-white/[0.03] px-3 text-[14px] text-zinc-100 outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500/30"
-            />
-          </Card>
-        </section>
+      <div className="mt-8 flex gap-10">
+        {/* Anchor list (§7) */}
+        <nav aria-label="Settings sections" className="hidden w-[160px] shrink-0 md:block">
+          <ul className="sticky top-8 flex flex-col gap-[2px]">
+            {ANCHORS.map((anchor) => (
+              <li key={anchor.id}>
+                <a
+                  href={`#${anchor.id}`}
+                  className="block rounded-[10px] px-3 py-2 text-[13px] text-ink-600 transition-colors hover:bg-sunken hover:text-ink-900"
+                >
+                  {anchor.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
 
-        {/* Cloud sync (opt-in) — only renders when Supabase is configured */}
-        <SyncSettings />
+        <div className="flex min-w-0 flex-1 flex-col gap-10">
+          {/* ── Account ── */}
+          <Section id="account" title="Account">
+            <SettingCard>
+              <Row
+                title="Your name"
+                description="Used for the greeting on your Dashboard."
+              >
+                <input
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="What should we call you?"
+                  maxLength={40}
+                  className="h-10 w-full max-w-[240px] rounded-full border border-line-strong bg-card px-4 text-[13.5px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-emerald-500"
+                />
+              </Row>
+              <Divider />
+              <Row
+                title="Plan"
+                description="Free while we grow — everything included."
+              >
+                <span className="rounded-full bg-sage-surface px-3 py-1 text-[12px] font-medium text-green-800">
+                  Free
+                </span>
+              </Row>
+            </SettingCard>
+          </Section>
 
-        {/* Appearance */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <Palette size={12} />
-            Appearance
-          </SectionTitle>
-          <Card className="flex flex-col gap-4 p-6" hoverable={false}>
-            <div className="flex flex-col gap-1">
-              <h4 className="text-[14px] font-semibold text-zinc-200">Theme</h4>
-              <p className="text-[12px] text-zinc-500">Choose how Jorata looks to you.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {THEMES.map((t) => (
+          {/* ── Sync ── */}
+          <Section id="sync" title="Sync">
+            <SettingCard>
+              <p className="font-serif text-[16px] leading-relaxed text-ink-900">
+                Local-first, by design.
+              </p>
+              <p className="mt-1.5 text-[13px] leading-relaxed text-ink-600">
+                Everything lives on this device and works offline. Sync is
+                opt-in: sign in to back your workspace up and use it
+                everywhere. Signing out never deletes local data.
+              </p>
+            </SettingCard>
+            <SyncSettings />
+          </Section>
+
+          {/* ── Themes ── */}
+          <Section id="themes" title="Themes">
+            <SettingCard>
+              <Row title="Pick your green" description="One accent recolours the whole app — paper and ink stay put.">
+                <span />
+              </Row>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+                {THEMES.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => changeTheme(t.id)}
+                    aria-pressed={theme === t.id}
+                    className={cn(
+                      "flex flex-col gap-2 rounded-inner border p-2.5 text-left transition-all duration-150",
+                      theme === t.id
+                        ? "border-transparent shadow-float-1"
+                        : "border-line-hair hover:border-line-strong"
+                    )}
+                    style={theme === t.id ? { outline: `1.5px solid ${t.accent}` } : undefined}
+                  >
+                    <ThemePreview accent={t.accent} />
+                    <span className="flex items-center gap-1.5 px-0.5">
+                      <span className="text-[12.5px] font-semibold text-ink-900">{t.label}</span>
+                      {theme === t.id && <Check size={12} style={{ color: t.accent }} />}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <Divider />
+              <Row
+                title="Daily Wisdom strip"
+                description="A quiet line above the Dashboard each morning — click it to open the Sanctuary."
+              >
+                <Toggle
+                  checked={wisdomStripEnabled}
+                  onChange={setWisdomStripEnabled}
+                  label="Show the Daily Wisdom strip"
+                />
+              </Row>
+            </SettingCard>
+          </Section>
+
+          {/* ── Shortcuts ── */}
+          <Section id="shortcuts" title="Shortcuts">
+            <SettingCard>
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <div className="flex flex-col gap-8">
+                  <ShortcutGroup title="Everywhere" shortcuts={GLOBAL_SHORTCUTS} />
+                  <ShortcutGroup title="Inbox triage" shortcuts={INBOX_SHORTCUTS} />
+                </div>
+                <ShortcutGroup title="Workspace canvas" shortcuts={CANVAS_SHORTCUTS} />
+              </div>
+            </SettingCard>
+          </Section>
+
+          {/* ── Data ── */}
+          <Section id="data" title="Data">
+            <SettingCard>
+              <Row
+                title="Export everything"
+                description="Maps, tasks, notes, goals, sources, reflections — one JSON file."
+              >
+                <Button variant="secondary" size="sm" onClick={handleExport}>
+                  <Download size={13} />
+                  Export JSON
+                </Button>
+              </Row>
+              <Divider />
+              <Row
+                title="Import a backup"
+                description="Restore a previous export. Replaces the current workspace."
+              >
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload size={13} />
+                  Import JSON
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImportFile(file);
+                    e.target.value = "";
+                  }}
+                />
+              </Row>
+              <Divider />
+              <Row
+                title="Export the open map"
+                description="As a Markdown outline or raw JSON — PNG export lives on the canvas (Share)."
+              >
+                <div className="flex shrink-0 gap-2">
+                  <Button variant="secondary" size="sm" onClick={handleExportMapMarkdown}>
+                    Markdown
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={handleExportMapJson}>
+                    JSON
+                  </Button>
+                </div>
+              </Row>
+              <Divider />
+              <Row
+                title="Clear all data"
+                description="Permanently erase this workspace and start fresh. Export first if unsure."
+              >
                 <button
-                  key={t.id}
-                  onClick={() => changeTheme(t.id)}
+                  type="button"
+                  onClick={handleClearAll}
                   className={cn(
-                    "flex flex-col gap-1.5 rounded-xl border p-3 text-left transition-all duration-150 cursor-pointer",
-                    theme === t.id
-                      ? "border-emerald-500/60 bg-emerald-500/8 shadow-lg shadow-emerald-500/15"
-                      : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+                    "flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[12.5px] font-medium transition-colors",
+                    confirmingClear
+                      ? "bg-clay-500 text-white"
+                      : "border border-clay-border bg-clay-bg text-clay-text hover:border-clay-500"
                   )}
                 >
-                  <ThemePreview accent={t.accent} active={theme === t.id} />
-                  <span className={cn("text-[13px] font-semibold", theme === t.id ? "text-zinc-100" : "text-zinc-300")}>
-                    {t.label}
-                  </span>
-                  <span className="text-[11px] text-zinc-500">{t.description}</span>
+                  <Trash2 size={13} />
+                  {confirmingClear ? "Click again to confirm" : "Clear data"}
                 </button>
-              ))}
-            </div>
-          </Card>
-        </section>
+              </Row>
+            </SettingCard>
+          </Section>
 
-        {/* Keyboard shortcuts */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <Keyboard size={12} />
-            Keyboard Shortcuts
-          </SectionTitle>
-          <Card className="grid grid-cols-1 gap-8 p-6 md:grid-cols-2" hoverable={false}>
-            <ShortcutGroup title="Everywhere" shortcuts={GLOBAL_SHORTCUTS} />
-            <ShortcutGroup title="Mind Map Canvas" shortcuts={CANVAS_SHORTCUTS} />
-          </Card>
-        </section>
-
-        {/* Data management */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <HardDrive size={12} />
-            Workspace Data
-          </SectionTitle>
-          <Card className="flex flex-col gap-6 p-6" hoverable={false}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-[14px] font-semibold text-zinc-200">Export backup</h4>
-                <p className="text-[12px] text-zinc-500">
-                  Download everything — maps, tasks, goals, reflections — as a JSON file.
-                </p>
-              </div>
-              <Button variant="secondary" size="sm" className="gap-2 shrink-0" onClick={handleExport}>
-                <Download size={14} />
-                Export JSON
-              </Button>
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-[14px] font-semibold text-zinc-200">Import backup</h4>
-                <p className="text-[12px] text-zinc-500">
-                  Restore a previous export. Replaces the current workspace.
-                </p>
-              </div>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="gap-2 shrink-0"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload size={14} />
-                Import JSON
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="application/json,.json"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleImportFile(file);
-                  e.target.value = "";
-                }}
-              />
-            </div>
-
-            <div className="h-px bg-white/5" />
-
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-[14px] font-semibold text-zinc-200">Clear all data</h4>
-                <p className="text-[12px] text-zinc-500">
-                  Permanently erase this workspace and start fresh. Export first if unsure.
-                </p>
-              </div>
-              <Button
-                variant={confirmingClear ? "primary" : "danger"}
-                size="sm"
-                className={cn(
-                  "gap-2 shrink-0",
-                  confirmingClear && "bg-rose-500 text-zinc-50 hover:bg-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.3)]"
-                )}
-                onClick={handleClearAll}
-              >
-                <Trash2 size={14} />
-                {confirmingClear ? "Click again to confirm" : "Clear data"}
-              </Button>
-            </div>
-          </Card>
-        </section>
-
-        {/* Mind map export */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <Network size={12} />
-            Export Mind Map
-          </SectionTitle>
-          <Card className="flex flex-col gap-4 p-6" hoverable={false}>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-[14px] font-semibold text-zinc-200">The map you have open</h4>
-                <p className="text-[12px] text-zinc-500">
-                  Export it as a Markdown outline or its raw JSON structure — separate from the full backup above.
-                </p>
-              </div>
-              <div className="flex shrink-0 gap-2">
-                <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportMapMarkdown}>
-                  <Download size={14} />
-                  Markdown
-                </Button>
-                <Button variant="secondary" size="sm" className="gap-2" onClick={handleExportMapJson}>
-                  <Download size={14} />
-                  JSON
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </section>
-
-        {/* About */}
-        <section className="flex flex-col gap-3">
-          <SectionTitle className="flex items-center gap-2">
-            <Info size={12} />
-            About
-          </SectionTitle>
-          <Card className="flex flex-col gap-2 p-6" hoverable={false}>
-            <p className="text-[14px] font-semibold text-zinc-200">Jorata v0.1</p>
-            <p className="text-[13px] leading-relaxed text-zinc-500">
-              A personal operating system for thinking and execution: capture thoughts,
-              shape them on the canvas, and turn them into action. Built local-first — your
-              data stays on this device by default, and you can turn on Sync to securely
-              back it up and use it on all your devices.
-            </p>
-          </Card>
-        </section>
+          {/* ── About ── */}
+          <Section id="about" title="About">
+            <SettingCard>
+              <p className="font-serif text-[18px] text-ink-900">Jorata</p>
+              <p className="mt-1.5 max-w-[520px] text-[13px] leading-relaxed text-ink-600">
+                A quiet room for a loud mind — capture thoughts, shape them on
+                the canvas, and turn them into action. Built local-first: your
+                data stays on this device by default, and sync is always your
+                choice.
+              </p>
+              <p className="mt-3 font-mono text-[11px] text-ink-400">
+                Think → Plan → Execute → Measure
+              </p>
+            </SettingCard>
+          </Section>
+        </div>
       </div>
     </div>
   );
 }
 
-function ThemePreview({ accent, active }: { accent: string; active: boolean }) {
+/* ── Building blocks ── */
+
+function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <div className="relative h-14 w-full overflow-hidden rounded-lg border border-white/8 bg-zinc-950">
-      {/* Simulated sidebar strip */}
-      <div className="absolute inset-y-0 left-0 w-5 bg-black/40" />
-      {/* Simulated content lines — the top one is tinted so each card shows its hue */}
-      <div className="absolute left-7 top-3 flex flex-col gap-1.5">
-        <div className="h-1.5 w-12 rounded-full" style={{ backgroundColor: accent, opacity: 0.55 }} />
-        <div className="h-1.5 w-8 rounded-full bg-zinc-700/50" />
+    <section id={id} aria-label={title} className="scroll-mt-8">
+      <h2 className="mb-3 text-[10.5px] font-medium uppercase tracking-[0.18em] text-ink-500">
+        {title}
+      </h2>
+      <div className="flex flex-col gap-3">{children}</div>
+    </section>
+  );
+}
+
+function SettingCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-card border border-line-hair bg-card p-6">{children}</div>
+  );
+}
+
+function Row({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <h4 className="text-[14px] font-semibold text-ink-900">{title}</h4>
+        <p className="text-[12.5px] leading-relaxed text-ink-600">{description}</p>
       </div>
-      {/* Accent dot */}
-      <div
-        className="absolute bottom-2.5 right-3 h-2 w-2 rounded-full"
-        style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
-      />
-      {/* Active highlight — an inner ring in the theme's own colour */}
-      {active && (
-        <div
-          className="pointer-events-none absolute inset-0 rounded-lg"
-          style={{ boxShadow: `inset 0 0 0 1.5px ${accent}` }}
-        />
+      {children}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="my-5 h-px bg-line-soft" />;
+}
+
+function Toggle({
+  checked,
+  onChange,
+  label,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200",
+        checked ? "bg-emerald-500" : "bg-track"
       )}
+    >
+      <span
+        className={cn(
+          "absolute top-0.5 h-5 w-5 rounded-full bg-card shadow-float-1 transition-all duration-200",
+          checked ? "left-[22px]" : "left-0.5"
+        )}
+      />
+    </button>
+  );
+}
+
+/** Live mini-dashboard preview in the candidate accent (§7). */
+function ThemePreview({ accent }: { accent: string }) {
+  return (
+    <div className="relative h-16 w-full overflow-hidden rounded-[10px] border border-line-hair bg-paper">
+      {/* rail */}
+      <div className="absolute inset-y-0 left-0 w-[14px] bg-evergreen-950">
+        <div className="mx-auto mt-1.5 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: accent }} />
+      </div>
+      {/* hero card */}
+      <div className="absolute left-[20px] top-1.5 h-6 w-[52px] rounded-[4px] bg-evergreen-950">
+        <div className="ml-1.5 mt-1.5 h-1 w-7 rounded-full bg-[rgba(233,237,224,0.35)]" />
+        <div className="ml-1.5 mt-1 h-1 w-4 rounded-full" style={{ backgroundColor: accent }} />
+      </div>
+      {/* paper cards */}
+      <div className="absolute right-1.5 top-1.5 h-6 w-[26px] rounded-[4px] border border-line-hair bg-card" />
+      <div className="absolute bottom-1.5 left-[20px] h-5 w-[38px] rounded-[4px] border border-line-hair bg-card">
+        <div className="ml-1 mt-1 h-1 w-5 rounded-full bg-sunken" />
+      </div>
+      <div className="absolute bottom-1.5 right-1.5 flex h-5 w-[40px] items-center justify-center rounded-[4px]" style={{ backgroundColor: accent }}>
+        <div className="h-1 w-6 rounded-full bg-white/70" />
+      </div>
     </div>
   );
 }
@@ -387,12 +511,12 @@ function ThemePreview({ accent, active }: { accent: string; active: boolean }) {
 function ShortcutGroup({ title, shortcuts }: { title: string; shortcuts: [string, string][] }) {
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">{title}</p>
+      <p className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-ink-500">{title}</p>
       <div className="flex flex-col gap-2.5">
         {shortcuts.map(([keys, action]) => (
           <div key={keys} className="flex items-center justify-between gap-6">
-            <span className="text-[12px] text-zinc-400">{action}</span>
-            <kbd className="shrink-0 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-bold text-zinc-300">
+            <span className="text-[12.5px] text-ink-600">{action}</span>
+            <kbd className="shrink-0 rounded-kbd border border-line-hair bg-sunken px-1.5 py-0.5 font-mono text-[10.5px] text-ink-600">
               {keys}
             </kbd>
           </div>

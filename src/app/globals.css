@@ -1,79 +1,87 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════════
+   Jorata "Evergreen" design language — single source of truth.
+   Paper surfaces + evergreen chrome + one themeable accent.
+   Token names follow the design handoff (§4) so specs map 1:1 to code.
+   ═══════════════════════════════════════════════════════════════════ */
+
 :root {
-  --background: #09090b;
-  --foreground: #f4f4f5;
+  --background: #f6f3eb; /* paper-bg */
+  --foreground: #3a463c; /* ink-700 */
 
   /* ── Accent ramp ──────────────────────────────────────────────
      The single source of truth for the app's accent colour. Every
      `emerald-*` utility is remapped onto these vars in @theme below,
      so swapping this ramp (via [data-theme] on <html>) recolours the
-     whole UI at once. Default = Emerald. */
-  --accent-50: #ecfdf5;
-  --accent-100: #d1fae5;
-  --accent-200: #a7f3d0;
-  --accent-300: #6ee7b7;
-  --accent-400: #34d399;
-  --accent-500: #10b981;
-  --accent-600: #059669;
-  --accent-700: #047857;
+     whole UI at once. Default = Evergreen Emerald (#1E9B68 brand).
+     Themes swap ONLY this ramp — paper, ink and greens stay put. */
+  --accent-50: #eaf6f0;
+  --accent-100: #d3ede0;
+  --accent-200: #a9dec4;
+  --accent-300: #6fce9e; /* emerald on dark surfaces */
+  --accent-400: #3fb683;
+  --accent-500: #1e9b68; /* brand */
+  --accent-600: #188256; /* hover */
+  --accent-700: #146a47;
 
-  /* Derived accents — defined once here against the ramp, so each
-     theme only needs to override the ramp above and these follow. */
-  --accent-focus: color-mix(in srgb, var(--accent-400) 55%, transparent);
-  --accent-select: color-mix(in srgb, var(--accent-400) 90%, transparent);
-  --accent-edge: rgba(161, 161, 170, 0.5); /* edges stay neutral grey */
+  /* Derived accents — defined once against the ramp so each theme
+     only overrides the ramp above and these follow. */
+  --accent-focus: var(--accent-500);
+  --accent-select: var(--accent-500);
+  --accent-edge: #b9b4a2; /* user-drawn map edges stay warm grey */
 }
 
 [data-theme="ocean"] {
-  --accent-50: #eff6ff;
-  --accent-100: #dbeafe;
-  --accent-200: #bfdbfe;
-  --accent-300: #93c5fd;
-  --accent-400: #60a5fa;
-  --accent-500: #3b82f6;
-  --accent-600: #2563eb;
-  --accent-700: #1d4ed8;
+  --accent-50: #ebf3fa;
+  --accent-100: #d5e7f4;
+  --accent-200: #aacfe9;
+  --accent-300: #78b3da;
+  --accent-400: #4795c8;
+  --accent-500: #2278b5;
+  --accent-600: #1c6496;
+  --accent-700: #175178;
 }
 
 [data-theme="violet"] {
-  --accent-50: #f5f3ff;
-  --accent-100: #ede9fe;
-  --accent-200: #ddd6fe;
-  --accent-300: #c4b5fd;
-  --accent-400: #a78bfa;
-  --accent-500: #8b5cf6;
-  --accent-600: #7c3aed;
-  --accent-700: #6d28d9;
+  --accent-50: #f2effa;
+  --accent-100: #e5def5;
+  --accent-200: #cabdea;
+  --accent-300: #ad98dc;
+  --accent-400: #9279d1;
+  --accent-500: #7a5bc7;
+  --accent-600: #654aa9;
+  --accent-700: #513a8a;
 }
 
 [data-theme="rose"] {
-  --accent-50: #fff1f2;
-  --accent-100: #ffe4e6;
-  --accent-200: #fecdd3;
-  --accent-300: #fda4af;
-  --accent-400: #fb7185;
-  --accent-500: #f43f5e;
-  --accent-600: #e11d48;
-  --accent-700: #be123c;
+  --accent-50: #faeff2;
+  --accent-100: #f4dce3;
+  --accent-200: #e9b8c5;
+  --accent-300: #dc90a5;
+  --accent-400: #cf6f8b;
+  --accent-500: #c25573;
+  --accent-600: #a4445f;
+  --accent-700: #85354c;
 }
 
 [data-theme="amber"] {
-  --accent-50: #fffbeb;
-  --accent-100: #fef3c7;
-  --accent-200: #fde68a;
-  --accent-300: #fcd34d;
-  --accent-400: #fbbf24;
-  --accent-500: #f59e0b;
-  --accent-600: #d97706;
-  --accent-700: #b45309;
+  --accent-50: #faf2e7;
+  --accent-100: #f4e4cd;
+  --accent-200: #e9c898;
+  --accent-300: #ddaa61;
+  --accent-400: #d39440;
+  --accent-500: #c97f2e;
+  --accent-600: #aa6a25;
+  --accent-700: #8a551d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter), "Segoe UI", Arial, Helvetica, sans-serif;
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --font-sans: var(--font-instrument-sans), "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-serif: var(--font-instrument-serif), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-spline-mono), "SFMono-Regular", Consolas, monospace;
 }
 
 /* Route every emerald utility through the accent ramp. This is why a single
@@ -91,6 +99,80 @@
   --color-emerald-500: var(--accent-500);
   --color-emerald-600: var(--accent-600);
   --color-emerald-700: var(--accent-700);
+
+  /* ── Ink (text) ─────────────────────────────────────────────── */
+  --color-ink-900: #1b291f; /* headings */
+  --color-ink-700: #3a463c; /* body */
+  --color-ink-600: #55604f; /* secondary */
+  --color-ink-500: #7a776c; /* tertiary, caps labels */
+  --color-ink-400: #a9a695; /* placeholder, disabled */
+
+  /* ── Paper (surfaces) ───────────────────────────────────────── */
+  --color-paper: #f6f3eb; /* app/page background */
+  --color-card: #fcfbf7; /* cards, inputs, floating chrome */
+  --color-sunken: #f0ede2; /* sunken wells, kbd chips */
+  --color-track: #ece8db; /* segmented-control tracks */
+
+  /* ── Lines ──────────────────────────────────────────────────── */
+  --color-line-hair: #e3dfd2; /* default 1px borders */
+  --color-line-strong: #d8d3c4; /* frame borders */
+  --color-line-soft: #ede9de; /* row dividers inside cards */
+
+  /* ── Evergreen (dark chrome) ────────────────────────────────── */
+  --color-evergreen-950: #10201a; /* rail, dark anchor cards, toasts */
+  --color-evergreen-900: #143024; /* primary buttons, central node */
+  --color-evergreen-deep: #0e241b; /* primary-dark hover */
+  --color-art-1: #1b3a2c; /* artwork lines on dark (outer) */
+  --color-art-2: #234a37;
+  --color-art-3: #2e5c41;
+  --color-art-4: #35634a; /* (inner) */
+  --color-green-800: #24523b; /* green text/links on paper, selected-node border */
+
+  /* ── Sage (AI material) ─────────────────────────────────────── */
+  --color-sage-surface: #e9ede0; /* assistant cells, proposals; active rail item */
+  --color-sage-border: #cbd6c0;
+  --color-sage-500: #9fb894;
+  --color-sage-dash: #7e937e; /* dashed borders/edges of AI-proposed content */
+
+  /* ── Rail text ──────────────────────────────────────────────── */
+  --color-rail-text: #dce4d4;
+  --color-rail-muted: #b9c6b0;
+  --color-rail-faint: #6e8570; /* section headers, footnotes */
+  --color-rail-bright: #f1f3ea; /* logo wordmark, user name */
+
+  /* ── Warm accents ───────────────────────────────────────────── */
+  --color-ochre-500: #c99a2e; /* attention dots, counts, avatar bg */
+  --color-ochre-700: #8a6a1d; /* ochre text on paper (contrast-safe) */
+  --color-straw: #f3e9c8; /* sticky notes */
+  --color-straw-text: #6b5222;
+  --color-straw-ink: #4a4230; /* body text on stickies */
+  --color-clay-500: #a65a3a; /* warnings/tension accents */
+  --color-clay-bg: #f2e4dc; /* deadline/danger chips, error banners */
+  --color-clay-text: #7e3b2a;
+  --color-clay-border: #e5c9ba;
+
+  /* ── Canvas ─────────────────────────────────────────────────── */
+  --color-edge: #b9b4a2; /* map edges (user-drawn) */
+  --color-dotgrid: #dad5c4; /* canvas dot grid */
+
+  /* ── Radius (§4.4) ──────────────────────────────────────────── */
+  --radius-card: 18px; /* cards/widgets */
+  --radius-inner: 14px; /* inner cards, capture bar */
+  --radius-node: 12px; /* map nodes, context menus */
+  --radius-item: 11px; /* rail items, mini-chips */
+  --radius-row: 9px; /* proposal sub-rows */
+  --radius-kbd: 6px; /* checkboxes, kbd chips */
+
+  /* ── Elevation (§4.5) — borders carry structure; shadows float ─ */
+  --shadow-float-1: 0 4px 14px rgba(20, 48, 36, 0.06);
+  --shadow-float-2: 0 10px 30px rgba(20, 48, 36, 0.1);
+  --shadow-float-3: 0 14px 40px rgba(20, 48, 36, 0.14);
+  --shadow-dark-float: 0 10px 26px rgba(22, 48, 31, 0.22);
+  --shadow-node: 0 4px 12px rgba(20, 48, 36, 0.05);
+  --shadow-node-selected: 0 6px 18px rgba(36, 82, 59, 0.16);
+
+  /* ── Motion (§8) ────────────────────────────────────────────── */
+  --ease-quiet: cubic-bezier(0.2, 0, 0, 1);
 }
 
 body {
@@ -98,6 +180,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent-500) 22%, transparent);
 }
 
 /* Keyboard-navigation baseline: a consistent, visible focus ring on
@@ -111,10 +197,12 @@ select:focus-visible {
 }
 
 @layer utilities {
+  /* Legacy dark-glass surface — still referenced by pre-Evergreen components.
+     Remove once the last dark-era component is rebuilt. */
   .glass {
     @apply border border-white/10 bg-white/[0.03] backdrop-blur-xl;
   }
-  
+
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -123,11 +211,101 @@ select:focus-visible {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(27, 41, 31, 0.16);
     border-radius: 10px;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(27, 41, 31, 0.28);
+  }
+
+  /* Scrollbar variant for dark (evergreen) surfaces — the rail, dark cards. */
+  .scrollbar-on-dark::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-thumb {
+    background: rgba(233, 237, 224, 0.14);
+    border-radius: 10px;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-thumb:hover {
+    background: rgba(233, 237, 224, 0.26);
+  }
+
+  /* Map canvas dot grid: 1px dots on a 26px pitch (§6.6). */
+  .canvas-dotgrid {
+    background-image: radial-gradient(var(--color-dotgrid) 1px, transparent 1px);
+    background-size: 26px 26px;
+  }
+}
+
+/* ── Skeleton shimmer (§7 states): card shapes in paper-sunken, 1.2s ── */
+@keyframes evergreen-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-sunken) 35%,
+    var(--color-card) 50%,
+    var(--color-sunken) 65%
+  );
+  background-size: 200% 100%;
+  animation: evergreen-shimmer 1.2s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-shimmer {
+    animation: none;
+    background: var(--color-sunken);
+  }
+}
+
+/* ── Proposal reveal (§5.1/§8): fade + scale .97→1, staggered 60ms upstream ── */
+@keyframes proposal-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.proposal-reveal {
+  animation: proposal-reveal 0.24s var(--ease-quiet) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .proposal-reveal {
+    animation-duration: 0.01ms;
+    animation-delay: 0ms !important;
+  }
+}
+
+/* ── AI presence: a 6px emerald dot pulses wherever the AI is writing (§8) ── */
+@keyframes ai-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.ai-pulse {
+  animation: ai-pulse 1.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ai-pulse {
+    animation: none;
   }
 }
 
@@ -190,34 +368,36 @@ select:focus-visible {
   }
 }
 
-/* Recharts Tooltip Customization override */
-.recharts-default-tooltip {
-  @apply !bg-zinc-900/90 !border-white/10 !rounded-xl !shadow-2xl !backdrop-blur-md !p-3 !text-[12px] !font-medium;
-}
-
 /* React Flow: one source of truth for edge, control and handle styling.
    Uses the library's --xy-* theming variables so they survive the cascade
-   regardless of stylesheet order. */
+   regardless of stylesheet order. Map spec §6.6. */
 .react-flow {
-  --xy-edge-stroke: var(--accent-edge);
-  --xy-edge-stroke-width: 2;
-  --xy-edge-stroke-selected: var(--accent-select);
-  --xy-controls-button-background-color: rgba(24, 24, 27, 0.92);
-  --xy-controls-button-background-color-hover: rgba(39, 39, 42, 0.95);
-  --xy-controls-button-color: #a1a1aa;
-  --xy-controls-button-color-hover: #e4e4e7;
-  --xy-controls-button-border-color: rgba(255, 255, 255, 0.08);
-  --xy-minimap-background-color: rgba(9, 9, 11, 0.6);
+  --xy-edge-stroke: var(--color-edge);
+  --xy-edge-stroke-width: 1.6;
+  --xy-edge-stroke-selected: var(--color-green-800);
+  --xy-controls-button-background-color: var(--color-card);
+  --xy-controls-button-background-color-hover: var(--color-sunken);
+  --xy-controls-button-color: var(--color-ink-600);
+  --xy-controls-button-color-hover: var(--color-ink-900);
+  --xy-controls-button-border-color: var(--color-line-hair);
+  --xy-minimap-background-color: rgba(252, 251, 247, 0.92);
   --xy-attribution-background-color: transparent;
 }
+/* Edge hover thickens (§6.6) and hints that edges are cuttable. */
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: rgba(212, 212, 216, 0.7);
+  stroke: var(--color-sage-dash);
+  stroke-width: 2.5;
 }
 /* Hand-drawn (freeform) connections read as lateral links — dashed and a touch
    faded — vs solid parent-child edges. */
 .react-flow__edge.freeform-edge .react-flow__edge-path {
   stroke-dasharray: 6 5;
   opacity: 0.6;
+}
+/* AI-proposed edges: sage dashes until the proposal is accepted. */
+.react-flow__edge.proposed-edge .react-flow__edge-path {
+  stroke: var(--color-sage-dash);
+  stroke-dasharray: 5 5;
 }
 .react-flow__handle {
   opacity: 0;
@@ -229,5 +409,5 @@ select:focus-visible {
   opacity: 1;
 }
 .react-flow__attribution {
-  color: rgba(255, 255, 255, 0.2);
+  color: rgba(27, 41, 31, 0.25);
 }

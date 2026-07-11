@@ -98,18 +98,18 @@ export default function FixMapModal({ onClose }: { onClose: () => void }) {
       className="max-w-lg"
     >
       {tooSmall ? (
-        <p className="text-[13px] leading-relaxed text-zinc-400">
+        <p className="text-[13.5px] leading-relaxed text-ink-600">
           This map is still small — a structure review helps once there are a few
           more ideas on the canvas. Add some and come back when you&apos;re ready.
         </p>
       ) : phase === "loading" ? (
-        <div className="flex items-center gap-3 py-6 text-[13px] text-zinc-400">
-          <Loader2 size={16} className="animate-spin text-zinc-500" />
+        <div className="flex items-center gap-3 py-6 text-[13.5px] text-ink-600">
+          <Loader2 size={16} className="animate-spin text-ink-500" />
           <span>Reading your map…</span>
         </div>
       ) : phase === "error" ? (
         <div className="flex flex-col gap-4">
-          <p className="text-[13px] leading-relaxed text-zinc-400">
+          <p className="text-[13.5px] leading-relaxed text-ink-600">
             {error ?? "That didn't work."}
           </p>
           <Button className="w-full gap-2" onClick={() => void requestReview()}>
@@ -117,28 +117,28 @@ export default function FixMapModal({ onClose }: { onClose: () => void }) {
           </Button>
         </div>
       ) : operations.length === 0 ? (
-        <p className="text-[13px] leading-relaxed text-zinc-400">
+        <p className="text-[13.5px] leading-relaxed text-ink-600">
           The structure looks sound — nothing to change right now.
         </p>
       ) : (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+            <span className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-ink-500">
               {operations.length} suggested {operations.length === 1 ? "change" : "changes"}
             </span>
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setAccepted(new Set(operations.map((_, i) => i)))}
-                className="text-[12px] text-zinc-400 transition-colors hover:text-emerald-300"
+                className="text-[12px] text-ink-600 transition-colors hover:text-green-800"
               >
                 Accept all
               </button>
-              <span className="h-3 w-px bg-white/10" />
+              <span className="h-3 w-px bg-line-hair" />
               <button
                 type="button"
                 onClick={() => setAccepted(new Set())}
-                className="text-[12px] text-zinc-400 transition-colors hover:text-zinc-200"
+                className="text-[12px] text-ink-600 transition-colors hover:text-ink-900"
               >
                 Reject all
               </button>
@@ -154,28 +154,28 @@ export default function FixMapModal({ onClose }: { onClose: () => void }) {
                   type="button"
                   onClick={() => toggle(index)}
                   className={cn(
-                    "flex items-start gap-3 rounded-xl border px-3 py-2.5 text-left transition-all",
+                    "flex items-start gap-3 rounded-node border px-3 py-2.5 text-left transition-all",
                     isAccepted
-                      ? "border-emerald-500/25 bg-emerald-500/[0.06]"
-                      : "border-white/[0.05] bg-white/[0.02] opacity-60 hover:opacity-90"
+                      ? "border-sage-border bg-sage-surface"
+                      : "border-line-hair bg-card opacity-60 hover:opacity-90"
                   )}
                 >
                   <span
                     className={cn(
-                      "mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-md border transition-all",
+                      "mt-0.5 flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] transition-all",
                       isAccepted
-                        ? "border-emerald-500 bg-emerald-500 text-zinc-950"
-                        : "border-white/15 text-transparent"
+                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        : "border-ink-400 text-transparent"
                     )}
                   >
                     <Check size={11} strokeWidth={3} />
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
-                    <span className="text-[13px] font-medium text-zinc-200">
+                    <span className="text-[13.5px] font-medium text-ink-900">
                       {describeOperation(op, labelOf)}
                     </span>
                     {op.reason && (
-                      <span className="text-[12px] leading-relaxed text-zinc-500">
+                      <span className="text-[12.5px] leading-relaxed text-ink-600">
                         {op.reason}
                       </span>
                     )}

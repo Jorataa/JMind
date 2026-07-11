@@ -28,16 +28,16 @@ export default function ReconcileModal() {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-[rgba(27,41,31,0.4)] p-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="reconcile-title"
     >
-      <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-zinc-900 p-7 shadow-2xl animate-in zoom-in-95 duration-200">
-        <h2 id="reconcile-title" className="text-[20px] font-semibold text-zinc-50">
+      <div className="w-full max-w-lg rounded-card border border-line-hair bg-card p-7 shadow-float-3">
+        <h2 id="reconcile-title" className="font-serif text-[24px] leading-[1.2] text-ink-900">
           You already have data here and in the cloud
         </h2>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-400">
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-600">
           This device has work saved locally, and your account has synced data too. How would
           you like to combine them? Nothing is deleted until you choose.
         </p>
@@ -96,19 +96,19 @@ function ChoiceButton({
       onClick={onClick}
       disabled={disabled}
       className={[
-        "flex items-start gap-3 rounded-xl border p-4 text-left transition-all duration-150 disabled:opacity-60",
+        "flex items-start gap-3 rounded-inner border p-4 text-left transition-all duration-150 disabled:opacity-60",
         highlight
-          ? "border-emerald-500/40 bg-emerald-500/[0.06] hover:border-emerald-500/60 hover:bg-emerald-500/10"
-          : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]",
+          ? "border-sage-border bg-sage-surface hover:border-sage-500"
+          : "border-line-hair bg-card hover:border-line-strong",
       ].join(" ")}
     >
-      <span className={highlight ? "mt-0.5 text-emerald-400" : "mt-0.5 text-zinc-400"}>{icon}</span>
+      <span className={highlight ? "mt-0.5 text-green-800" : "mt-0.5 text-ink-500"}>{icon}</span>
       <span className="flex flex-col gap-0.5">
-        <span className="text-[14px] font-semibold text-zinc-100">
+        <span className="text-[14px] font-semibold text-ink-900">
           {title}
-          {loading && <span className="ml-2 text-[12px] font-normal text-zinc-400">working…</span>}
+          {loading && <span className="ml-2 text-[12px] font-normal text-ink-500">working…</span>}
         </span>
-        <span className="text-[12px] leading-relaxed text-zinc-500">{description}</span>
+        <span className="text-[12.5px] leading-relaxed text-ink-600">{description}</span>
       </span>
     </button>
   );

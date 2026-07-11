@@ -5,6 +5,10 @@ import { useFocusStore } from "@/stores/use-focus-store";
 import { useActivityStore } from "@/stores/use-activity-store";
 import { useInboxStore } from "@/stores/use-inbox-store";
 import { useWisdomStore } from "@/stores/use-wisdom-store";
+import { useGroveStore } from "@/stores/use-grove-store";
+import { useNoteStore } from "@/stores/use-note-store";
+import { useKnowledgeStore } from "@/stores/use-knowledge-store";
+import { useCalendarStore } from "@/stores/use-calendar-store";
 import { useUIStore } from "@/stores/use-ui-store";
 
 /**
@@ -23,6 +27,10 @@ const STORES_BY_KEY = {
   "jmind:activity": useActivityStore,
   "jmind:inbox": useInboxStore,
   "jmind:wisdom": useWisdomStore,
+  "jmind:groves": useGroveStore,
+  "jmind:notes": useNoteStore,
+  "jmind:knowledge": useKnowledgeStore,
+  "jmind:calendar": useCalendarStore,
   "jmind:ui": useUIStore,
 } as const;
 

@@ -1,64 +1,63 @@
 "use client";
 
-import { useCallback, useMemo, useState, type KeyboardEvent } from "react";
+import { useCallback, useState } from "react";
 import { Panel, useReactFlow, getNodesBounds, getViewportForBounds } from "@xyflow/react";
-import { Search, Plus, Maximize, Sparkles, Download, PanelRight, Undo2, Redo2, StickyNote, Wand2, Wrench } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { useMindMapNodes, useMindMapActions, useMindMapStore, useCanUndo, useCanRedo, ROOT_NODE_ID } from "@/stores/use-mindmap-store";
+import {
+  Share2,
+  Sparkles,
+  PanelRight,
+  Undo2,
+  Redo2,
+  Wand2,
+  Wrench,
+} from "lucide-react";
+import {
+  useMindMapActions,
+  useMindMapStore,
+  useCanUndo,
+  useCanRedo,
+} from "@/stores/use-mindmap-store";
 import { exportViewportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
 import AiGenerateModal from "@/features/ai/AiGenerateModal";
 import FixMapModal from "@/features/ai/FixMapModal";
 
+/**
+ * Workspace top chrome (design handoff §6.2, mockup #2b) — floating paper
+ * pills inset from the frame:
+ *   left   breadcrumb (MapSwitcher) · history/tidy/AI-structure pill
+ *   center Map / Outline view switcher
+ *   right  Share · Ask Jorata (dark) · details-panel toggle
+ */
+
+export type WorkspaceView = "map" | "outline";
+
+const ICON_BTN =
+  "flex h-7 w-7 items-center justify-center rounded-full text-ink-600 transition-colors hover:bg-sunken hover:text-ink-900 disabled:pointer-events-none disabled:opacity-40";
+
+function Divider() {
+  return <span aria-hidden className="h-4 w-px shrink-0 bg-line-hair" />;
+}
+
 export default function CanvasToolbar({
   onTidy,
-  onAddSticky,
   onOpenAi,
+  view,
+  onViewChange,
 }: {
   onTidy: () => void;
-  onAddSticky: () => void;
   onOpenAi: () => void;
+  view: WorkspaceView;
+  onViewChange: (view: WorkspaceView) => void;
 }) {
-  const nodes = useMindMapNodes();
-  const selectedNodeId = useMindMapStore((state) => state.selectedNodeId);
   const sidebarOpen = useMindMapStore((state) => state.sidebarOpen);
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-  const { addNode, selectNode, toggleSidebar, undo, redo } = useMindMapActions();
-  const { fitView, setCenter, getNodes } = useReactFlow();
-  const [search, setSearch] = useState("");
+  const { toggleSidebar, undo, redo } = useMindMapActions();
+  const { getNodes } = useReactFlow();
   const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
   const [fixMapOpen, setFixMapOpen] = useState(false);
-
-  const matchingNode = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return null;
-    return nodes.find((node) => node.data.label.toLowerCase().includes(q)) ?? null;
-  }, [nodes, search]);
-
-  const handleSearchKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLInputElement>) => {
-      if (event.key === "Enter" && matchingNode) {
-        selectNode(matchingNode.id);
-        setCenter(matchingNode.position.x + 80, matchingNode.position.y + 20, {
-          zoom: 1.2,
-          duration: 400,
-        });
-      }
-    },
-    [matchingNode, selectNode, setCenter]
-  );
-
-  // Always connect: child of the selected node, or of the root when nothing is
-  // selected — matching the Tab shortcut, so the button never drops an orphan.
-  const handleAddNode = useCallback(() => {
-    addNode("New Idea", selectedNodeId ?? ROOT_NODE_ID);
-  }, [addNode, selectedNodeId]);
-
-  const handleFitView = useCallback(() => {
-    fitView({ duration: 300, padding: 0.2, maxZoom: 1.25 });
-  }, [fitView]);
 
   const handleExport = useCallback(async () => {
     const viewport = document
@@ -88,153 +87,127 @@ export default function CanvasToolbar({
   }, [getNodes]);
 
   return (
-    <Panel position="top-left" className="z-10 ml-4 mt-4">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        {/* Which map am I in? Click to switch or create. */}
-        <MapSwitcher />
+    <>
+      {/* ── Left: breadcrumb + history/structure ── */}
+      <Panel position="top-left" className="z-10 !m-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <MapSwitcher />
 
-        {/* Generate a whole map from one topic. */}
-        <Button
-          size="sm"
-          className="h-9 gap-2 rounded-full border border-violet-500/30 bg-violet-500/15 px-4 text-violet-200 shadow-xl hover:bg-violet-500/25"
-          variant="secondary"
-          onClick={() => setAiGenerateOpen(true)}
-          title="Generate a mind map with AI"
-        >
-          <Wand2 size={14} className="text-violet-300" />
-          <span className="hidden md:inline">AI Generate</span>
-        </Button>
-
-        {/* Chat with the AI about the current map. Lives IN the toolbar (rather
-            than floating over the top-right corner) so it can never overlap the
-            canvas controls or other buttons. */}
-        <Button
-          size="sm"
-          className="h-9 gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-4 text-emerald-200 shadow-xl hover:bg-emerald-500/25"
-          variant="secondary"
-          onClick={onOpenAi}
-          title="Ask Jorata AI"
-        >
-          <Sparkles size={14} className="text-emerald-300" />
-          <span className="hidden md:inline">Ask AI</span>
-        </Button>
-
-        {/* Review the whole map's structure — proposals only, applied after
-            the user reviews them. Neutral styling: it's a maintenance tool,
-            not a third accent color. */}
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-9 gap-2 rounded-full border border-white/5 bg-zinc-900/60 px-4 shadow-xl backdrop-blur-xl hover:bg-zinc-900/80"
-          onClick={() => setFixMapOpen(true)}
-          title="Review & improve this map's structure"
-        >
-          <Wrench size={14} className="text-zinc-400" />
-          <span className="hidden md:inline">Fix map</span>
-        </Button>
-
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={14} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="Find an idea..."
-            className="h-9 w-44 rounded-full border border-white/5 bg-zinc-900/60 pl-9 pr-4 text-[12px] text-zinc-200 shadow-2xl outline-none backdrop-blur-xl transition-all focus:border-emerald-500/20 focus:bg-zinc-900/80 xl:w-56"
-          />
+          <div className="flex h-9 items-center gap-0.5 rounded-full border border-line-hair bg-card px-1.5 shadow-float-1">
+            <button
+              type="button"
+              className={ICON_BTN}
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (Ctrl+Z)"
+              aria-label="Undo"
+            >
+              <Undo2 size={13.5} />
+            </button>
+            <button
+              type="button"
+              className={ICON_BTN}
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (Ctrl+Shift+Z)"
+              aria-label="Redo"
+            >
+              <Redo2 size={13.5} />
+            </button>
+            <Divider />
+            <button
+              type="button"
+              className={ICON_BTN}
+              onClick={onTidy}
+              title="Tidy map (Shift+T)"
+              aria-label="Tidy map"
+            >
+              <Sparkles size={13.5} />
+            </button>
+            <Divider />
+            <button
+              type="button"
+              className={ICON_BTN}
+              onClick={() => setAiGenerateOpen(true)}
+              title="Generate a whole mind map with AI"
+              aria-label="Generate a mind map with AI"
+            >
+              <Wand2 size={13.5} />
+            </button>
+            <button
+              type="button"
+              className={ICON_BTN}
+              onClick={() => setFixMapOpen(true)}
+              title="Review & improve this map's structure"
+              aria-label="Review map structure"
+            >
+              <Wrench size={13.5} />
+            </button>
+          </div>
         </div>
+      </Panel>
 
-        <Button
-          size="sm"
-          className="h-9 gap-2 rounded-full border border-emerald-500/20 px-4 shadow-xl"
-          onClick={handleAddNode}
-          title={selectedNodeId ? "Add child of selected idea (Tab)" : "Add idea under root (Tab)"}
-        >
-          <Plus size={14} />
-          <span>Idea</span>
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-9 gap-2 rounded-full border border-white/5 bg-zinc-900/60 px-4 shadow-xl backdrop-blur-xl hover:bg-zinc-900/80"
-          onClick={onAddSticky}
-          title="Add sticky note (S)"
-        >
-          <StickyNote size={14} className="text-yellow-400" />
-          <span className="hidden md:inline">Sticky</span>
-        </Button>
-        <div className="flex items-center rounded-full border border-white/5 bg-zinc-900/60 shadow-xl backdrop-blur-xl">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 rounded-l-full rounded-r-none p-0"
-            onClick={undo}
-            disabled={!canUndo}
-            title="Undo (Ctrl+Z)"
-            aria-label="Undo"
-          >
-            <Undo2 size={14} />
-          </Button>
-          <div className="h-4 w-px bg-white/5" />
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-9 w-9 rounded-r-full rounded-l-none p-0"
-            onClick={redo}
-            disabled={!canRedo}
-            title="Redo (Ctrl+Shift+Z)"
-            aria-label="Redo"
-          >
-            <Redo2 size={14} />
-          </Button>
+      {/* ── Center: view switcher ── */}
+      <Panel position="top-center" className="z-10 !mt-4 hidden sm:block">
+        <div className="flex h-9 items-center gap-0.5 rounded-full bg-track p-1 shadow-float-1">
+          {(["map", "outline"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onViewChange(v)}
+              aria-pressed={view === v}
+              className={cn(
+                "h-7 rounded-full px-3.5 text-[12.5px] capitalize transition-colors",
+                view === v
+                  ? "bg-card font-semibold text-ink-900 shadow-float-1"
+                  : "text-ink-600 hover:text-ink-900"
+              )}
+            >
+              {v}
+            </button>
+          ))}
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="hidden h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl sm:flex"
-          onClick={onTidy}
-          title="Tidy map (Shift+T)"
-          aria-label="Tidy map"
-        >
-          <Sparkles size={14} className="text-amber-400" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl"
-          onClick={handleFitView}
-          title="Fit view (F)"
-          aria-label="Fit view"
-        >
-          <Maximize size={14} />
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="hidden h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl sm:flex"
-          onClick={handleExport}
-          title="Export as PNG"
-          aria-label="Export as PNG"
-        >
-          <Download size={14} className="text-emerald-400" />
-        </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          className={cn(
-            "h-9 w-9 rounded-full border border-white/5 p-0 shadow-xl",
-            sidebarOpen && "border-emerald-500/30 text-emerald-400"
-          )}
-          onClick={() => toggleSidebar()}
-          title="Node details (I)"
-          aria-label="Toggle node details"
-        >
-          <PanelRight size={14} />
-        </Button>
-      </div>
+      </Panel>
+
+      {/* ── Right: share · ask · details ── */}
+      <Panel position="top-right" className="z-10 !m-4">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleExport}
+            className="flex h-9 items-center gap-1.5 rounded-full border border-line-hair bg-card px-3.5 text-[12.5px] text-green-800 shadow-float-1 transition-colors hover:border-green-800"
+            title="Export this map as a PNG"
+          >
+            <Share2 size={12.5} />
+            <span className="hidden md:inline">Share</span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenAi}
+            className="flex h-9 items-center gap-1.5 rounded-full bg-evergreen-900 px-4 text-[12.5px] font-medium text-[#E9EDE0] shadow-float-1 transition-colors hover:bg-evergreen-deep"
+            title="Ask Jorata about this map (J)"
+          >
+            Ask Jorata
+          </button>
+          <button
+            type="button"
+            onClick={() => toggleSidebar()}
+            className={cn(
+              "flex h-9 w-9 items-center justify-center rounded-full border border-line-hair bg-card shadow-float-1 transition-colors",
+              sidebarOpen
+                ? "border-green-800 text-green-800"
+                : "text-ink-600 hover:text-ink-900"
+            )}
+            title="Node details (I)"
+            aria-label="Toggle node details"
+          >
+            <PanelRight size={14} />
+          </button>
+        </div>
+      </Panel>
 
       {aiGenerateOpen && <AiGenerateModal onClose={() => setAiGenerateOpen(false)} />}
       {fixMapOpen && <FixMapModal onClose={() => setFixMapOpen(false)} />}
-    </Panel>
+    </>
   );
 }

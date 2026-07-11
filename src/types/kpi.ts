@@ -10,6 +10,8 @@ export interface KPI {
   target: number;
   unit: string;
   category?: string;
+  /** Optional project group (grove) — additive; legacy goals simply have none. */
+  groveId?: string;
   updatedAt: string;
   history: KPIHistoryEntry[];
 }

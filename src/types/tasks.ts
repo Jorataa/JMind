@@ -12,6 +12,8 @@ export interface Task {
   priority: TaskPriority;
   energy: TaskEnergy;
   category?: string;
+  /** Optional project group (grove) — additive; legacy tasks simply have none. */
+  groveId?: string;
   /** Set when the task was created from a mind-map node — lets the task jump back to it. */
   sourceNodeId?: string;
   sourceMapId?: string;

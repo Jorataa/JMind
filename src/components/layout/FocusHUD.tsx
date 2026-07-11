@@ -4,9 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useFocus, useFocusActions } from "@/stores/use-focus-store";
 import { useTaskStore } from "@/stores/use-task-store";
-import { Zap, X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { X } from "lucide-react";
+import { ContourRings } from "@/components/ui/ContourArt";
 
+/**
+ * Focus Session (design handoff §7): full-screen evergreen — the one thing,
+ * a quiet timer, contour rings breathing in the corner. Capture and the
+ * palette stay reachable mid-session.
+ */
 export default function FocusHUD() {
   const { dailyAnchor, deepWorkMode, deepWorkStartedAt, activeTaskId } = useFocus();
   const { setDeepWorkMode } = useFocusActions();
@@ -29,15 +34,15 @@ export default function FocusHUD() {
 
   const focusTitle = activeTask?.title ?? dailyAnchor ?? "Choose one thing to focus on";
   const focusStatus = useMemo(() => {
-    if (activeTask) return "Task Focus";
-    if (dailyAnchor) return "Today's Focus";
-    return "Open Focus";
+    if (activeTask) return "task focus";
+    if (dailyAnchor) return "today's focus";
+    return "open focus";
   }, [activeTask, dailyAnchor]);
 
   return (
     <AnimatePresence>
       {deepWorkMode && (
-        // Sits above the workspace (sidebar z-90) but below the command
+        // Sits above the workspace (rail z-90) but below the command
         // palette (z-110) and quick capture (z-130), so both stay usable
         // mid-session.
         <motion.div
@@ -45,79 +50,79 @@ export default function FocusHUD() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-[105] flex flex-col items-center justify-between bg-zinc-950/95 p-12 backdrop-blur-xl"
+          className="fixed inset-0 z-[105] flex flex-col items-center justify-between overflow-hidden bg-evergreen-950 p-8 md:p-12"
+          role="dialog"
+          aria-label="Focus session"
         >
-          {/* Top Bar */}
+          <ContourRings
+            variant="dark"
+            size={520}
+            className="absolute -bottom-32 -left-40 opacity-60"
+          />
+          <ContourRings
+            variant="dark"
+            size={300}
+            className="absolute -right-24 -top-16 opacity-40"
+          />
+
+          {/* Top bar */}
           <motion.div
-            initial={{ opacity: 0, y: -16 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex w-full max-w-4xl items-center justify-between"
+            className="relative z-10 flex w-full max-w-4xl items-center justify-between"
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-zinc-950">
-                <Zap size={20} fill="currentColor" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-500/80">Focus Session</span>
-                <span className="text-[14px] font-semibold text-zinc-100">Session Active</span>
-              </div>
+            <div className="flex items-center gap-2.5">
+              <span className="ai-pulse h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+              <span className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-rail-faint">
+                Focus session
+              </span>
             </div>
 
-            <Button
-              variant="ghost"
-              className="text-zinc-500 hover:bg-rose-400/10 hover:text-rose-400"
+            <button
+              type="button"
               onClick={() => setDeepWorkMode(false)}
+              className="flex h-9 items-center gap-1.5 rounded-full border border-[rgba(233,237,224,0.2)] px-4 text-[12.5px] text-rail-text transition-colors hover:border-[rgba(233,237,224,0.4)] hover:text-rail-bright"
             >
-              <X size={18} className="mr-2" />
-              End Session
-            </Button>
+              <X size={13} />
+              End session
+            </button>
           </motion.div>
 
-          {/* Center Focus */}
+          {/* Center */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.15 }}
-            className="flex flex-col items-center gap-6 text-center"
+            className="relative z-10 flex flex-col items-center gap-7 text-center"
           >
-            <div className="h-1 w-24 overflow-hidden rounded-full bg-emerald-500/20">
-              <motion.div
-                animate={{ x: ["-100%", "100%"] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="h-full w-full bg-emerald-500"
-              />
-            </div>
+            <span className="text-[11px] font-medium uppercase tracking-[0.4em] text-rail-faint">
+              One thing
+            </span>
+            <h2 className="max-w-[22ch] font-serif text-[36px] leading-[1.15] text-[#E9EDE0] md:text-[52px]">
+              {focusTitle}
+            </h2>
 
-            <div className="flex flex-col gap-2">
-              <span className="text-[12px] font-bold uppercase tracking-[0.4em] text-zinc-600">Current Focus</span>
-              <h2 className="max-w-2xl text-[42px] font-bold tracking-tight text-zinc-100">
-                {focusTitle}
-              </h2>
-            </div>
-
-            <div className="mt-4 flex items-center gap-8">
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Time Elapsed</span>
-                <span className="font-mono text-[18px] text-zinc-400">{formatElapsed(elapsedSeconds)}</span>
-              </div>
-              <div className="h-8 w-px bg-white/5" />
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Status</span>
-                <span className="text-[18px] font-medium text-emerald-400">{focusStatus}</span>
-              </div>
+            <div className="mt-2 flex items-center gap-8">
+              <span className="font-mono text-[20px] tabular-nums text-rail-muted">
+                {formatElapsed(elapsedSeconds)}
+              </span>
+              <span aria-hidden className="h-6 w-px bg-[rgba(233,237,224,0.15)]" />
+              <span className="font-serif text-[16px] italic text-emerald-300">
+                {focusStatus}
+              </span>
             </div>
           </motion.div>
 
-          {/* Bottom Shortcuts */}
+          {/* Bottom shortcuts */}
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-12"
+            className="relative z-10 flex items-center gap-10"
           >
-            <Shortcut hint="Capture Thought" keys={["CTRL", "J"]} />
-            <Shortcut hint="Command Palette" keys={["CTRL", "K"]} />
+            <Shortcut hint="Capture" keys={["Ctrl", "J"]} />
+            <Shortcut hint="Palette" keys={["Ctrl", "K"]} />
           </motion.div>
         </motion.div>
       )}
@@ -146,11 +151,16 @@ function formatElapsed(totalSeconds: number) {
 
 function Shortcut({ hint, keys }: { hint: string; keys: string[] }) {
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-[11px] font-medium text-zinc-600">{hint}</span>
-      <div className="flex gap-1.5">
+    <div className="flex items-center gap-2.5">
+      <span className="text-[11px] text-rail-faint">{hint}</span>
+      <div className="flex gap-1">
         {keys.map(k => (
-          <span key={k} className="flex h-6 min-w-[24px] items-center justify-center rounded border border-white/10 bg-white/[0.03] px-1.5 text-[10px] font-bold text-zinc-500">{k}</span>
+          <kbd
+            key={k}
+            className="flex h-6 min-w-[24px] items-center justify-center rounded-kbd border border-[rgba(233,237,224,0.15)] bg-[rgba(233,237,224,0.06)] px-1.5 font-mono text-[10px] text-rail-muted"
+          >
+            {k}
+          </kbd>
         ))}
       </div>
     </div>

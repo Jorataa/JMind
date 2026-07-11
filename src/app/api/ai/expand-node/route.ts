@@ -10,10 +10,12 @@ const MAX_BODY_BYTES = 64 * 1024;
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/ai/expand-node — suggest child ideas for ONE existing node.
 //
-// Body: { node: string, root?: string }
+// Body: { node: string, root?: string, mode?: "expand" | "simplify" | "counter" }
 //   node  — the title of the node being expanded
 //   root  — the overall map topic, for context (optional)
-// Returns: { children: [{ title, category?, description? }] }  (4–6, one level)
+//   mode  — the thinking verb (§6.6 node toolbar): grow, restate simply,
+//           or argue against. Defaults to "expand".
+// Returns: { children: [{ title, category?, description? }] }  (one level)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const MAX_TITLE_CHARS = 200;
@@ -22,14 +24,12 @@ const MAX_TITLE_CHARS = 200;
 // now falls through to it on any error, not just a 404).
 const EXPANSION_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
-const SYSTEM_PROMPT = `You are an expert mind map generator expanding ONE node of an existing mind map.
-Return ONLY valid JSON — no preamble, no markdown fences.
+const SHARED_RULES = `Return ONLY valid JSON — no preamble, no markdown fences.
 
 Rules:
-- Provide 4 to 6 children, ONE level deep (each child has an empty children array)
-- Children must be relevant sub-topics of the node, within the overall map's context
+- ONE level deep (each child has an empty children array)
 - Keep titles short (a few words, no sentences)
-- Every child gets a "description": one plain, calm sentence (under 120 characters) saying what it covers and why it belongs under this node. Write like a calm friend — no hype, no gamified or corporate language.
+- Every child gets a "description": one plain, calm sentence (under 120 characters). Write like a calm friend — no hype, no gamified or corporate language.
 - Every child gets a "category": one of "goal" (an outcome to reach), "task" (a concrete action), "idea" (a concept or thought), "warning" (a risk or caution), or "default" (none of those clearly fit).
 - No markdown
 - No explanation outside the JSON
@@ -37,6 +37,20 @@ Rules:
 
 Return an object of this exact shape:
 { "title": "", "children": [ { "title": "", "category": "", "description": "", "children": [] } ] }`;
+
+const MODE_PROMPTS: Record<string, string> = {
+  expand: `You are an expert mind map generator expanding ONE node of an existing mind map.
+- Provide 4 to 6 children: relevant sub-topics of the node, within the overall map's context
+${SHARED_RULES}`,
+  simplify: `You are a clear thinker restating ONE node of a mind map more simply.
+- Provide 2 to 3 children: plainer, more concrete reformulations or the smallest useful pieces of the idea
+- Each child should be simpler and more actionable than the original node
+${SHARED_RULES}`,
+  counter: `You are a thoughtful devil's advocate examining ONE node of a mind map.
+- Provide 2 to 3 children: honest counterpoints, risks, or opposing considerations for this idea
+- Mark genuinely risky ones with category "warning"
+${SHARED_RULES}`,
+};
 
 function parseJson(text: string): unknown {
   let cleaned = text
@@ -61,7 +75,7 @@ export async function POST(request: Request) {
   const limited = applyRateLimit(request, AI_RATE_LIMIT);
   if (limited) return limited;
 
-  let body: { node?: unknown; root?: unknown };
+  let body: { node?: unknown; root?: unknown; mode?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -70,6 +84,7 @@ export async function POST(request: Request) {
 
   const node = String(body.node ?? "").trim().slice(0, MAX_TITLE_CHARS);
   const root = String(body.root ?? "").trim().slice(0, MAX_TITLE_CHARS);
+  const mode = typeof body.mode === "string" && body.mode in MODE_PROMPTS ? body.mode : "expand";
   if (!node) {
     return NextResponse.json({ error: "No node provided to expand." }, { status: 400 });
   }
@@ -80,7 +95,7 @@ export async function POST(request: Request) {
 
   try {
     const raw = await callGemini({
-      system: SYSTEM_PROMPT,
+      system: MODE_PROMPTS[mode],
       user: userPrompt,
       models: EXPANSION_MODELS,
       temperature: 0.7,

@@ -47,7 +47,7 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       style={{ left: Math.max(12, safeX), top: Math.max(12, safeY) }}
-      className="fixed z-[100] min-w-[200px] overflow-hidden rounded-xl border border-white/10 bg-zinc-900/90 p-1.5 shadow-2xl backdrop-blur-xl"
+      className="fixed z-[100] min-w-[200px] overflow-hidden rounded-node border border-line-hair bg-card p-1.5 shadow-float-2"
     >
       <div className="flex flex-col gap-0.5">
         <ContextItem
@@ -64,21 +64,21 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
         />
         {!isSticky && (
           <ContextItem
-            icon={<Wand2 size={14} className="text-violet-300" />}
+            icon={<Wand2 size={14} className="text-emerald-600" />}
             label="Expand with AI"
             onClick={() => handleAction(() => expandNodeWithAi(id))}
           />
         )}
-        <div className="h-px bg-white/5 my-1" />
+        <div className="h-px bg-line-soft my-1" />
 
         {!isLinked && !isRoot && (
           <>
             <ContextItem
-              icon={<CheckCircle2 size={14} className="text-emerald-400" />}
+              icon={<CheckCircle2 size={14} className="text-emerald-600" />}
               label="Convert to Task"
               onClick={() => handleAction(() => convertNodeToTask(id))}
             />
-            <div className="h-px bg-white/5 my-1" />
+            <div className="h-px bg-line-soft my-1" />
           </>
         )}
 
@@ -87,26 +87,28 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
           label="Duplicate Node"
           onClick={() => handleAction(() => duplicateNode(id))}
         />
-        <div className="h-px bg-white/5 my-1" />
+        <div className="h-px bg-line-soft my-1" />
         
         {isSticky ? (
           <>
-            <p className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Paper Color</p>
+            <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink-500">Paper Color</p>
             <div className="grid grid-cols-4 gap-1 px-1.5 pb-1.5">
               {([
-                ["yellow", "bg-[#fef9c3]"],
-                ["blue", "bg-[#dbeafe]"],
-                ["green", "bg-[#dcfce7]"],
-                ["pink", "bg-[#fce7f3]"],
+                ["yellow", "bg-[#F3E9C8]"],
+                ["blue", "bg-[#E2E9EE]"],
+                ["green", "bg-[#E9EDE0]"],
+                ["pink", "bg-[#F2E4DC]"],
               ] as const).map(([color, bg]) => (
                 <button
                   key={color}
                   type="button"
                   onClick={() => handleAction(() => updateNodeData(id, { color }))}
                   className={cn(
-                    "h-6 w-full rounded-full border shadow-sm transition-all hover:scale-110 active:scale-95",
+                    "h-6 w-full rounded-full border transition-all hover:scale-110 active:scale-95",
                     bg,
-                    activeColor === color ? "border-white/60 ring-1 ring-white/30" : "border-white/10"
+                    activeColor === color
+                      ? "border-green-800 ring-1 ring-green-800/40"
+                      : "border-line-strong"
                   )}
                   aria-label={`Set sticky color to ${color}`}
                   title={color.charAt(0).toUpperCase() + color.slice(1)}
@@ -116,7 +118,7 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
           </>
         ) : (
           <>
-            <p className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-500">Change Category</p>
+            <p className="px-3 py-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink-500">Change Category</p>
             <div className="grid grid-cols-5 gap-1 px-1.5 pb-1.5">
               <CategoryBtn label="Default" color="zinc" onClick={() => handleAction(() => updateNodeData(id, { category: "default" }))} />
               <CategoryBtn label="Action" color="emerald" onClick={() => handleAction(() => updateNodeData(id, { category: "task" }))} />
@@ -129,9 +131,9 @@ export default function NodeContextMenu({ id, x, y, onClose }: NodeContextMenuPr
 
         {!isRoot && (
           <>
-            <div className="h-px bg-white/5 my-1" />
+            <div className="h-px bg-line-soft my-1" />
             <ContextItem
-              icon={<Trash2 size={14} className="text-rose-400" />}
+              icon={<Trash2 size={14} />}
               label="Delete Node"
               shortcut="Del"
               variant="danger"
@@ -150,14 +152,14 @@ function ContextItem({ icon, label, shortcut, onClick, variant = "default" }: { 
       type="button"
       onClick={onClick}
       className={cn(
-        "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
-        variant === "danger" ? "text-rose-400 hover:bg-rose-500/10" : "text-zinc-300 hover:bg-white/5"
+        "flex w-full items-center gap-3 rounded-[9px] px-3 py-2 text-[13.5px] font-medium transition-colors",
+        variant === "danger" ? "text-clay-text hover:bg-clay-bg" : "text-ink-700 hover:bg-sunken"
       )}
     >
       {icon}
       {label}
       {shortcut && (
-        <kbd className="ml-auto rounded border border-white/10 bg-white/5 px-1.5 py-0.5 text-[9px] font-bold text-zinc-500">
+        <kbd className="ml-auto rounded-kbd border border-line-hair bg-sunken px-1.5 py-0.5 font-mono text-[10px] text-ink-500">
           {shortcut}
         </kbd>
       )}
@@ -167,19 +169,19 @@ function ContextItem({ icon, label, shortcut, onClick, variant = "default" }: { 
 
 function CategoryBtn({ label, color, onClick }: { label: string; color: string; onClick: () => void }) {
   const bg = {
-    zinc: "bg-zinc-800",
+    zinc: "bg-sunken",
     emerald: "bg-emerald-500",
-    indigo: "bg-indigo-500",
-    violet: "bg-violet-500",
-    rose: "bg-rose-500",
-  }[color] || "bg-zinc-800";
+    indigo: "bg-green-800",
+    violet: "bg-ochre-500",
+    rose: "bg-clay-500",
+  }[color] || "bg-sunken";
 
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "h-6 w-full rounded-full transition-all hover:scale-110 active:scale-95 border border-white/10 shadow-sm", 
+        "h-6 w-full rounded-full border border-line-strong transition-all hover:scale-110 active:scale-95",
         bg
       )}
       aria-label={`Set category to ${label}`}

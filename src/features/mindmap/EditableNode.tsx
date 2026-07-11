@@ -1,39 +1,60 @@
 "use client";
 
 import React, { memo, useCallback, useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { Handle, Position } from "@xyflow/react";
+import { Handle, Position, NodeToolbar } from "@xyflow/react";
 import { cn } from "@/lib/cn";
 import { useMindMapActions, useMindMapStore, MindMapNodeData } from "@/stores/use-mindmap-store";
 import { motion } from "framer-motion";
-import { AlertCircle, Clock, CheckCircle2, ListTodo, Plus, Minus } from "lucide-react";
+import { Plus, Minus, ListTodo, Sparkles, MoreHorizontal, ArrowRight, Check, Scale, Minimize2 } from "lucide-react";
 import { BRANCH_COLOR_STYLES } from "@/lib/node-colors";
+import { expandNodeWithAi } from "@/features/ai/useAiGenerate";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+/**
+ * Map node (design handoff §6.6): paper card, radius 12, title 14/600 over a
+ * quiet meta line. The central node is evergreen with a serif face. Metadata
+ * renders as a priority dot (status ring around it) top-right, tag chips
+ * below, and a slim branch-colored left rule on AI-generated branches.
+ * Selecting a node raises the dark verb toolbar above it.
+ */
 
-const categoryStyles: Record<string, { bg: string; text: string; glow: string }> = {
-  default: { bg: "#18181b", text: "#e4e4e7", glow: "rgba(0,0,0,0.22)" },
-  goal: { bg: "#1e1b4b", text: "#e0e7ff", glow: "rgba(99,102,241,0.2)" },
-  task: { bg: "#064e3b", text: "#d1fae5", glow: "rgba(16,185,129,0.2)" },
-  idea: { bg: "#4c1d95", text: "#f5f3ff", glow: "rgba(139,92,246,0.2)" },
-  warning: { bg: "#450a0a", text: "#fef2f2", glow: "rgba(239,68,68,0.2)" },
+const PRIORITY_DOT: Record<string, string> = {
+  high: "bg-clay-500",
+  medium: "bg-ochre-500",
+  low: "bg-sage-500",
 };
 
-// ─── EditableNode ─────────────────────────────────────────────────────────────
+const STATUS_RING: Record<string, string> = {
+  todo: "outline outline-[1.5px] outline-offset-2 outline-ink-400/60",
+  doing: "outline outline-[1.5px] outline-offset-2 outline-emerald-500 ai-pulse",
+  done: "outline outline-[1.5px] outline-offset-2 outline-green-800",
+};
+
+const CATEGORY_CHIP: Record<string, { label: string; cls: string }> = {
+  goal: { label: "goal", cls: "bg-sage-surface text-green-800" },
+  task: { label: "task", cls: "bg-sage-surface text-green-800" },
+  idea: { label: "idea", cls: "bg-straw text-straw-text" },
+  warning: { label: "risk", cls: "bg-clay-bg text-clay-text" },
+};
 
 function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeData; selected?: boolean }) {
-  const { updateNodeData, updateNodeLabel, addNode, toggleNodeCollapse } = useMindMapActions();
+  const { updateNodeData, updateNodeLabel, addNode, toggleNodeCollapse, convertNodeToTask } =
+    useMindMapActions();
   const isRoot = data.isRoot ?? false;
   const isLinked = data.linkedTaskIds?.length > 0;
-  const category = data.category ?? "default";
-  // AI-generated maps color nodes by branch (each main branch keeps its own
-  // hue); the branch color wins over category styling on the node face.
-  // Manual nodes have no branch color and keep the category look.
-  const branchStyle = typeof data.color === "string" ? BRANCH_COLOR_STYLES[data.color] : undefined;
-  const style = branchStyle ?? categoryStyles[category] ?? categoryStyles.default;
+  const branchAccent =
+    typeof data.color === "string" ? BRANCH_COLOR_STYLES[data.color]?.accent : undefined;
 
   // Direct children — drives the collapse toggle. Primitive selector, so the
   // node only re-renders when its own child count actually changes.
   const childCount = useMindMapStore((s) => s.edges.filter((e) => e.source === id).length);
+  // Pick-mode (§5.2): null = not picking; boolean = this node's keep state.
+  const pickKeep = useMindMapStore((s) =>
+    s.proposalPick === null ? null : s.proposalPick.includes(id)
+  );
+  const togglePick = useMindMapStore((s) => s.actions.togglePick);
+  const isProposed = data.proposed === true;
+  // Only the central node shows the map size in its meta line.
+  const nodeCount = useMindMapStore((s) => (isRoot ? s.nodes.filter((n) => n.type !== "sticky").length : 0));
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [draft, setDraft] = useState<string>(data.label);
@@ -117,43 +138,143 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
     [data.label]
   );
 
+  // The ⋯ verb opens the full context menu at the button — the menu itself is
+  // owned by the canvas, so hand it the request via a DOM event.
+  const openMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      window.dispatchEvent(
+        new CustomEvent("jorata:node-menu", {
+          detail: { id, x: rect.left, y: rect.bottom + 6 },
+        })
+      );
+    },
+    [id]
+  );
+
   // Connection points: visible on the selected node (discoverable through a
   // normal click) and on hover, faded otherwise so the canvas stays calm.
   const handleClass = cn(
-    "!w-2.5 !h-2.5 !bg-zinc-500 !border-zinc-300 transition-opacity group-hover:opacity-100",
+    "!h-2.5 !w-2.5 !border-[1.5px] !border-sage-dash !bg-card transition-opacity group-hover:opacity-100",
     selected ? "opacity-100" : "opacity-0"
   );
 
-  // Node UI
+  const priorityDot = PRIORITY_DOT[data.priority ?? "none"];
+  const statusRing = STATUS_RING[data.status ?? "none"];
+  const showMetaDot = Boolean(priorityDot || statusRing);
+  const categoryChip = CATEGORY_CHIP[data.category ?? "default"];
+  const meta = data.description?.trim() || data.aiDescription?.trim();
+  const tags = Array.isArray(data.tags) ? data.tags.slice(0, 3) : [];
+
   return (
     <motion.div
       initial={false}
-      whileHover={{ y: -1, boxShadow: `0 8px 20px ${style.glow}` }}
-      animate={{
-        scale: selected ? 1.02 : 1,
-        boxShadow: selected
-          ? `0 0 0 2px ${isRoot ? "rgba(52,211,153,0.3)" : "rgba(99,102,241,0.3)"}, 0 12px 30px ${style.glow}`
-          : `0 2px 8px ${style.glow}`,
-      }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      whileHover={isEditing ? undefined : { y: -1 }}
+      animate={{ scale: selected ? 1.01 : 1 }}
+      transition={{ type: "spring", stiffness: 400, damping: 28 }}
       className={cn(
-        "relative rounded-xl border px-5 py-3 min-w-[140px] max-w-[280px] group outline-none",
-        "transition-all duration-200",
+        "group relative rounded-node outline-none transition-shadow duration-150",
         isEditing ? "cursor-text" : "cursor-grab active:cursor-grabbing",
-        isRoot ? "bg-emerald-500 text-zinc-950 font-bold border-emerald-400 shadow-[0_0_30px_rgba(16,185,129,0.3)] min-w-[160px] py-4 text-lg" : ""
+        isRoot
+          ? "min-w-[170px] max-w-[300px] bg-evergreen-900 px-5 py-4 text-[#E9EDE0]"
+          : cn(
+              "min-w-[140px] max-w-[280px] border px-4 py-3",
+              isProposed ? "proposal-reveal bg-sage-surface" : "bg-card"
+            )
       )}
-      style={!isRoot ? {
-        backgroundColor: style.bg,
-        color: style.text,
-        borderColor: isEditing
-          ? "rgba(99,102,241,0.4)"
-          : selected
-            ? "rgba(255,255,255,0.25)"
-            : "rgba(255,255,255,0.08)",
-      } : {}}
+      style={
+        isRoot
+          ? { boxShadow: "var(--shadow-dark-float)" }
+          : isProposed
+            ? {
+                borderStyle: "dashed",
+                borderWidth: 1.5,
+                borderColor: "var(--color-sage-dash)",
+                boxShadow: selected ? "var(--shadow-node-selected)" : "var(--shadow-node)",
+                animationDelay: `${Math.min(data.staggerIndex ?? 0, 30) * 60}ms`,
+              }
+            : {
+                borderColor: selected
+                  ? "var(--color-green-800)"
+                  : isEditing
+                    ? "var(--color-emerald-500)"
+                    : "#DCD7C8",
+                borderLeftWidth: branchAccent ? 3 : 1,
+                borderLeftColor: branchAccent ?? undefined,
+                boxShadow: selected
+                  ? "0 0 0 0.5px var(--color-green-800), var(--shadow-node-selected)"
+                  : "var(--shadow-node)",
+              }
+      }
       onDoubleClick={onDoubleClick}
       onTouchEnd={onTouchEnd}
     >
+      {/* Selected-node verb toolbar (§6.6) — dark pill above the node. */}
+      <NodeToolbar
+        isVisible={Boolean(selected) && !isEditing}
+        position={Position.Top}
+        offset={10}
+        className="nodrag nopan"
+      >
+        <div
+          className="flex items-center gap-0.5 rounded-full bg-evergreen-950 p-1 text-[12.5px] text-rail-text"
+          style={{ boxShadow: "var(--shadow-dark-float)" }}
+        >
+          <button
+            type="button"
+            onClick={() => expandNodeWithAi(id, "expand")}
+            className="flex items-center gap-1.5 rounded-full px-2.5 py-1 transition-colors hover:bg-[rgba(233,237,224,0.13)]"
+            title="Grow this idea with AI"
+          >
+            <Sparkles size={11.5} className="text-emerald-300" />
+            Expand
+          </button>
+          {!isRoot && (
+            <button
+              type="button"
+              onClick={() => expandNodeWithAi(id, "simplify")}
+              className="hidden items-center gap-1 rounded-full px-2.5 py-1 transition-colors hover:bg-[rgba(233,237,224,0.13)] sm:flex"
+              title="Restate this idea more simply"
+            >
+              <Minimize2 size={11} />
+              Simplify
+            </button>
+          )}
+          {!isRoot && (
+            <button
+              type="button"
+              onClick={() => expandNodeWithAi(id, "counter")}
+              className="hidden items-center gap-1 rounded-full px-2.5 py-1 transition-colors hover:bg-[rgba(233,237,224,0.13)] sm:flex"
+              title="Argue against this idea"
+            >
+              <Scale size={11} />
+              Counter
+            </button>
+          )}
+          {!isRoot && (
+            <button
+              type="button"
+              onClick={() => convertNodeToTask(id)}
+              className="flex items-center gap-1 rounded-full px-2.5 py-1 transition-colors hover:bg-[rgba(233,237,224,0.13)]"
+              title="Send to Tasks"
+            >
+              <ArrowRight size={11.5} />
+              Task
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={openMenu}
+            className="rounded-full px-2 py-1 transition-colors hover:bg-[rgba(233,237,224,0.13)]"
+            title="More…"
+            aria-label="More actions"
+          >
+            <MoreHorizontal size={13} />
+          </button>
+        </div>
+      </NodeToolbar>
+
       <Handle type="target" position={Position.Left} className={handleClass} />
       <Handle type="source" position={Position.Right} className={handleClass} />
 
@@ -169,10 +290,10 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
           }}
           onMouseDown={(e) => e.stopPropagation()}
           className={cn(
-            "nodrag nopan absolute -bottom-2.5 left-1/2 z-10 flex h-5 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border px-1.5 text-[10px] font-bold shadow-md transition-opacity",
+            "nodrag nopan absolute -bottom-2.5 left-1/2 z-10 flex h-5 -translate-x-1/2 items-center justify-center gap-0.5 rounded-full border px-1.5 font-mono text-[10px] font-medium transition-opacity",
             data.collapsed
-              ? "border-white/20 bg-zinc-800 text-zinc-100 opacity-100"
-              : "border-white/15 bg-zinc-900 text-zinc-400 opacity-0 group-hover:opacity-100"
+              ? "border-transparent bg-evergreen-900 text-[#E9EDE0] opacity-100 shadow-float-1"
+              : "border-line-strong bg-card text-ink-600 opacity-0 shadow-float-1 group-hover:opacity-100"
           )}
           title={data.collapsed ? `Expand ${childCount} hidden` : "Collapse branch"}
           aria-label={data.collapsed ? "Expand branch" : "Collapse branch"}
@@ -188,40 +309,60 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
         </button>
       )}
 
-      {/* Status/Priority Indicators */}
-      {!isRoot && !isEditing && (
-        <div className="absolute -top-2 -right-1 flex gap-1">
-          {isLinked && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="rounded-full bg-indigo-500 p-0.5 text-white shadow-lg"
-            >
-              <ListTodo size={10} strokeWidth={3} />
-            </motion.div>
+      {/* Pick-mode checkbox (§5.2): keep or drop this proposal. */}
+      {isProposed && pickKeep !== null && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            togglePick(id);
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          className={cn(
+            "nodrag nopan absolute -left-2 -top-2 z-10 flex h-[18px] w-[18px] items-center justify-center rounded-[5px] border-[1.5px] shadow-float-1 transition-colors",
+            pickKeep
+              ? "border-emerald-500 bg-emerald-500 text-white"
+              : "border-ink-400 bg-card text-transparent hover:border-green-800"
           )}
-          {data.priority === "high" && (
-            <div className="rounded-full bg-rose-500 p-0.5 text-white shadow-lg">
-              <AlertCircle size={10} strokeWidth={3} />
-            </div>
+          aria-pressed={pickKeep}
+          aria-label={pickKeep ? "Keep this idea" : "Drop this idea"}
+          title={pickKeep ? "Keeping — click to drop" : "Dropped — click to keep"}
+        >
+          <Check size={11} strokeWidth={3.5} />
+        </button>
+      )}
+
+      {/* Proposed material wears its provenance (§6.6). */}
+      {isProposed && !isEditing && (
+        <span className="mb-1 block text-[9.5px] font-medium uppercase tracking-[0.16em] text-sage-dash">
+          Proposed by Jorata
+        </span>
+      )}
+
+      {/* Priority dot + status ring (§6.6), top-right. */}
+      {!isRoot && !isEditing && showMetaDot && (
+        <span
+          className={cn(
+            "absolute right-2.5 top-2.5 block h-[7px] w-[7px] rounded-full",
+            priorityDot ?? "bg-ink-400",
+            statusRing
           )}
-          {data.status === "doing" && (
-            <div className="rounded-full bg-sky-500 p-0.5 text-white shadow-lg animate-pulse">
-              <Clock size={10} strokeWidth={3} />
-            </div>
-          )}
-          {data.status === "done" && (
-            <div className="rounded-full bg-emerald-500 p-0.5 text-white shadow-lg">
-              <CheckCircle2 size={10} strokeWidth={3} />
-            </div>
-          )}
-        </div>
+          title={[
+            data.priority !== "none" ? `${data.priority} priority` : null,
+            data.status !== "none" ? data.status : null,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        />
       )}
 
       {isEditing ? (
         <input
           ref={inputRef}
-          className="nodrag nopan w-full bg-transparent border-none outline-none text-inherit font-inherit text-[14px] cursor-text"
+          className={cn(
+            "nodrag nopan w-full cursor-text border-none bg-transparent outline-none",
+            isRoot ? "font-serif text-[21px]" : "text-[14px] font-semibold text-ink-900"
+          )}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={onInputKeyDown}
@@ -230,13 +371,52 @@ function EditableNode({ id, data, selected }: { id: string; data: MindMapNodeDat
           spellCheck={false}
           autoComplete="off"
         />
+      ) : isRoot ? (
+        <div className="flex flex-col gap-1">
+          <span className="block font-serif text-[21px] leading-[1.25]">{data.label}</span>
+          <span className="text-[11px] text-rail-muted">
+            central question{nodeCount > 1 ? ` · ${nodeCount} nodes` : ""}
+          </span>
+        </div>
       ) : (
-        <div className="flex flex-col gap-0.5">
-          <span className="block whitespace-nowrap overflow-hidden text-ellipsis text-[14px]">
+        <div className="flex flex-col gap-1">
+          <span
+            className={cn(
+              "block overflow-hidden text-ellipsis whitespace-nowrap pr-3 text-[14px] font-semibold text-ink-900",
+              data.status === "done" && "text-ink-400 line-through"
+            )}
+          >
             {data.label}
           </span>
-          {data.description && (
-             <span className="block h-1 w-8 rounded-full bg-white/10" />
+          {meta && (
+            <span className="block overflow-hidden text-ellipsis whitespace-nowrap text-[12px] leading-snug text-ink-500">
+              {meta}
+            </span>
+          )}
+          {(tags.length > 0 || categoryChip || isLinked) && (
+            <span className="mt-0.5 flex flex-wrap items-center gap-1">
+              {categoryChip && (
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 py-px text-[10.5px] font-medium",
+                    categoryChip.cls
+                  )}
+                >
+                  {categoryChip.label}
+                </span>
+              )}
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-sunken px-1.5 py-px text-[10.5px] text-ink-600"
+                >
+                  {tag}
+                </span>
+              ))}
+              {isLinked && (
+                <ListTodo size={11} className="text-green-800" aria-label="Linked to a task" />
+              )}
+            </span>
           )}
         </div>
       )}

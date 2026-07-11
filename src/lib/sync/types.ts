@@ -14,7 +14,11 @@ export type SyncedStoreKey =
   | "jmind:focus"
   | "jmind:activity"
   | "jmind:inbox"
-  | "jmind:wisdom";
+  | "jmind:wisdom"
+  | "jmind:groves"
+  | "jmind:notes"
+  | "jmind:knowledge"
+  | "jmind:calendar";
 
 export const SYNCED_STORE_KEYS: readonly SyncedStoreKey[] = [
   "jmind:mindmap",
@@ -24,6 +28,10 @@ export const SYNCED_STORE_KEYS: readonly SyncedStoreKey[] = [
   "jmind:activity",
   "jmind:inbox",
   "jmind:wisdom",
+  "jmind:groves",
+  "jmind:notes",
+  "jmind:knowledge",
+  "jmind:calendar",
 ] as const;
 
 /**

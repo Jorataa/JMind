@@ -56,6 +56,11 @@ interface MindMapState {
    * never persisted.
    */
   pendingFocusNodeId: string | null;
+  /**
+   * Pick-mode for AI proposals (§5.2): the ids currently marked "keep", or
+   * null when not picking. Transient, never persisted.
+   */
+  proposalPick: string[] | null;
   /** Undo/redo history — per-tab session state, never persisted. */
   past: HistoryEntry[];
   future: HistoryEntry[];
@@ -97,12 +102,30 @@ interface MindMapState {
     switchMap: (id: string) => void;
     deleteMap: (id: string) => void;
     renameMap: (id: string, title: string) => void;
+    /** Attach a map to a grove (project group); undefined detaches it. */
+    assignMapToGrove: (id: string, groveId: string | undefined) => void;
 
-    // AI generation
-    /** Build a brand-new workspace from an AI-generated tree and switch to it. */
-    generateMapFromTree: (tree: AiTreeNode) => string;
+    // AI generation — every result lands as PROPOSED material (§6.6) until
+    // the user keeps or discards it.
+    /**
+     * Build a workspace from an AI-generated tree and switch to it. With
+     * `intoMapId` (= the active map), replaces that map's contents instead —
+     * the regenerate/refine path — as a single undoable step.
+     */
+    generateMapFromTree: (tree: AiTreeNode, intoMapId?: string) => string;
     /** Append AI-suggested child nodes under an existing node (non-destructive). */
     expandNodeWithChildren: (parentId: string, ideas: AiChildIdea[]) => void;
+    /**
+     * Resolve pending proposals in one undoable step: keep everything
+     * ("all") or only the given ids — the rest are removed with their edges.
+     */
+    resolveProposals: (keep: "all" | string[]) => void;
+    /** Remove every pending proposal (one undoable step). */
+    discardProposals: () => void;
+    /** Enter pick-mode with every proposal marked keep. */
+    startPick: () => void;
+    togglePick: (id: string) => void;
+    cancelPick: () => void;
     /**
      * Apply user-accepted "fix my mindmap" operations as ONE undo step.
      * Returns how many operations actually changed something — the live map
@@ -140,6 +163,8 @@ const validateWorkspace = (map: unknown): MindMapWorkspace | null => {
   return {
     id: map.id,
     title: map.title.trim() || "Untitled Map",
+    // groveId is optional metadata — preserve it through validation, never invent it.
+    ...(typeof map.groveId === "string" && map.groveId ? { groveId: map.groveId } : {}),
     nodes: map.nodes as MindMapNode[],
     edges: map.edges as MindMapEdge[],
     viewport: sanitizeViewport(map.viewport),
@@ -443,6 +468,7 @@ export const useMindMapStore = create<MindMapState>()(
       selectedNodeId: null,
       sidebarOpen: false,
       pendingFocusNodeId: null,
+      proposalPick: null,
       past: [],
       future: [],
 
@@ -677,14 +703,16 @@ export const useMindMapStore = create<MindMapState>()(
             label,
             node.data.priority !== "none" ? node.data.priority : "medium",
             "quick", // default energy
-            node.data.category !== "default" ? node.data.category : "Mind Map"
+            node.data.category !== "default" ? node.data.category : "Mind Map",
+            undefined,
+            {
+              // Back-reference so the task can jump to its origin node, across
+              // maps — and the map's grove travels with it (provenance, §5.4).
+              sourceNodeId: id,
+              sourceMapId: get().activeMapId,
+              groveId: get().maps[get().activeMapId]?.groveId,
+            }
           );
-
-          // Back-reference so the task can jump to its origin node, across maps.
-          useTaskStore.getState().actions.updateTask(task.id, {
-            sourceNodeId: id,
-            sourceMapId: get().activeMapId,
-          });
 
           useActivityStore.getState().actions.logActivity(
             'node_converted',
@@ -871,13 +899,49 @@ export const useMindMapStore = create<MindMapState>()(
           });
         },
 
-        generateMapFromTree: (tree) => {
+        assignMapToGrove: (id, groveId) => {
+          set((state) => {
+            if (!state.maps[id]) return state;
+            return {
+              maps: {
+                ...state.maps,
+                [id]: { ...state.maps[id], groveId, updatedAt: nowIso() },
+              },
+            };
+          });
+        },
+
+        generateMapFromTree: (tree, intoMapId) => {
           // JSON → flow → balanced positions, all via existing utilities.
-          const { nodes, edges } = mindMapTreeToFlow(tree);
+          // Branches land as PROPOSED (§6.6) — sage/dashed until kept.
+          const { nodes, edges } = mindMapTreeToFlow(tree, { proposed: true });
           const laidOut = calculateTreeLayout(nodes, edges);
-          const id = crypto.randomUUID();
           const now = nowIso();
 
+          // Regenerate/refine: replace the ACTIVE map's contents in place, as
+          // one undoable step, instead of minting yet another workspace.
+          if (intoMapId && intoMapId === get().activeMapId && get().maps[intoMapId]) {
+            takeSnapshot();
+            set((state) => ({
+              nodes: laidOut,
+              edges,
+              selectedNodeId: null,
+              proposalPick: null,
+              maps: {
+                ...state.maps,
+                [intoMapId]: {
+                  ...state.maps[intoMapId],
+                  title: tree.title || state.maps[intoMapId].title,
+                  nodes: laidOut,
+                  edges,
+                  updatedAt: now,
+                },
+              },
+            }));
+            return intoMapId;
+          }
+
+          const id = crypto.randomUUID();
           set((state) => ({
             maps: {
               ...state.maps,
@@ -934,8 +998,13 @@ export const useMindMapStore = create<MindMapState>()(
             if (branchColor) {
               node.data.color = branchColor;
             }
+            // Proposed until the user keeps them (§5.2) — revealed staggered.
+            node.data.proposed = true;
+            node.data.staggerIndex = index;
             newNodes.push(node);
-            newEdges.push(MindMapService.createEdge(parent.id, node.id));
+            const edge = MindMapService.createEdge(parent.id, node.id);
+            edge.className = "proposed-edge";
+            newEdges.push(edge);
           });
 
           useActivityStore.getState().actions.logActivity(
@@ -952,6 +1021,79 @@ export const useMindMapStore = create<MindMapState>()(
             ],
             edges: [...s.edges, ...newEdges],
           }));
+        },
+
+        resolveProposals: (keep) => {
+          const state = get();
+          const proposedIds = state.nodes
+            .filter((n) => n.data.proposed)
+            .map((n) => n.id);
+          if (proposedIds.length === 0) {
+            set({ proposalPick: null });
+            return;
+          }
+
+          const keepSet = keep === "all" ? new Set(proposedIds) : new Set(keep);
+          const dropSet = new Set(proposedIds.filter((id) => !keepSet.has(id)));
+          const now = nowIso();
+
+          // One snapshot for the whole resolution → a single Ctrl+Z reverts it.
+          takeSnapshot();
+          set((s) => {
+            const nodes = s.nodes
+              .filter((n) => !dropSet.has(n.id))
+              .map((n) =>
+                n.data.proposed
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        proposed: false,
+                        staggerIndex: undefined,
+                        updatedAt: now,
+                      },
+                    }
+                  : n
+              );
+            const edges = s.edges
+              .filter((e) => !dropSet.has(e.source) && !dropSet.has(e.target))
+              .map((e) =>
+                e.className === "proposed-edge" ? { ...e, className: undefined } : e
+              );
+            return {
+              nodes,
+              edges,
+              proposalPick: null,
+              selectedNodeId:
+                s.selectedNodeId && dropSet.has(s.selectedNodeId)
+                  ? null
+                  : s.selectedNodeId,
+            };
+          });
+        },
+
+        discardProposals: () => {
+          get().actions.resolveProposals([]);
+        },
+
+        startPick: () => {
+          set((s) => ({
+            proposalPick: s.nodes.filter((n) => n.data.proposed).map((n) => n.id),
+          }));
+        },
+
+        togglePick: (id) => {
+          set((s) => ({
+            proposalPick: s.proposalPick
+              ? s.proposalPick.includes(id)
+                ? s.proposalPick.filter((x) => x !== id)
+                : [...s.proposalPick, id]
+              : s.proposalPick,
+          }));
+        },
+
+        cancelPick: () => {
+          set({ proposalPick: null });
         },
 
         applyMapFixes: (operations) => {
@@ -1145,6 +1287,11 @@ export const useMindMapEdges = () => useMindMapStore((state) => state.edges);
 export const useMindMapViewport = () => useMindMapStore((state) => state.viewport);
 export const useCanUndo = () => useMindMapStore((state) => state.past.length > 0);
 export const useCanRedo = () => useMindMapStore((state) => state.future.length > 0);
+export const useProposedCount = () =>
+  useMindMapStore((state) =>
+    state.nodes.reduce((count, node) => (node.data.proposed ? count + 1 : count), 0)
+  );
+export const useProposalPick = () => useMindMapStore((state) => state.proposalPick);
 export const useSelectedNode = () => {
   const nodes = useMindMapStore((state) => state.nodes);
   const id = useMindMapStore((state) => state.selectedNodeId);

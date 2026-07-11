@@ -1,13 +1,30 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Instrument_Sans, Instrument_Serif, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import LayoutShell from "@/components/layout/LayoutShell";
 import { ToastProvider } from "@/components/ui/Toast";
 
-const inter = Inter({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-inter",
+  variable: "--font-instrument-sans",
+});
+
+// Instrument Serif ships a single 400 weight (+ italic) — the design never
+// bolds the serif, so nothing else is needed.
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
+  variable: "--font-instrument-serif",
+});
+
+const splineSansMono = Spline_Sans_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+  variable: "--font-spline-mono",
 });
 
 export const metadata: Metadata = {
@@ -25,12 +42,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${instrumentSans.variable} ${instrumentSerif.variable} ${splineSansMono.variable}`}
+    >
       {/* Apply theme before first paint to prevent flash */}
       <head>
         <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('jmind:theme');if(['ocean','violet','rose','amber'].indexOf(t)>-1)document.documentElement.setAttribute('data-theme',t)}catch(e){}` }} />
       </head>
-      <body className="bg-zinc-950 text-zinc-100 antialiased">
+      <body className="bg-paper text-ink-700 antialiased">
         <LayoutShell>{children}</LayoutShell>
         <ToastProvider />
       </body>

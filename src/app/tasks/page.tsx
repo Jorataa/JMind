@@ -1,15 +1,5 @@
-import TaskPanel from "@/features/tasks/TaskPanel";
-import { SectionTitle } from "@/components/ui/SectionTitle";
+import TasksPage from "@/features/tasks/TasksPage";
 
-export default function TasksPage() {
-  return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <SectionTitle>Tasks</SectionTitle>
-        </div>
-        <TaskPanel />
-      </div>
-    </div>
-  );
+export default function Tasks() {
+  return <TasksPage />;
 }

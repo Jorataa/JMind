@@ -1,31 +1,47 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 import { cn } from "@/lib/cn";
 
+/**
+ * Button grammar (design handoff §6.3). All buttons are pills.
+ *  - primary   dark evergreen — the one dark primary action per view
+ *  - accent    emerald brand — capture / AI / brand contexts
+ *  - secondary quiet outline on paper
+ *  - ghost     text only
+ *  - onDark    outline variant for dark (evergreen) surfaces
+ *  - danger    clay — destructive affordances
+ */
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger";
+  variant?: "primary" | "accent" | "secondary" | "ghost" | "onDark" | "danger";
   size?: "sm" | "md" | "lg";
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", ...props }, ref) => {
     const variants = {
-      primary: "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 active:scale-[0.98] shadow-lg shadow-emerald-500/25 disabled:bg-emerald-500/50",
-      secondary: "border border-white/10 bg-white/[0.04] text-zinc-200 hover:border-white/20 hover:bg-white/[0.08] active:scale-[0.98] shadow-lg",
-      ghost: "text-zinc-500 hover:bg-white/5 hover:text-zinc-200 active:scale-[0.98]",
-      danger: "text-zinc-400 hover:bg-rose-500/10 hover:text-rose-400 active:scale-[0.98]",
+      primary:
+        "bg-evergreen-900 text-[#E9EDE0] hover:bg-evergreen-deep active:translate-y-[0.5px]",
+      accent:
+        "bg-emerald-500 font-semibold text-white hover:bg-emerald-600 active:translate-y-[0.5px]",
+      secondary:
+        "border border-[#C9C4B4] bg-transparent text-green-800 hover:border-green-800 hover:bg-[rgba(36,82,59,0.04)] active:translate-y-[0.5px]",
+      ghost: "text-ink-600 hover:text-ink-900 active:translate-y-[0.5px]",
+      onDark:
+        "border border-[rgba(233,237,224,0.2)] bg-transparent text-rail-text hover:border-[rgba(233,237,224,0.4)] hover:text-rail-bright active:translate-y-[0.5px]",
+      danger:
+        "text-clay-text hover:bg-clay-bg active:translate-y-[0.5px]",
     };
 
     const sizes = {
-      sm: "h-8 px-3 text-[12px]",
-      md: "h-10 px-4 text-[13px]",
-      lg: "h-12 px-6 text-[14px]",
+      sm: "h-8 px-3.5 text-[12.5px]",
+      md: "h-9 px-[18px] text-[13.5px]",
+      lg: "h-11 px-6 text-[14px]",
     };
 
     return (
       <button
         ref={ref}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400/20 disabled:pointer-events-none disabled:opacity-50",
+          "inline-flex items-center justify-center gap-1.5 rounded-full font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-40",
           variants[variant],
           sizes[size],
           className

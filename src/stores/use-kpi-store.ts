@@ -38,6 +38,7 @@ const sanitizeKPI = (value: unknown): KPI | null => {
     target: Math.max(sanitizeNumber(value.target, 1), 1),
     unit: sanitizeString(value.unit, "unit"),
     category: typeof value.category === "string" && value.category.trim() ? value.category : undefined,
+    groveId: typeof value.groveId === "string" && value.groveId ? value.groveId : undefined,
     updatedAt: sanitizeDate(value.updatedAt, now),
     history: history.length > 0 ? history : [{ value: sanitizeNumber(value.value), timestamp: now }],
   };
@@ -61,7 +62,14 @@ interface KPIState {
   kpis: KPI[];
   // Actions
   actions: {
-    addKPI: (label: string, target: number, unit: string, category?: string, current?: number) => void;
+    addKPI: (
+      label: string,
+      target: number,
+      unit: string,
+      category?: string,
+      current?: number,
+      extras?: Partial<Pick<KPI, "groveId">>
+    ) => KPI;
     updateProgress: (id: string, value: number) => void;
     editKPI: (id: string, updates: Partial<Omit<KPI, "id" | "updatedAt" | "history">>) => void;
     removeKPI: (id: string) => void;
@@ -73,9 +81,13 @@ export const useKPIStore = create<KPIState>()(
     (set) => ({
       kpis: [],
       actions: {
-        addKPI: (label, target, unit, category, current) => {
-          const newKPI = KPIService.createKPI(label, Math.max(target, 1), unit, category, current);
+        addKPI: (label, target, unit, category, current, extras) => {
+          const newKPI = {
+            ...KPIService.createKPI(label, Math.max(target, 1), unit, category, current),
+            ...extras,
+          };
           set((state) => ({ kpis: [newKPI, ...state.kpis] }));
+          return newKPI;
         },
         updateProgress: (id, value) =>
           set((state) => ({

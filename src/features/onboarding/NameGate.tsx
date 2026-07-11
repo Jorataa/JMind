@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { LogoMark } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
 import { useHydrated } from "@/hooks/use-hydrated";
@@ -19,18 +20,23 @@ const MAX_NAME_LENGTH = 40;
 
 /**
  * First-run welcome gate. Asks the visitor what we should call them, saves it to
- * the UI store (which drives the dashboard greeting + sidebar), and logs the
+ * the UI store (which drives the dashboard greeting + rail), and logs the
  * entry to the owner's Google Sheet. Already-onboarded visitors skip the modal
  * but still get a once-per-session "visit" ping.
+ *
+ * On "/" the landing page owns onboarding, so the gate stays out of the way.
  */
 export default function NameGate() {
   const hydrated = useHydrated();
   const hasOnboarded = useHasOnboarded();
   const userName = useUserName();
   const { completeOnboarding } = useUIActions();
+  const pathname = usePathname();
 
   const [name, setName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const onLanding = pathname === "/";
 
   // Returning visitor: record the session once we know who they are.
   useEffect(() => {
@@ -40,12 +46,12 @@ export default function NameGate() {
 
   // Focus the field as soon as the gate appears.
   useEffect(() => {
-    if (hydrated && !hasOnboarded) inputRef.current?.focus();
-  }, [hydrated, hasOnboarded]);
+    if (hydrated && !hasOnboarded && !onLanding) inputRef.current?.focus();
+  }, [hydrated, hasOnboarded, onLanding]);
 
-  // Don't render until hydrated (avoids SSR/localStorage mismatch) or if the
-  // visitor is already onboarded.
-  if (!hydrated || hasOnboarded) return null;
+  // Don't render until hydrated (avoids SSR/localStorage mismatch), if the
+  // visitor is already onboarded, or on the landing page (it owns this step).
+  if (!hydrated || hasOnboarded || onLanding) return null;
 
   const trimmed = name.trim();
   const canSubmit = trimmed.length > 0;
@@ -62,25 +68,25 @@ export default function NameGate() {
     // A required gate: no Esc / backdrop dismiss — entering a name is the only
     // way through. role="dialog" + aria-modal keeps it accessible.
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 p-4 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(27,41,31,0.4)] p-4 backdrop-blur-[2px]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="namegate-title"
     >
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-zinc-900 p-7 shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
-          <LogoMark size={22} title="Jorata" />
+      <div className="w-full max-w-md rounded-card border border-line-hair bg-card p-7 shadow-float-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-inner bg-sage-surface text-emerald-500">
+          <LogoMark size={24} title="Jorata" />
         </div>
 
         <h2
           id="namegate-title"
-          className="mt-4 text-[20px] font-semibold text-zinc-50"
+          className="mt-4 font-serif text-[26px] leading-[1.15] text-ink-900"
         >
           Welcome to Jorata
         </h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-zinc-400">
-          Your personal space to think, plan, and get things done. What should
-          we call you?
+        <p className="mt-1.5 text-[13.5px] leading-relaxed text-ink-600">
+          A quiet place to think, plan, and get things done. What should we
+          call you?
         </p>
 
         <form
@@ -98,14 +104,14 @@ export default function NameGate() {
             maxLength={MAX_NAME_LENGTH}
             autoComplete="name"
             aria-label="Your name"
-            className="h-11 w-full rounded-lg border border-white/10 bg-zinc-950/60 px-3.5 text-[14px] text-zinc-100 outline-none transition-all placeholder:text-zinc-600 focus:border-emerald-500/40 focus:bg-zinc-950 focus:ring-2 focus:ring-emerald-400/10"
+            className="h-11 w-full rounded-inner border border-line-strong bg-card px-4 text-[14.5px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-emerald-500"
           />
-          <Button type="submit" size="lg" disabled={!canSubmit} className="w-full">
+          <Button type="submit" variant="accent" size="lg" disabled={!canSubmit} className="w-full">
             Continue
           </Button>
         </form>
 
-        <p className="mt-4 text-[11px] leading-relaxed text-zinc-600">
+        <p className="mt-4 text-[11.5px] leading-relaxed text-ink-500">
           Just a name so we can greet you — no password, no email.
         </p>
       </div>

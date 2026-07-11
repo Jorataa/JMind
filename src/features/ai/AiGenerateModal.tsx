@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Wand2, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useAiGenerate } from "./useAiGenerate";
 
@@ -28,7 +27,7 @@ export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
       onClose={onClose}
     >
       <div className="flex flex-col gap-5">
-        <Input
+        <input
           autoFocus
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
@@ -37,10 +36,12 @@ export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
           }}
           placeholder="What do you want to learn?"
           disabled={isLoading}
+          aria-label="Topic to generate"
+          className="h-11 w-full rounded-inner border border-line-strong bg-card px-4 text-[14.5px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-emerald-500 disabled:opacity-60"
         />
 
         <div className="flex flex-col gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500">
+          <span className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-ink-500">
             Examples
           </span>
           <div className="flex flex-wrap gap-2">
@@ -50,7 +51,7 @@ export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
                 type="button"
                 disabled={isLoading}
                 onClick={() => setTopic(example)}
-                className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12px] text-zinc-300 transition-colors hover:border-emerald-500/30 hover:text-emerald-300 disabled:opacity-50"
+                className="rounded-full border border-line-hair bg-card px-3 py-1.5 text-[12px] text-ink-600 transition-colors hover:border-green-800 hover:text-green-800 disabled:opacity-50"
               >
                 {example}
               </button>
@@ -59,6 +60,7 @@ export default function AiGenerateModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <Button
+          variant="accent"
           className="w-full gap-2"
           onClick={handleGenerate}
           disabled={isLoading || topic.trim().length === 0}

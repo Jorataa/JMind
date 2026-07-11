@@ -1,7 +1,9 @@
 import { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { ContourRings } from "./ContourArt";
 
 interface EmptyStateProps {
+  /** Optional icon; when omitted the brand contour-rings artwork is shown (§7). */
   icon?: ReactNode;
   title: string;
   description: string;
@@ -11,19 +13,27 @@ interface EmptyStateProps {
   className?: string;
 }
 
+/**
+ * Empty state (design handoff §7): contour-rings artwork + a serif line +
+ * one action. Calm, never a wall of dashed grey.
+ */
 export const EmptyState = ({ icon, title, description, action, footer, className }: EmptyStateProps) => {
   return (
-    <div className={cn(
-      "flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-16 text-center",
-      className
-    )}>
-      {icon && (
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-300/10 text-emerald-300">
+    <div
+      className={cn(
+        "flex flex-col items-center justify-center py-16 text-center",
+        className
+      )}
+    >
+      {icon ? (
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-sage-surface text-green-800">
           {icon}
         </div>
+      ) : (
+        <ContourRings variant="sage" size={150} centerDot className="opacity-60" />
       )}
-      <h3 className="mt-4 text-[16px] font-semibold text-zinc-100">{title}</h3>
-      <p className="mt-1 text-[13px] text-zinc-500 max-w-[280px] leading-relaxed">
+      <h3 className="mt-4 font-serif text-[22px] leading-snug text-ink-900">{title}</h3>
+      <p className="mt-1.5 max-w-[300px] text-[13.5px] leading-relaxed text-ink-600">
         {description}
       </p>
       {action && <div className="mt-6">{action}</div>}

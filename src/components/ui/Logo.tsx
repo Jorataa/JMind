@@ -1,14 +1,13 @@
 /**
- * Jorata brand mark — the "Orbit" concept.
+ * Jorata brand mark — the official node-mark (design handoff §9).
  *
- * Three circles of descending size — one large hub with two lines branching
- * out to a medium and a smaller node. It echoes the mind-map nodes on the
- * canvas: one idea radiating into others.
+ * One large hub circle with two satellite nodes on radiating lines — the
+ * mind-map "grown" into a mark: one idea radiating into others.
  *
  * Flat, single-color, no gradients or shadows. Color comes from `currentColor`,
  * so callers pick the variant with Tailwind:
- *   - dark backgrounds → `text-emerald-500` (#10b981, brand primary)
- *   - light backgrounds → `text-emerald-600` (#059669, brand dark variant)
+ *   - anywhere brand-colored → `text-emerald-500` (the themeable accent)
+ *   - on dark surfaces → `text-emerald-300`
  *
  * It is an inline SVG (never a raster asset) so it stays crisp at every size,
  * from a 16px favicon to a hero splash. The same geometry is mirrored in
@@ -28,7 +27,7 @@ export function LogoMark({ size = 20, title, ...props }: LogoMarkProps) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 27 27"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       role={title ? "img" : undefined}
@@ -36,16 +35,15 @@ export function LogoMark({ size = 20, title, ...props }: LogoMarkProps) {
       {...props}
     >
       {title ? <title>{title}</title> : null}
-      {/* Spokes first so the hub and nodes sit on top of the lines. */}
+      {/* Spokes first so the hub and satellites sit on top of the lines. */}
       <path
-        d="M12 16L23 9M12 16L22 23"
+        d="M13 12L19.5 6.8M13.5 18l4.6 3.4"
         stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
+        strokeWidth="2"
       />
-      <circle cx="12" cy="16" r="5" fill="currentColor" />
-      <circle cx="23" cy="9" r="3" fill="currentColor" />
-      <circle cx="22" cy="23" r="2.4" fill="currentColor" />
+      <circle cx="9.5" cy="15.5" r="5.4" fill="currentColor" />
+      <circle cx="20.6" cy="6" r="3.3" fill="currentColor" />
+      <circle cx="19.4" cy="22.2" r="2.4" fill="currentColor" />
     </svg>
   );
 }

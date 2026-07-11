@@ -40,6 +40,7 @@ const sanitizeTask = (value: unknown): Task | null => {
     priority: validPriorities.has(priority) ? priority : "medium",
     energy: validEnergies.has(energy) ? energy : "quick",
     category: typeof value.category === "string" && value.category.trim() ? value.category : undefined,
+    groveId: typeof value.groveId === "string" && value.groveId ? value.groveId : undefined,
     sourceNodeId: typeof value.sourceNodeId === "string" && value.sourceNodeId ? value.sourceNodeId : undefined,
     sourceMapId: typeof value.sourceMapId === "string" && value.sourceMapId ? value.sourceMapId : undefined,
   };
@@ -67,10 +68,19 @@ interface TaskState {
     priority: "all" | TaskPriority;
   };
   actions: {
-    addTask: (title: string, priority: TaskPriority, energy: TaskEnergy, category?: string, id?: string) => Task;
+    addTask: (
+      title: string,
+      priority: TaskPriority,
+      energy: TaskEnergy,
+      category?: string,
+      id?: string,
+      extras?: Partial<Pick<Task, "groveId" | "dueDate" | "sourceNodeId" | "sourceMapId">>
+    ) => Task;
     toggleTask: (id: string) => void;
     updateTask: (id: string, updates: Partial<Omit<Task, "id" | "createdAt">>) => void;
     removeTask: (id: string) => void;
+    /** Move a task before `beforeId` (or to the end when null) — drag reorder. */
+    reorderTask: (id: string, beforeId: string | null) => void;
     setFilter: (updates: Partial<TaskState["filter"]>) => void;
   };
 }
@@ -85,8 +95,8 @@ export const useTaskStore = create<TaskState>()(
         priority: "all",
       },
       actions: {
-        addTask: (title, priority, energy, category, id) => {
-          const newTask = TaskService.createTask(title, priority, energy, category, id);
+        addTask: (title, priority, energy, category, id, extras) => {
+          const newTask = { ...TaskService.createTask(title, priority, energy, category, id), ...extras };
           if (get().tasks.some((task) => task.id === newTask.id)) return newTask;
 
           useActivityStore.getState().actions.logActivity(
@@ -123,6 +133,16 @@ export const useTaskStore = create<TaskState>()(
           set((state) => ({
             tasks: state.tasks.filter((task) => task.id !== id),
           })),
+        reorderTask: (id, beforeId) =>
+          set((state) => {
+            const tasks = [...state.tasks];
+            const from = tasks.findIndex((task) => task.id === id);
+            if (from === -1 || id === beforeId) return state;
+            const [moved] = tasks.splice(from, 1);
+            const to = beforeId ? tasks.findIndex((task) => task.id === beforeId) : -1;
+            tasks.splice(to === -1 ? tasks.length : to, 0, moved);
+            return { tasks };
+          }),
         setFilter: (updates) =>
           set((state) => ({ filter: { ...state.filter, ...updates } })),
       },

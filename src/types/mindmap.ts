@@ -20,6 +20,14 @@ export type MindMapNodeData = {
   isNew?: boolean;
   /** When true, this node's descendants are hidden on the canvas. */
   collapsed?: boolean;
+  /**
+   * AI-proposed material (§6.6): sage/dashed until the user keeps or discards
+   * it. Every AI result lands proposed:true; accepting strips the flag.
+   */
+  proposed?: boolean;
+  /** Reveal order for the streaming entrance (60ms stagger). Transient styling
+   *  data — harmless if it persists on an unresolved proposal. */
+  staggerIndex?: number;
   color?: string;
   linkedTaskIds: string[];
   linkedKpiIds: string[];
@@ -34,6 +42,8 @@ export type MindMapEdge = Edge;
 export interface MindMapWorkspace {
   id: string;
   title: string;
+  /** Optional project group (grove) this map belongs to. Absent on legacy maps. */
+  groveId?: string;
   nodes: MindMapNode[];
   edges: MindMapEdge[];
   viewport: Viewport;

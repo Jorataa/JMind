@@ -4,8 +4,11 @@
 // When the AI builds a whole map, every main branch (direct child of the root)
 // gets its own hue and passes it down to its sub-topics — the classic mind-map
 // convention that keeps branches traceable at a glance. The root keeps its
-// emerald treatment; manually created nodes never get a branch color and keep
-// their category styling.
+// evergreen treatment; manually created nodes never get a branch color.
+//
+// Evergreen re-expression: nodes are paper-faced (§6.6), so the branch hue is
+// carried by a slim left rule + the minimap swatch instead of a dark face.
+// The stored keys are unchanged — existing maps keep their colors.
 //
 // The color is stored in node.data.color as one of the keys below (the same
 // field sticky notes use for their paper color — the two node types render
@@ -13,12 +16,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface BranchColorStyle {
-  /** Node face background (dark, matching the category palette's register). */
-  bg: string;
-  /** Node label text. */
-  text: string;
-  /** Soft shadow tint for hover/selection. */
-  glow: string;
+  /** The branch hue — left rule on the node face. */
+  accent: string;
   /** Solid swatch for the minimap. */
   swatch: string;
 }
@@ -40,16 +39,18 @@ export const BRANCH_COLOR_ORDER = [
   "fuchsia",
 ] as const;
 
+// Muted, paper-compatible values: saturated enough to trace a branch,
+// quiet enough to sit beside ink and evergreen.
 export const BRANCH_COLOR_STYLES: Record<string, BranchColorStyle> = {
-  sky: { bg: "#0c4a6e", text: "#e0f2fe", glow: "rgba(14,165,233,0.2)", swatch: "#0ea5e9" },
-  amber: { bg: "#78350f", text: "#fef3c7", glow: "rgba(245,158,11,0.2)", swatch: "#f59e0b" },
-  violet: { bg: "#4c1d95", text: "#f5f3ff", glow: "rgba(139,92,246,0.2)", swatch: "#8b5cf6" },
-  rose: { bg: "#881337", text: "#ffe4e6", glow: "rgba(244,63,94,0.2)", swatch: "#f43f5e" },
-  teal: { bg: "#134e4a", text: "#ccfbf1", glow: "rgba(20,184,166,0.2)", swatch: "#14b8a6" },
-  indigo: { bg: "#1e1b4b", text: "#e0e7ff", glow: "rgba(99,102,241,0.2)", swatch: "#6366f1" },
-  lime: { bg: "#365314", text: "#ecfccb", glow: "rgba(132,204,22,0.2)", swatch: "#84cc16" },
-  orange: { bg: "#7c2d12", text: "#ffedd5", glow: "rgba(249,115,22,0.2)", swatch: "#f97316" },
-  fuchsia: { bg: "#701a75", text: "#fae8ff", glow: "rgba(217,70,239,0.2)", swatch: "#d946ef" },
+  sky: { accent: "#4E86A8", swatch: "#4E86A8" },
+  amber: { accent: "#C99A2E", swatch: "#C99A2E" },
+  violet: { accent: "#8A73B8", swatch: "#8A73B8" },
+  rose: { accent: "#B96A80", swatch: "#B96A80" },
+  teal: { accent: "#4E9B8F", swatch: "#4E9B8F" },
+  indigo: { accent: "#6B78AE", swatch: "#6B78AE" },
+  lime: { accent: "#8FA24E", swatch: "#8FA24E" },
+  orange: { accent: "#C07A45", swatch: "#C07A45" },
+  fuchsia: { accent: "#A868A0", swatch: "#A868A0" },
 };
 
 /** The hue for the Nth main branch (wraps when a map has more branches). */

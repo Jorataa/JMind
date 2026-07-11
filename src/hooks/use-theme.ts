@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 
 export type ThemeId = "default" | "ocean" | "violet" | "rose" | "amber";
 
-// `accent` is the swatch colour shown in the Settings picker (the 400 shade of
-// each ramp). The CSS in globals.css owns the actual palette.
+// `accent` is the swatch colour shown in the Settings picker (the 500 brand
+// shade of each ramp). The CSS in globals.css owns the actual palette.
 export const THEMES: { id: ThemeId; label: string; description: string; accent: string }[] = [
-  { id: "default", label: "Emerald", description: "Fresh green", accent: "#34d399" },
-  { id: "ocean", label: "Ocean", description: "Calm blue", accent: "#60a5fa" },
-  { id: "violet", label: "Violet", description: "Bold purple", accent: "#a78bfa" },
-  { id: "rose", label: "Rose", description: "Warm rose", accent: "#fb7185" },
-  { id: "amber", label: "Amber", description: "Golden glow", accent: "#fbbf24" },
+  { id: "default", label: "Emerald", description: "Fresh green", accent: "#1e9b68" },
+  { id: "ocean", label: "Ocean", description: "Calm blue", accent: "#2278b5" },
+  { id: "violet", label: "Violet", description: "Bold purple", accent: "#7a5bc7" },
+  { id: "rose", label: "Rose", description: "Warm rose", accent: "#c25573" },
+  { id: "amber", label: "Amber", description: "Golden glow", accent: "#c97f2e" },
 ];
 
 export const THEME_STORAGE_KEY = "jmind:theme";

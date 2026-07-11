@@ -141,22 +141,38 @@ function buildNode(
  * every other node gets a fresh UUID. Edges are parent → child. Positions are
  * left at the origin — run a tree layout (calculateTreeLayout) on the result to
  * place them.
+ *
+ * With `proposed`, every non-root node lands as AI-proposed material (§6.6):
+ * sage/dashed on the canvas, edges dashed, revealed with a 60ms stagger —
+ * until the user keeps or discards it.
  */
-export function mindMapTreeToFlow(tree: AiTreeNode): {
+export function mindMapTreeToFlow(
+  tree: AiTreeNode,
+  options?: { proposed?: boolean }
+): {
   nodes: MindMapNode[];
   edges: MindMapEdge[];
 } {
   const nodes: MindMapNode[] = [];
   const edges: MindMapEdge[] = [];
+  const proposed = options?.proposed ?? false;
+  let revealOrder = 0;
 
   // Each main branch (direct child of the root) gets its own hue; everything
   // deeper inherits it, so whole branches stay traceable by color. The root
   // keeps its emerald treatment (no branch color).
   const walk = (node: AiTreeNode, id: string, isRoot: boolean, branchColor?: string) => {
-    nodes.push(buildNode(id, node, isRoot, branchColor));
+    const built = buildNode(id, node, isRoot, branchColor);
+    if (proposed && !isRoot) {
+      built.data.proposed = true;
+      built.data.staggerIndex = revealOrder++;
+    }
+    nodes.push(built);
     node.children.forEach((child, index) => {
       const childId = crypto.randomUUID();
-      edges.push(MindMapService.createEdge(id, childId));
+      const edge = MindMapService.createEdge(id, childId);
+      if (proposed) edge.className = "proposed-edge";
+      edges.push(edge);
       walk(child, childId, false, isRoot ? branchColorAt(index) : branchColor);
     });
   };
