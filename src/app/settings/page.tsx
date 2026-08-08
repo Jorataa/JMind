@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2, Check } from "lucide-react";
+import { Download, Upload, Trash2, Check, User } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/stores/use-toast-store";
@@ -9,11 +10,13 @@ import { cn } from "@/lib/cn";
 import { useTheme, THEMES, THEME_STORAGE_KEY } from "@/hooks/use-theme";
 import { useUserName, useUIActions, useUIStore } from "@/stores/use-ui-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
-import { exportToMarkdown, downloadMarkdown } from "@/lib/export-markdown";
+import {
+  buildOutlineMarkdown,
+  buildMapJson,
+  exportFileName,
+  downloadTextFile,
+} from "@/lib/export";
 import SyncSettings from "@/features/sync/SyncSettings";
-
-const slugify = (s: string) =>
-  s.replace(/[^a-z0-9]+/gi, "-").replace(/^-+|-+$/g, "").toLowerCase() || "mind-map";
 
 // Every JSON-persisted store — the full local workspace, nothing forgotten.
 const STORAGE_KEYS = [
@@ -152,30 +155,26 @@ export default function SettingsPage() {
   const handleExportMapMarkdown = () => {
     const s = useMindMapStore.getState();
     const title = s.maps[s.activeMapId]?.title ?? "Mind Map";
-    const md = exportToMarkdown(s.nodes, s.edges);
-    if (!md.trim()) {
+    if (s.nodes.length <= 1) {
       addToast("This map is empty", "info");
       return;
     }
-    downloadMarkdown(md, `${slugify(title)}.md`);
+    downloadTextFile(
+      exportFileName(title, "md"),
+      buildOutlineMarkdown(title, s.nodes, s.edges),
+      "text/markdown"
+    );
     addToast("Mind map exported as Markdown", "success");
   };
 
   const handleExportMapJson = () => {
     const s = useMindMapStore.getState();
     const title = s.maps[s.activeMapId]?.title ?? "Mind Map";
-    const payload = JSON.stringify(
-      { app: "jmind", type: "mindmap", title, exportedAt: new Date().toISOString(), nodes: s.nodes, edges: s.edges },
-      null,
-      2
+    downloadTextFile(
+      exportFileName(title, "json"),
+      buildMapJson(title, s.nodes, s.edges),
+      "application/json"
     );
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${slugify(title)}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
     addToast("Mind map structure exported", "success");
   };
 
@@ -391,16 +390,26 @@ export default function SettingsPage() {
           {/* ── About ── */}
           <Section id="about" title="About">
             <SettingCard>
-              <p className="font-serif text-[18px] text-ink-900">Jorata</p>
-              <p className="mt-1.5 max-w-[520px] text-[13px] leading-relaxed text-ink-600">
-                A quiet room for a loud mind — capture thoughts, shape them on
-                the canvas, and turn them into action. Built local-first: your
-                data stays on this device by default, and sync is always your
-                choice.
-              </p>
-              <p className="mt-3 font-mono text-[11px] text-ink-400">
-                Think → Plan → Execute → Measure
-              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-serif text-[18px] text-ink-900">Jorata</p>
+                  <p className="mt-1.5 max-w-[520px] text-[13px] leading-relaxed text-ink-600">
+                    A quiet room for a loud mind — capture thoughts, shape them on
+                    the canvas, and turn them into action. Built local-first: your
+                    data stays on this device by default, and sync is always your
+                    choice.
+                  </p>
+                  <p className="mt-3 font-mono text-[11px] text-ink-400">
+                    Think → Plan → Execute → Measure
+                  </p>
+                </div>
+                <Link
+                  href="/profile"
+                  className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg bg-evergreen-950 px-4 text-[12.5px] font-medium text-white transition-colors hover:bg-evergreen-900"
+                >
+                  <User size={14} /> Creator Profile
+                </Link>
+              </div>
             </SettingCard>
           </Section>
         </div>
