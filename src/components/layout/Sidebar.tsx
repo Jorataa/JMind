@@ -16,6 +16,7 @@ import { useShallow } from "zustand/shallow";
 import { cn } from "@/lib/cn";
 import { LogoMark } from "@/components/ui/Logo";
 import { ContourRings } from "@/components/ui/ContourArt";
+import SyncStatusChip from "./SyncStatusChip";
 import {
   LayoutDashboard,
   Waypoints,
@@ -472,6 +473,9 @@ export default function Sidebar() {
               {!isCompact && <span>Collapse</span>}
             </button>
           )}
+
+          {/* Where the data lives — always answerable at a glance (§ pass 2). */}
+          <SyncStatusChip compact={isCompact} />
 
           <Link
             href="/settings"

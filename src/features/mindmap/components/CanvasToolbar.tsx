@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
-import { Panel, useReactFlow, getNodesBounds, getViewportForBounds } from "@xyflow/react";
+import { useState } from "react";
+import { Panel } from "@xyflow/react";
 import {
-  Share2,
   Sparkles,
   PanelRight,
   Undo2,
@@ -17,9 +16,9 @@ import {
   useCanUndo,
   useCanRedo,
 } from "@/stores/use-mindmap-store";
-import { exportViewportToPng } from "@/lib/export";
 import { cn } from "@/lib/cn";
 import MapSwitcher from "./MapSwitcher";
+import ExportMenu from "./ExportMenu";
 import AiGenerateModal from "@/features/ai/AiGenerateModal";
 import FixMapModal from "@/features/ai/FixMapModal";
 
@@ -28,7 +27,7 @@ import FixMapModal from "@/features/ai/FixMapModal";
  * pills inset from the frame:
  *   left   breadcrumb (MapSwitcher) · history/tidy/AI-structure pill
  *   center Map / Outline view switcher
- *   right  Share · Ask Jorata (dark) · details-panel toggle
+ *   right  Download · Ask Jorata (dark) · details-panel toggle
  */
 
 export type WorkspaceView = "map" | "outline";
@@ -55,36 +54,8 @@ export default function CanvasToolbar({
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
   const { toggleSidebar, undo, redo } = useMindMapActions();
-  const { getNodes } = useReactFlow();
   const [aiGenerateOpen, setAiGenerateOpen] = useState(false);
   const [fixMapOpen, setFixMapOpen] = useState(false);
-
-  const handleExport = useCallback(async () => {
-    const viewport = document
-      .getElementById("mindmap-canvas")
-      ?.querySelector<HTMLElement>(".react-flow__viewport");
-    // Frame on the visible nodes, not the collapsed/hidden ones (they aren't
-    // in the DOM, so including them would leave dead space in the export).
-    const visibleNodes = getNodes().filter((node) => !node.hidden);
-    if (!viewport || visibleNodes.length === 0) return;
-
-    const bounds = getNodesBounds(visibleNodes);
-    const aspect = bounds.width / bounds.height || 1;
-    // Tight-but-not-tiny: scale the map's own aspect ratio so the longer side
-    // lands between 900 and 2600px; pixelRatio:2 keeps text crisp on top.
-    const longSide = Math.min(Math.max(bounds.width, bounds.height, 900), 2600);
-    const width = Math.round(aspect >= 1 ? longSide : longSide * aspect);
-    const height = Math.round(aspect >= 1 ? longSide / aspect : longSide);
-    const transform = getViewportForBounds(bounds, width, height, 0.1, 2, 0.14);
-
-    await exportViewportToPng(
-      viewport,
-      width,
-      height,
-      transform,
-      `jorata-export-${Date.now()}.png`,
-    );
-  }, [getNodes]);
 
   return (
     <>
@@ -169,18 +140,10 @@ export default function CanvasToolbar({
         </div>
       </Panel>
 
-      {/* ── Right: share · ask · details ── */}
+      {/* ── Right: download · ask · details ── */}
       <Panel position="top-right" className="z-10 !m-4">
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleExport}
-            className="flex h-9 items-center gap-1.5 rounded-full border border-line-hair bg-card px-3.5 text-[12.5px] text-green-800 shadow-float-1 transition-colors hover:border-green-800"
-            title="Export this map as a PNG"
-          >
-            <Share2 size={12.5} />
-            <span className="hidden md:inline">Share</span>
-          </button>
+          <ExportMenu />
           <button
             type="button"
             onClick={onOpenAi}

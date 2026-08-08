@@ -3,21 +3,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { PencilLine, X, CornerDownLeft } from "lucide-react";
+import { PencilLine, X, CornerDownLeft, Link2 } from "lucide-react";
 import { useInboxActions } from "@/stores/use-inbox-store";
 import { useUIActions, useUIStore } from "@/stores/use-ui-store";
 import { useTaskActions } from "@/stores/use-task-store";
 import { useNoteActions } from "@/stores/use-note-store";
+import { useKnowledgeActions } from "@/stores/use-knowledge-store";
 import { useMindMapStore } from "@/stores/use-mindmap-store";
 import { useToast } from "@/stores/use-toast-store";
+import { looksLikeUrl, inferSourceType, titleFromUrl } from "@/lib/source-utils";
 import { cn } from "@/lib/cn";
 
 /**
  * Capture (§5.5): ⌘J (or N) opens this centered bar anywhere. ⏎ saves to the
  * Inbox as a scrap unless a chip was chosen — Note, Map, Task, or Ask AI.
+ * A pasted URL is recognized and defaults to Knowledge instead.
  */
 
-type CaptureChip = "note" | "map" | "task" | "ask";
+type CaptureChip = "note" | "map" | "task" | "ask" | "source";
 
 const CHIPS: { id: CaptureChip; label: string }[] = [
   { id: "note", label: "Note" },
@@ -32,6 +35,7 @@ export default function QuickCaptureOverlay() {
   const { capture } = useInboxActions();
   const { addTask } = useTaskActions();
   const { addNote } = useNoteActions();
+  const { addSource } = useKnowledgeActions();
   const createMap = useMindMapStore((state) => state.actions.createMap);
   const router = useRouter();
   const [input, setInput] = useState("");
@@ -80,23 +84,30 @@ export default function QuickCaptureOverlay() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [close, isOpen, setQuickCaptureOpen, toggleQuickCapture]);
 
+  const isUrl = looksLikeUrl(input);
+  // A bare URL's home is Knowledge — chips can still override.
+  const effectiveChip = chip ?? (isUrl ? "source" : null);
+
   const handleCapture = (e?: React.FormEvent) => {
     e?.preventDefault();
     const text = input.trim();
     if (!text) return;
 
-    if (chip === "note") {
+    if (effectiveChip === "note") {
       addNote({ body: text });
       addToast("Saved to Notes", "success");
-    } else if (chip === "task") {
+    } else if (effectiveChip === "task") {
       addTask(text, "medium", "quick");
       addToast("Task added", "success");
-    } else if (chip === "map") {
+    } else if (effectiveChip === "source") {
+      addSource(titleFromUrl(text), inferSourceType(text), { url: text });
+      addToast("Link saved to Knowledge", "success");
+    } else if (effectiveChip === "map") {
       createMap(text.length > 60 ? `${text.slice(0, 59)}…` : text);
       close();
       router.push("/mindmap");
       return;
-    } else if (chip === "ask") {
+    } else if (effectiveChip === "ask") {
       close();
       openAssistant(text);
       return;
@@ -149,6 +160,23 @@ export default function QuickCaptureOverlay() {
               </div>
 
               <div className="mt-2.5 flex items-center gap-1.5 px-0.5">
+                {/* A recognized link grows a Knowledge chip, pre-armed. */}
+                {isUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setChip(chip === "source" ? null : "source")}
+                    aria-pressed={effectiveChip === "source"}
+                    className={cn(
+                      "flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-medium transition-colors",
+                      effectiveChip === "source"
+                        ? "bg-sage-surface text-green-800"
+                        : "border border-line-hair text-ink-600 hover:text-ink-900"
+                    )}
+                  >
+                    <Link2 size={11} />
+                    Knowledge
+                  </button>
+                )}
                 {CHIPS.map((c) => (
                   <button
                     key={c.id}
@@ -167,7 +195,11 @@ export default function QuickCaptureOverlay() {
                 ))}
                 <span className="ml-auto flex items-center gap-1 font-mono text-[10.5px] text-ink-400">
                   <CornerDownLeft size={10.5} />
-                  {chip ? CHIPS.find((c) => c.id === chip)?.label : "Inbox"}
+                  {effectiveChip === "source"
+                    ? "Knowledge"
+                    : effectiveChip
+                      ? CHIPS.find((c) => c.id === effectiveChip)?.label
+                      : "Inbox"}
                 </span>
               </div>
             </form>

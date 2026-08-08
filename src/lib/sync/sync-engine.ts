@@ -108,6 +108,20 @@ export async function signOut(): Promise<void> {
   await supabase.auth.signOut();
 }
 
+/**
+ * Manual "Sync now": one immediate bidirectional pass (pull newer cloud
+ * stores, push newer local ones). The automatic engine already covers every
+ * normal path — this exists so the user can *see* it happen on demand.
+ */
+export async function syncNow(): Promise<void> {
+  if (!activeUserId || reconcileGate) return;
+  if (pushTimer) {
+    clearTimeout(pushTimer);
+    pushTimer = null;
+  }
+  await flushPush();
+}
+
 /** Resolve the one-time first-sign-in keep/use/merge choice. */
 export async function resolveReconcile(choice: ReconcileChoice): Promise<void> {
   const supabase = getSupabaseClient();

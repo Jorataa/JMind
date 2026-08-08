@@ -161,7 +161,7 @@ export default function ProfilePage() {
                   <MessageSquare size={14} /> WhatsApp
                 </a>
                 <a
-                  href={`tel:${phone}`}
+                  href={`tel:+${rawPhone}`}
                   className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-line-hair bg-sunken px-3 text-[12.5px] font-medium text-ink-700 transition-colors hover:bg-paper"
                   title="Call phone number"
                 >

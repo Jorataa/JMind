@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, ChevronsUpDown, FileText, Plus, Edit3, Trash2 } from "lucide-react";
 import { useShallow } from "zustand/shallow";
@@ -63,13 +63,13 @@ export default function MapSwitcher() {
     };
   }, [nodes, edges]);
 
-  // Leaving the popover abandons any in-progress rename or delete confirm.
-  useEffect(() => {
-    if (!open) {
-      setEditingId(null);
-      setConfirmDeleteId(null);
-    }
-  }, [open]);
+  // Closing the popover abandons any in-progress rename or delete confirm —
+  // reset at the moment of closing rather than reacting to `open` flipping.
+  const close = useCallback(() => {
+    setOpen(false);
+    setEditingId(null);
+    setConfirmDeleteId(null);
+  }, []);
 
   // Disarm the delete confirmation if the user walks away.
   useEffect(() => {
@@ -84,11 +84,11 @@ export default function MapSwitcher() {
 
     const onPointerDown = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+        close();
       }
     };
     const onKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") close();
     };
 
     document.addEventListener("pointerdown", onPointerDown);
@@ -97,16 +97,16 @@ export default function MapSwitcher() {
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, close]);
 
   const handleSwitch = (id: string) => {
     if (id !== activeMapId) switchMap(id);
-    setOpen(false);
+    close();
   };
 
   const handleCreate = () => {
     createMap();
-    setOpen(false);
+    close();
   };
 
   const handleStartRename = (id: string, title: string) => {
@@ -141,7 +141,7 @@ export default function MapSwitcher() {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => (open ? close() : setOpen(true))}
         aria-expanded={open}
         aria-haspopup="true"
         title="Switch mind map"

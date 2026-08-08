@@ -1,7 +1,6 @@
 import { Task } from "@/types/tasks";
 import type { CalendarEvent } from "@/stores/use-calendar-store";
 import type { KPI } from "@/types/kpi";
-import type { InboxItem } from "@/stores/use-inbox-store";
 import { getLocalDateKey } from "@/lib/format-date";
 
 export function getGreeting() {

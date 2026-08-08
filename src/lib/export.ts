@@ -6,6 +6,139 @@ interface ViewportTransform {
   zoom: number;
 }
 
+// Matches --color-paper: exports should look like the canvas they came from.
+// (The accent themes only remap greens; paper is constant across all of them.)
+const EXPORT_BACKGROUND = "#F6F3EB";
+
+/** "Q3 Launch Plan!" → "q3-launch-plan" — safe for filenames. */
+export function slugifyTitle(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 48);
+  return slug || "mind-map";
+}
+
+/** "jorata-q3-launch-plan-2026-07-11.png" — title + date, per export. */
+export function exportFileName(title: string, ext: string): string {
+  const d = new Date();
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+  return `jorata-${slugifyTitle(title)}-${date}.${ext}`;
+}
+
+/** Triggers a browser download of a generated text file. */
+export function downloadTextFile(fileName: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: `${mime};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.download = fileName;
+  link.href = url;
+  link.click();
+  // Let the click land before revoking.
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Structural node/edge shapes so this lib doesn't depend on the store types.
+interface ExportableNode {
+  id: string;
+  type?: string;
+  position: { x: number; y: number };
+  data: { label?: string; isRoot?: boolean; aiDescription?: string };
+}
+interface ExportableEdge {
+  source: string;
+  target: string;
+}
+
+/**
+ * The map as a nested Markdown outline — the "paste it anywhere" export.
+ * Root becomes the H1; branches become nested bullets in the same top-to-
+ * bottom order as the canvas; stickies land under a "Notes" section.
+ */
+export function buildOutlineMarkdown(
+  title: string,
+  nodes: ExportableNode[],
+  edges: ExportableEdge[]
+): string {
+  const byId = new Map(nodes.map((n) => [n.id, n]));
+  const childrenOf = new Map<string, ExportableNode[]>();
+  const hasParent = new Set<string>();
+
+  for (const edge of edges) {
+    const child = byId.get(edge.target);
+    if (!child || child.type === "sticky") continue;
+    hasParent.add(edge.target);
+    const list = childrenOf.get(edge.source) ?? [];
+    list.push(child);
+    childrenOf.set(edge.source, list);
+  }
+  for (const list of childrenOf.values()) {
+    list.sort((a, b) => a.position.y - b.position.y);
+  }
+
+  const mapNodes = nodes.filter((n) => n.type !== "sticky");
+  const roots = mapNodes
+    .filter((n) => n.data.isRoot || !hasParent.has(n.id))
+    .sort((a, b) => Number(b.data.isRoot ?? false) - Number(a.data.isRoot ?? false));
+  const stickies = nodes.filter((n) => n.type === "sticky");
+
+  const lines: string[] = [`# ${title.trim() || "Mind map"}`, ""];
+  const visited = new Set<string>();
+
+  const walk = (node: ExportableNode, depth: number) => {
+    if (visited.has(node.id)) return; // cycles must not hang the export
+    visited.add(node.id);
+    const label = (node.data.label ?? "").trim() || "Untitled";
+    const description = (node.data.aiDescription ?? "").trim();
+    if (!node.data.isRoot) {
+      lines.push(
+        `${"  ".repeat(depth)}- ${label}${description ? ` — ${description}` : ""}`
+      );
+    }
+    for (const child of childrenOf.get(node.id) ?? []) {
+      walk(child, node.data.isRoot ? 0 : depth + 1);
+    }
+  };
+  roots.forEach((root) => walk(root, 0));
+
+  if (stickies.length > 0) {
+    lines.push("", "## Notes", "");
+    for (const sticky of stickies) {
+      const text = (sticky.data.label ?? "").trim();
+      if (text) lines.push(`> ${text.replace(/\n/g, "\n> ")}`, "");
+    }
+  }
+
+  lines.push("", `*Exported from Jorata — ${new Date().toLocaleDateString("en-US")}*`);
+  return lines.join("\n");
+}
+
+/** The map as re-importable JSON: everything the store keeps, plus provenance. */
+export function buildMapJson(
+  title: string,
+  nodes: unknown[],
+  edges: unknown[]
+): string {
+  return JSON.stringify(
+    {
+      format: "jorata-map",
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      title,
+      nodes,
+      edges,
+    },
+    null,
+    2
+  );
+}
+
 // React Flow draws edges (and their labels) as SVG inside `.react-flow__edges`,
 // styled entirely through the stylesheet — e.g. `.react-flow__edge-path { stroke:
 // var(--xy-edge-stroke); fill: none }`. html-to-image deep-clones <svg> subtrees
@@ -76,11 +209,11 @@ export async function exportViewportToPng(
   height: number,
   { x, y, zoom }: ViewportTransform,
   fileName: string = "jorata-map.png",
-) {
+): Promise<boolean> {
   const restoreEdgePaint = inlineEdgePaintForCapture(viewport);
   try {
     const dataUrl = await toPng(viewport, {
-      backgroundColor: "#09090b",
+      backgroundColor: EXPORT_BACKGROUND,
       pixelRatio: 2, // High resolution
       width,
       height,
@@ -95,8 +228,10 @@ export async function exportViewportToPng(
     link.download = fileName;
     link.href = dataUrl;
     link.click();
+    return true;
   } catch (error) {
     console.error("Failed to export image:", error);
+    return false;
   } finally {
     restoreEdgePaint();
   }

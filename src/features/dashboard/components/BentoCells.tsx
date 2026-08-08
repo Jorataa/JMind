@@ -24,6 +24,7 @@ import { useInbox, useInboxActions } from "@/stores/use-inbox-store";
 import { useNotes, useNoteActions } from "@/stores/use-note-store";
 import {
   useKnowledgeSources,
+  useKnowledgeStore,
   type SourceType,
 } from "@/stores/use-knowledge-store";
 import { useCalendarEvents } from "@/stores/use-calendar-store";
@@ -796,10 +797,11 @@ const TYPE_BADGE: Record<SourceType, { label: string; className: string }> = {
 
 export function KnowledgeCell({ className }: { className?: string }) {
   const sources = useKnowledgeSources();
-  const newCount = useMemo(() => {
+  // Computed in a selector (the Sidebar due-count idiom) so render stays pure.
+  const newCount = useKnowledgeStore((state) => {
     const weekAgo = Date.now() - 7 * 86_400_000;
-    return sources.filter((s) => new Date(s.addedAt).getTime() > weekAgo).length;
-  }, [sources]);
+    return state.sources.filter((s) => new Date(s.addedAt).getTime() > weekAgo).length;
+  });
 
   return (
     <Card className={cn("gap-3", className)}>

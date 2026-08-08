@@ -13,7 +13,7 @@ export const ToastProvider = () => {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-6 z-[140] flex flex-col items-center gap-2"
+      className="pointer-events-none fixed inset-x-0 bottom-6 z-[140] flex flex-col items-center gap-2 max-md:bottom-[84px]"
       aria-live="polite"
     >
       {toasts.map((toast) => (

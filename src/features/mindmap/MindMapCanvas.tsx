@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import {
   Background,
   BackgroundVariant,
@@ -18,6 +18,7 @@ import NodeContextMenu from "./components/NodeContextMenu";
 import PaneContextMenu from "./components/PaneContextMenu";
 import NodeIntelligenceSidebar from "./components/NodeIntelligenceSidebar";
 import MapSwitcher from "./components/MapSwitcher";
+import ExportMenu from "./components/ExportMenu";
 import CanvasToolbar, { type WorkspaceView } from "./components/CanvasToolbar";
 import { CanvasDock, ZoomPill, CanvasHints, type CanvasTool } from "./components/CanvasDock";
 import OutlineView from "./components/OutlineView";
@@ -43,7 +44,7 @@ import { BRANCH_COLOR_STYLES } from "@/lib/node-colors";
 import { AnimatePresence, motion } from "framer-motion";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { cn } from "@/lib/cn";
-import { Sparkles } from "lucide-react";
+import { PencilLine, Sparkles, X } from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -139,8 +140,35 @@ function MindMapFlow({
   // showing its root pinned to the top-left corner; a saved viewport wins.
   // Arriving with a selection skips the fit — the center effect takes over.
   const activeMapId = useMindMapStore((state) => state.activeMapId);
-  const shouldFitView =
-    !selectedNodeId && viewport.x === 0 && viewport.y === 0 && viewport.zoom === 1;
+  const isDefaultViewport = viewport.x === 0 && viewport.y === 0 && viewport.zoom === 1;
+  // Fresh maps skip fitView: the placement effect below seats the root above
+  // the generation invite so the two never overlap.
+  const isFreshMap = nodes.length <= 1;
+  const shouldFitView = !selectedNodeId && isDefaultViewport && !isFreshMap;
+
+  // Fresh map staging: the root sits ~200px above canvas center, the invite
+  // fills the space beneath it — one composed column instead of a collision.
+  // (200, not less: on short viewports the invite's eyebrow otherwise kisses
+  // the root node — measured in verification.)
+  const { setCenter: setCenterForStage } = useReactFlow();
+  useEffect(() => {
+    if (!isFreshMap) return;
+    const state = useMindMapStore.getState();
+    const vp = state.viewport;
+    if (vp.x !== 0 || vp.y !== 0 || vp.zoom !== 1) return; // a saved pan wins
+    const root = state.nodes.find((n) => n.data.isRoot);
+    if (!root) return;
+    // Give the keyed <ReactFlow> a beat to mount before positioning.
+    const timer = window.setTimeout(() => {
+      setCenterForStage(
+        root.position.x + NODE_CENTER_OFFSET.x,
+        root.position.y + NODE_CENTER_OFFSET.y + 200,
+        { zoom: 1 }
+      );
+    }, 60);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMapId, isFreshMap]);
 
   // Mirror linked task completion into node status. One subscription for the
   // lifetime of the canvas; reads fresh store state inside the callback.
@@ -200,6 +228,15 @@ function MindMapFlow({
   const { generate, isLoading: generating } = useAiGenerate();
   const [lastTopic, setLastTopic] = useState<string | null>(null);
   const [refineOpen, setRefineOpen] = useState(false);
+  // "Start by hand" (or the invite's ✕) hides the front door for this map
+  // until the user switches away and back. Reset-during-render (not an
+  // effect) so the incoming map never flashes a stale dismissal.
+  const [inviteDismissed, setInviteDismissed] = useState(false);
+  const [inviteMapId, setInviteMapId] = useState(activeMapId);
+  if (inviteMapId !== activeMapId) {
+    setInviteMapId(activeMapId);
+    setInviteDismissed(false);
+  }
   const proposedCount = useMemo(
     () => nodes.reduce((count, n) => (n.data.proposed ? count + 1 : count), 0),
     [nodes]
@@ -506,7 +543,12 @@ function MindMapFlow({
                 }
                 onRefine={lastTopic ? () => setRefineOpen(true) : undefined}
               />
-              <CanvasDock tool={tool} onToolChange={changeTool} onOpenAi={onOpenAi} />
+              <CanvasDock
+                tool={tool}
+                onToolChange={changeTool}
+                onOpenAi={onOpenAi}
+                onShowOutline={() => onViewChange("outline")}
+              />
               <ZoomPill />
               <CanvasHints />
               <CanvasHelp />
@@ -547,15 +589,24 @@ function MindMapFlow({
         {/* Empty map → the generation input is the front door (§5.1).
             Refine re-opens it prefilled over the pending proposals. */}
         <AnimatePresence>
-          {((nodes.length <= 1 && proposedCount === 0) || refineOpen) && (
+          {((nodes.length <= 1 && proposedCount === 0 && !inviteDismissed) ||
+            refineOpen) && (
             <GenerationInvite
               key={refineOpen ? "refine" : "fresh"}
               initialTopic={refineOpen ? lastTopic ?? "" : ""}
               refining={refineOpen}
               generating={generating}
               onGenerate={(topic) => runGenerate(topic, refineOpen || nodes.length > 1)}
-              onManualStart={() => addNode("New Idea", ROOT_NODE_ID)}
-              onDismiss={refineOpen ? () => setRefineOpen(false) : undefined}
+              onManualStart={() => {
+                // Building by hand starts with naming the central idea — not
+                // with an orphaned "New Idea" child.
+                setInviteDismissed(true);
+                selectNode(ROOT_NODE_ID);
+                beginEditing(ROOT_NODE_ID);
+              }}
+              onDismiss={
+                refineOpen ? () => setRefineOpen(false) : () => setInviteDismissed(true)
+              }
             />
           )}
         </AnimatePresence>
@@ -594,8 +645,17 @@ function MindMapFlow({
   );
 }
 
-/** Centered "What are we thinking about?" — the AI map-generation front door
- *  (§5.1). Doubles as the Refine surface, prefilled with the last topic. */
+/** Topics that show the breadth of what a map can hold — one click prefills. */
+const EXAMPLE_TOPICS = [
+  "Plan a product launch",
+  "Should I change careers?",
+  "Learn watercolor painting",
+];
+
+/** The AI map-generation front door (§5.1), staged BELOW the root node so the
+ *  two read as one column. Doubles as the Refine surface, prefilled with the
+ *  last topic. The first ten seconds: type a topic → Generate, tap an example,
+ *  or take the explicit "start by hand" path. */
 function GenerationInvite({
   initialTopic,
   refining,
@@ -612,6 +672,7 @@ function GenerationInvite({
   onDismiss?: () => void;
 }) {
   const [topic, setTopic] = useState(initialTopic);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -626,23 +687,48 @@ function GenerationInvite({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 8 }}
       transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-      className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4"
+      className={cn(
+        "pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4",
+        // Fresh maps stage the root ~150px above center; nudging the invite
+        // down keeps the column composed (root → heading → input).
+        !refining && "pt-[104px]"
+      )}
     >
       <div
         className={cn(
-          "pointer-events-auto w-full max-w-[460px] text-center",
+          "pointer-events-auto relative w-full max-w-[480px] text-center",
           refining && "rounded-card border border-line-hair bg-card/95 p-6 shadow-float-3"
         )}
       >
+        {!refining && onDismiss && (
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="absolute -top-1 right-0 rounded-full p-1.5 text-ink-400 transition-colors hover:bg-sunken hover:text-ink-900"
+            title="Dismiss — the canvas is all yours"
+            aria-label="Dismiss the new map helper"
+          >
+            <X size={14} />
+          </button>
+        )}
+
         <p className="text-[10.5px] font-medium uppercase tracking-[0.18em] text-ink-500">
           {refining ? "Refine the topic" : "New map"}
         </p>
         <h2 className="mt-2 font-serif text-[30px] leading-[1.15] text-ink-900">
           What are we thinking about?
         </h2>
+        {!refining && (
+          <p className="mx-auto mt-2 max-w-[360px] text-[13px] leading-relaxed text-ink-600">
+            Type a topic and Jorata drafts the first branches — you approve
+            before anything lands.
+          </p>
+        )}
+
         <form onSubmit={submit} className="mt-5">
           <div className="flex items-center gap-2 rounded-[16px] border border-line-strong bg-card p-2 pl-4 shadow-float-2 transition-colors focus-within:border-emerald-500">
             <input
+              ref={inputRef}
               value={topic}
               onChange={(e) => setTopic(e.target.value)}
               onKeyDown={(e) => {
@@ -674,6 +760,27 @@ function GenerationInvite({
             </button>
           </div>
         </form>
+
+        {/* Example topics — the fastest way to see what a map becomes. */}
+        {!refining && !generating && (
+          <div className="mt-3.5 flex flex-wrap items-center justify-center gap-1.5">
+            <span className="text-[11.5px] text-ink-400">Try</span>
+            {EXAMPLE_TOPICS.map((example) => (
+              <button
+                key={example}
+                type="button"
+                onClick={() => {
+                  setTopic(example);
+                  inputRef.current?.focus();
+                }}
+                className="rounded-full border border-line-hair bg-card/80 px-2.5 py-1 text-[11.5px] text-ink-600 transition-colors hover:border-sage-500 hover:bg-sage-surface hover:text-green-800"
+              >
+                {example}
+              </button>
+            ))}
+          </div>
+        )}
+
         {generating ? (
           <p className="mt-4 text-[12.5px] text-ink-500">
             <kbd className="font-mono text-[11px]">Esc</kbd> to cancel
@@ -687,13 +794,27 @@ function GenerationInvite({
             Keep the current proposals — <kbd className="font-mono text-[11px]">Esc</kbd>
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={onManualStart}
-            className="mt-4 text-[12.5px] text-ink-500 transition-colors hover:text-ink-900"
-          >
-            or start by hand — double-click anywhere, <kbd className="font-mono text-[11px]">Tab</kbd> to branch
-          </button>
+          <div className="mt-6">
+            <div className="mx-auto flex max-w-[300px] items-center gap-3" aria-hidden>
+              <span className="h-px flex-1 bg-line-strong" />
+              <span className="text-[11px] uppercase tracking-[0.14em] text-ink-400">
+                or build it yourself
+              </span>
+              <span className="h-px flex-1 bg-line-strong" />
+            </div>
+            <button
+              type="button"
+              onClick={onManualStart}
+              className="mt-3.5 inline-flex h-9 items-center gap-2 rounded-full border border-[#C9C4B4] bg-card px-4 text-[13px] font-medium text-green-800 transition-colors hover:border-green-800 hover:bg-[rgba(36,82,59,0.04)]"
+            >
+              <PencilLine size={13} />
+              Name your central idea
+            </button>
+            <p className="mt-3 text-[11.5px] text-ink-400">
+              then <kbd className="rounded-kbd border border-line-hair bg-sunken px-1 font-mono text-[10px]">Tab</kbd> to
+              branch · double-click anywhere for a new idea
+            </p>
+          </div>
         )}
       </div>
     </motion.div>
@@ -736,9 +857,17 @@ function OutlineWorkspace({
   onViewChange: (view: WorkspaceView) => void;
   onOpenAi: () => void;
 }) {
+  const { requestNodeFocus } = useMindMapActions();
+
   return (
     <div className="relative h-full w-full">
-      <OutlineView />
+      <OutlineView
+        onShowOnMap={(id) => {
+          // Queue the focus first; the canvas centers it as soon as it mounts.
+          requestNodeFocus(id);
+          onViewChange("map");
+        }}
+      />
       <div className="absolute left-4 top-4 z-10">
         <MapSwitcher />
       </div>
@@ -762,14 +891,38 @@ function OutlineWorkspace({
           ))}
         </div>
       </div>
-      <div className="absolute right-4 top-4 z-10">
+      <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
+        <ExportMenu pngAvailable={false} />
         <button
           type="button"
           onClick={onOpenAi}
-          className="flex h-9 items-center gap-1.5 rounded-full bg-evergreen-900 px-4 text-[12.5px] font-medium text-[#E9EDE0] shadow-float-1 transition-colors hover:bg-evergreen-deep"
+          className="hidden h-9 items-center gap-1.5 rounded-full bg-evergreen-900 px-4 text-[12.5px] font-medium text-[#E9EDE0] shadow-float-1 transition-colors hover:bg-evergreen-deep sm:flex"
         >
           Ask Jorata
         </button>
+      </div>
+
+      {/* Mobile: the top switcher is hidden below sm — a thumb-reachable pill
+          takes over, sitting just above the tab bar. */}
+      <div className="absolute bottom-[76px] left-1/2 z-10 -translate-x-1/2 sm:hidden">
+        <div className="flex h-9 items-center gap-0.5 rounded-full bg-track p-1 shadow-float-2">
+          {(["map", "outline"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => onViewChange(v)}
+              aria-pressed={view === v}
+              className={cn(
+                "h-7 rounded-full px-3.5 text-[12.5px] capitalize transition-colors",
+                view === v
+                  ? "bg-card font-semibold text-ink-900 shadow-float-1"
+                  : "text-ink-600 hover:text-ink-900"
+              )}
+            >
+              {v}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

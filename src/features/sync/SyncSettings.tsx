@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Cloud, CloudOff, RefreshCw, Check, LogOut, Mail } from "lucide-react";
+import { Cloud, CloudOff, RefreshCw, Check, LogOut, Mail, HardDrive } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { isSyncConfigured } from "@/lib/sync/supabase";
-import { signInWithPassword, signUpWithPassword, signOut } from "@/lib/sync/sync-engine";
+import {
+  signInWithPassword,
+  signUpWithPassword,
+  signOut,
+  syncNow,
+} from "@/lib/sync/sync-engine";
 import {
   useLastSyncedAt,
   useSyncError,
   useSyncStatus,
   useSyncUser,
 } from "@/stores/use-sync-store";
+import { formatRelativeTime } from "@/lib/format-date";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,12 +24,30 @@ const INPUT_CLS =
   "h-10 w-full rounded-full border border-line-strong bg-card px-4 text-[13.5px] text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-emerald-500 sm:max-w-xs";
 
 /**
- * The opt-in "Turn on Sync" surface in Settings (§7). Renders nothing unless
- * the owner has configured Supabase, so an unconfigured build shows no sync
- * UI at all — anonymous local-first users never see a hint of an account wall.
+ * The "where does my data live?" surface in Settings (§7). With Supabase
+ * configured it's the sign-in / signed-in sync panel; without it, an honest
+ * local-only explanation — never an account wall, never a blank section.
  */
 export default function SyncSettings() {
-  if (!isSyncConfigured()) return null;
+  if (!isSyncConfigured()) {
+    return (
+      <div className="rounded-card border border-line-hair bg-card p-6">
+        <div className="flex items-center gap-2 text-ink-900">
+          <HardDrive size={15} className="text-green-800" />
+          <h4 className="text-[14px] font-semibold">Your data lives on this device</h4>
+        </div>
+        <p className="mt-1.5 max-w-[520px] text-[12.5px] leading-relaxed text-ink-600">
+          Everything saves to this browser automatically as you work — no
+          account needed, and it works offline. To move or protect your data,
+          download a backup from the Data section below.
+        </p>
+        <p className="mt-2 text-[11.5px] leading-relaxed text-ink-500">
+          Cloud sync isn&apos;t enabled on this deployment. (Owner setup: add the
+          Supabase keys per SETUP.md and this section becomes sign-in.)
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="rounded-card border border-line-hair bg-card p-6">
       <SyncBody />
@@ -179,11 +203,15 @@ function SignedIn() {
         </div>
         <p className="text-[12.5px] text-ink-600">
           Signed in as <span className="font-medium text-ink-900">{user?.email}</span>.
-          Your data is backed up and kept in step across your devices.
+          Changes sync automatically — as you edit, on focus, and live from
+          your other devices.
         </p>
         {lastSyncedAt && (
-          <p className="font-mono text-[11px] text-ink-400">
-            Last synced {new Date(lastSyncedAt).toLocaleString()}
+          <p
+            className="font-mono text-[11px] text-ink-400"
+            title={new Date(lastSyncedAt).toLocaleString()}
+          >
+            Last synced {formatRelativeTime(lastSyncedAt)}
           </p>
         )}
         {error && status === "error" && (
@@ -192,16 +220,21 @@ function SignedIn() {
           </p>
         )}
       </div>
-      <Button
-        variant="secondary"
-        size="sm"
-        onClick={handleSignOut}
-        disabled={busy}
-        className="self-start"
-      >
-        <LogOut size={13} />
-        Sign out
-      </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => void syncNow()}
+          disabled={status === "syncing"}
+        >
+          <RefreshCw size={13} className={status === "syncing" ? "animate-spin" : undefined} />
+          {status === "syncing" ? "Syncing…" : "Sync now"}
+        </Button>
+        <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={busy}>
+          <LogOut size={13} />
+          Sign out
+        </Button>
+      </div>
       <p className="text-[11.5px] leading-relaxed text-ink-500">
         Signing out leaves all of your data on this device untouched — it just stops syncing.
       </p>

@@ -9,6 +9,7 @@ import {
   Sparkles,
   Minus,
   Plus,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -33,10 +34,13 @@ export function CanvasDock({
   tool,
   onToolChange,
   onOpenAi,
+  onShowOutline,
 }: {
   tool: CanvasTool;
   onToolChange: (tool: CanvasTool) => void;
   onOpenAi: () => void;
+  /** Mobile-only escape hatch — the top view switcher is hidden below sm. */
+  onShowOutline?: () => void;
 }) {
   return (
     <Panel position="bottom-center" className="z-10 !mb-[76px] md:!mb-4">
@@ -59,6 +63,17 @@ export function CanvasDock({
             <Icon size={14.5} strokeWidth={1.9} />
           </button>
         ))}
+        {onShowOutline && (
+          <button
+            type="button"
+            onClick={onShowOutline}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-ink-600 transition-colors hover:bg-sunken hover:text-ink-900 sm:hidden"
+            title="Outline view"
+            aria-label="Switch to outline view"
+          >
+            <List size={14.5} strokeWidth={1.9} />
+          </button>
+        )}
         <span aria-hidden className="mx-1 h-4 w-px bg-line-hair" />
         <button
           type="button"
