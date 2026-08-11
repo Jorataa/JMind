@@ -12,6 +12,7 @@
   "dependencies": {
     "@google/genai": "^2.16.0",
     "@supabase/supabase-js": "^2.108.2",
+    "@vercel/analytics": "^2.0.1",
     "@xyflow/react": "^12.11.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",

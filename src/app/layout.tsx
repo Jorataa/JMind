@@ -3,6 +3,7 @@ import { Instrument_Sans, Instrument_Serif, Spline_Sans_Mono } from "next/font/g
 import "./globals.css";
 import LayoutShell from "@/components/layout/LayoutShell";
 import { ToastProvider } from "@/components/ui/Toast";
+import { Analytics } from "@vercel/analytics/next";
 
 const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body className="bg-paper text-ink-700 antialiased">
         <LayoutShell>{children}</LayoutShell>
         <ToastProvider />
+        <Analytics />
       </body>
     </html>
   );
