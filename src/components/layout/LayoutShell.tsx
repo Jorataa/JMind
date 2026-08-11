@@ -15,6 +15,8 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { initCrossTabSync } from "@/lib/cross-tab-sync";
 
+import { CookieBanner } from "@/components/legal/CookieBanner";
+
 export default function LayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
@@ -24,7 +26,12 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
   // The landing owns the whole viewport — no rail, no app chrome (§7).
   if (pathname === "/") {
-    return <>{children}</>;
+    return (
+      <>
+        {children}
+        <CookieBanner />
+      </>
+    );
   }
 
   return (
@@ -72,6 +79,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
 
       {/* First-run name gate + returning-visitor session logging */}
       <NameGate />
+
+      {/* Cookie & privacy consent banner */}
+      <CookieBanner />
 
       {/* Optional cloud sync — no-op unless the owner configured Supabase */}
       <SyncProvider />

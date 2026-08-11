@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import PageHeader from "@/components/ui/PageHeader";
 import WisdomStrip from "@/features/dashboard/components/WisdomStrip";
+import BrandLandscapeAnchor from "@/features/dashboard/components/BrandLandscapeAnchor";
 import {
   HeroBriefCell,
   WorkspaceCell,
@@ -27,11 +28,10 @@ import { getGreeting } from "@/lib/dashboard-insights";
 import { formatFullDate } from "@/lib/format-date";
 
 /**
- * The Dashboard bento (design handoff #3a, §4.3): 12-col grid, gap 13px.
- *  row 1–2: hero 5 · workspace 4 · assistant 3
- *  row 3–4: tasks 4 · calendar 3 · notes 3 · knowledge/goal stacked 2
- * Collapses per §10: 8-col (lg) · 6-col (md) · single-column feed (mobile,
- * reordered so capture and tasks lead).
+ * The Dashboard bento (design handoff #3a, §4.3):
+ * 1. Reflective Element: Daily Motivation strip
+ * 2. Environmental Element: Brand Landscape photograph visual anchor
+ * 3. Functional Element: 12-col workspace grid
  */
 
 const CELLS: {
@@ -143,8 +143,13 @@ export default function Dashboard() {
         }
       />
 
+      {/* Reflective Element: Daily Motivation */}
       <WisdomStrip className="mt-6" />
 
+      {/* Environmental Element: Golden-Hour Coastal Landscape Photograph */}
+      <BrandLandscapeAnchor className="mt-[13px]" />
+
+      {/* Functional Element: Workspace Bento Grid */}
       <motion.div
         className="mt-[13px] grid grid-cols-1 gap-[13px] md:auto-rows-[minmax(172px,auto)] md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12"
         initial="hidden"
@@ -174,3 +179,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

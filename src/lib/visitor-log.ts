@@ -41,6 +41,18 @@ export function getVisitorId(): string {
 export function logVisitor(event: VisitorEvent, name: string): void {
   if (typeof window === "undefined") return;
 
+  try {
+    const rawConsent = localStorage.getItem("jmind:cookie-consent");
+    if (rawConsent) {
+      const parsed = JSON.parse(rawConsent);
+      if (parsed?.state?.hasResponded && parsed?.state?.analytics === false) {
+        return; // User opted out of analytics/telemetry
+      }
+    }
+  } catch {
+    // If storage reading fails, default behavior continues
+  }
+
   const payload = {
     event,
     name: name.trim().slice(0, 80),

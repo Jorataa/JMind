@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Download, Upload, Trash2, Check, User } from "lucide-react";
+import { Download, Upload, Trash2, Check, User, ShieldCheck, FileText, Lock, ExternalLink } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/stores/use-toast-store";
@@ -17,6 +17,7 @@ import {
   downloadTextFile,
 } from "@/lib/export";
 import SyncSettings from "@/features/sync/SyncSettings";
+import { CookiePreferences } from "@/components/legal/CookiePreferences";
 
 // Every JSON-persisted store — the full local workspace, nothing forgotten.
 const STORAGE_KEYS = [
@@ -71,6 +72,7 @@ const ANCHORS = [
   { id: "themes", label: "Themes" },
   { id: "shortcuts", label: "Shortcuts" },
   { id: "data", label: "Data" },
+  { id: "legal", label: "Legal & Privacy" },
   { id: "about", label: "About" },
 ];
 
@@ -385,6 +387,83 @@ export default function SettingsPage() {
                 </button>
               </Row>
             </SettingCard>
+          </Section>
+
+          {/* ── Legal & Privacy ── */}
+          <Section id="legal" title="Legal & Privacy">
+            <SettingCard>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h3 className="font-serif text-[18px] text-ink-900 flex items-center gap-2">
+                    <ShieldCheck size={18} className="text-emerald-600" />
+                    Trust &amp; Transparency Layer
+                  </h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-ink-600">
+                    Jorata is engineered around local-first privacy. Your notes, tasks, and mind maps remain on your device by default, and your work always belongs to you.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                  <Link
+                    href="/privacy"
+                    className="flex items-center justify-between rounded-inner border border-line-hair bg-sunken/40 p-3.5 transition-colors hover:bg-sunken hover:border-line-strong"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <ShieldCheck size={16} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-[13.5px] font-semibold text-ink-900">Privacy Policy</p>
+                        <p className="text-[11.5px] text-ink-500">How your data is handled</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-ink-400" />
+                  </Link>
+
+                  <Link
+                    href="/cookies"
+                    className="flex items-center justify-between rounded-inner border border-line-hair bg-sunken/40 p-3.5 transition-colors hover:bg-sunken hover:border-line-strong"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Lock size={16} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-[13.5px] font-semibold text-ink-900">Cookie &amp; Storage</p>
+                        <p className="text-[11.5px] text-ink-500">Local storage keys &amp; choices</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-ink-400" />
+                  </Link>
+
+                  <Link
+                    href="/terms"
+                    className="flex items-center justify-between rounded-inner border border-line-hair bg-sunken/40 p-3.5 transition-colors hover:bg-sunken hover:border-line-strong"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileText size={16} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-[13.5px] font-semibold text-ink-900">Terms of Service</p>
+                        <p className="text-[11.5px] text-ink-500">Rules &amp; AI disclaimers</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-ink-400" />
+                  </Link>
+
+                  <Link
+                    href="/copyright"
+                    className="flex items-center justify-between rounded-inner border border-line-hair bg-sunken/40 p-3.5 transition-colors hover:bg-sunken hover:border-line-strong"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <FileText size={16} className="text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="text-[13.5px] font-semibold text-ink-900">Copyright Policy</p>
+                        <p className="text-[11.5px] text-ink-500">Ownership &amp; IP notices</p>
+                      </div>
+                    </div>
+                    <ExternalLink size={14} className="text-ink-400" />
+                  </Link>
+                </div>
+              </div>
+            </SettingCard>
+
+            <CookiePreferences />
           </Section>
 
           {/* ── About ── */}

@@ -17,6 +17,7 @@ import { cn } from "@/lib/cn";
 import { LogoMark } from "@/components/ui/Logo";
 import { ContourRings } from "@/components/ui/ContourArt";
 import SyncStatusChip from "./SyncStatusChip";
+import { NotificationBell } from "@/features/notifications/NotificationBell";
 import {
   LayoutDashboard,
   Waypoints,
@@ -216,15 +217,19 @@ export default function Sidebar() {
               Jorata
             </span>
           )}
-          {/* Mobile close */}
-          <button
-            type="button"
-            onClick={() => setMobileSidebarOpen(false)}
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-full text-rail-muted hover:text-rail-bright md:hidden"
-            aria-label="Close navigation"
-          >
-            <X size={16} />
-          </button>
+          
+          <div className="ml-auto flex items-center gap-1">
+            <NotificationBell />
+            {/* Mobile close */}
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-rail-muted hover:text-rail-bright md:hidden"
+              aria-label="Close navigation"
+            >
+              <X size={16} />
+            </button>
+          </div>
         </div>
 
         {/* ── Search well ── */}
